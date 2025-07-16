@@ -4,7 +4,8 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const db = require('./db'); // Nosso módulo de conexão com o banco
+const db = require('./db');
+const { cpf: cpfValidator } = require('cpf-cnpj-validator'); // Adicione esta linha
 
 // 2. Inicialização do App
 const app = express();
@@ -25,6 +26,14 @@ app.post('/transacoes', async (req, res) => {
       return res.status(400).json({ error: 'CPF e valor (maior que zero) são obrigatórios.' });
     }
 
+    // Limpar o CPF removendo pontos e traços antes de validar e salvar
+    const cpfLimpo = cpf.replace(/\D/g, '');
+
+    // --- BLOCO DE VALIDAÇÃO DE CPF ---
+    if (!cpfValidator.isValid(cpfLimpo)) {
+      return res.status(400).json({ error: 'CPF inválido. Por favor, verifique os dados.' });
+    }
+
     const pontosGanhos = Math.floor(valor); // 1 real = 1 ponto
 
     // Inicia uma transação com o banco de dados.
@@ -33,14 +42,14 @@ app.post('/transacoes', async (req, res) => {
     await connection.beginTransaction();
 
     // Passo A: Verificar se o cliente existe
-    let [clientes] = await connection.execute('SELECT * FROM clientes WHERE cpf = ?', [cpf]);
+    let [clientes] = await connection.execute('SELECT * FROM clientes WHERE cpf = ?', [cpfLimpo]);
     let cliente = clientes[0];
     let clienteId;
 
     // Passo B: Se o cliente não existe, criar um novo
     if (!cliente) {
-      console.log(`Cliente com CPF ${cpf} não encontrado. Criando novo cliente.`);
-      const [resultado] = await connection.execute('INSERT INTO clientes (cpf, pontos_totais) VALUES (?, 0)', [cpf]);
+      console.log(`Cliente com CPF ${cpfLimpo} não encontrado. Criando novo cliente.`);
+      const [resultado] = await connection.execute('INSERT INTO clientes (cpf, pontos_totais) VALUES (?, 0)', [cpfLimpo]);
       clienteId = resultado.insertId;
     } else {
       clienteId = cliente.id;

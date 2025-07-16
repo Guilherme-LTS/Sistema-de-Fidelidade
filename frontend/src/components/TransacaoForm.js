@@ -11,7 +11,26 @@ function TransacaoForm() {
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  // 3. Função para lidar com o envio do formulário
+  // 3. Função para formatar CPF
+  const formatarCPF = (valor) => {
+    // Remove tudo que não é dígito
+    const cpfLimpo = valor.replace(/\D/g, '');
+    
+    // Aplica a máscara
+    const cpfFormatado = cpfLimpo.replace(/(\d{3})(\d)/, '$1.$2')
+                                 .replace(/(\d{3})(\d)/, '$1.$2')
+                                 .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    
+    return cpfFormatado;
+  };
+
+  // 4. Função para lidar com mudança no CPF
+  const handleCpfChange = (e) => {
+    const valorFormatado = formatarCPF(e.target.value);
+    setCpf(valorFormatado);
+  };
+
+  // 5. Função para lidar com o envio do formulário
   const handleSubmit = async (event) => {
     event.preventDefault(); // Impede o recarregamento da página
     setCarregando(true);
@@ -24,7 +43,7 @@ function TransacaoForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ cpf, valor: parseFloat(valor) }),
+        body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), valor: parseFloat(valor) }),
       });
 
       const data = await response.json();
@@ -56,8 +75,9 @@ function TransacaoForm() {
           type="text"
           id="cpf"
           value={cpf}
-          onChange={(e) => setCpf(e.target.value)}
-          placeholder="Digite apenas números"
+          onChange={handleCpfChange}
+          placeholder="000.000.000-00"
+          maxLength="14"
           required
         />
       </div>
@@ -70,6 +90,8 @@ function TransacaoForm() {
           value={valor}
           onChange={(e) => setValor(e.target.value)}
           placeholder="Ex: 150.75"
+          step="0.01"
+          min="0"
           required
         />
       </div>
