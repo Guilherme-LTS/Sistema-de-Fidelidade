@@ -1,41 +1,38 @@
 // frontend/src/components/TransacaoForm.js
+
 import React, { useState } from 'react';
+import { toast } from 'react-toastify'; // A importação do toast continua aqui
 
 function TransacaoForm() {
   // 1. Estados para os campos do formulário
   const [cpf, setCpf] = useState('');
   const [valor, setValor] = useState('');
 
-  // 2. Estados para feedback ao usuário
-  const [mensagem, setMensagem] = useState('');
-  const [erro, setErro] = useState('');
+  // 2. Estados de feedback foram removidos
+  // const [mensagem, setMensagem] = useState('');
+  // const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  // 3. Função para formatar CPF
+  // 3. Sua função de formatar CPF (mantida intacta, está ótima!)
   const formatarCPF = (valor) => {
-    // Remove tudo que não é dígito
     const cpfLimpo = valor.replace(/\D/g, '');
-    
-    // Aplica a máscara
     const cpfFormatado = cpfLimpo.replace(/(\d{3})(\d)/, '$1.$2')
-                                 .replace(/(\d{3})(\d)/, '$1.$2')
-                                 .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    
+                                  .replace(/(\d{3})(\d)/, '$1.$2')
+                                  .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     return cpfFormatado;
   };
 
-  // 4. Função para lidar com mudança no CPF
+  // 4. Sua função para lidar com mudança no CPF (mantida intacta)
   const handleCpfChange = (e) => {
     const valorFormatado = formatarCPF(e.target.value);
     setCpf(valorFormatado);
   };
 
-  // 5. Função para lidar com o envio do formulário
+  // 5. Função de envio atualizada para usar toasts
   const handleSubmit = async (event) => {
-    event.preventDefault(); // Impede o recarregamento da página
+    event.preventDefault();
     setCarregando(true);
-    setMensagem('');
-    setErro('');
+    // Não precisamos mais limpar mensagens aqui
 
     try {
       const response = await fetch('http://localhost:3001/transacoes', {
@@ -49,17 +46,17 @@ function TransacaoForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Se a resposta não for de sucesso (ex: 400, 500)
         throw new Error(data.error || 'Ocorreu um erro na requisição.');
       }
 
-      // Se a resposta for de sucesso
-      setMensagem(`Pontos registrados com sucesso! Pontos ganhos: ${data.pontosGanhos}`);
-      setCpf(''); // Limpa os campos após o sucesso
+      // SUCESSO: Chamamos o toast de sucesso!
+      toast.success(`Pontos registrados! Pontos ganhos: ${data.pontosGanhos}`);
+      setCpf('');
       setValor('');
 
     } catch (error) {
-      setErro(error.message);
+      // ERRO: Chamamos o toast de erro!
+      toast.error(error.message);
     } finally {
       setCarregando(false);
     }
@@ -100,9 +97,7 @@ function TransacaoForm() {
         {carregando ? 'Processando...' : 'Lançar Pontos'}
       </button>
 
-      {/* Exibição de mensagens de feedback */}
-      {mensagem && <p className="mensagem-sucesso">{mensagem}</p>}
-      {erro && <p className="mensagem-erro">{erro}</p>}
+      {/* As mensagens de feedback em texto foram removidas daqui */}
     </form>
   );
 }

@@ -78,3 +78,23 @@ button:disabled {
   color: #dc3545;
   font-weight: bold;
 }
+
+/* App.css */
+.Toastify__close-button {
+  /* Tente uma ou mais destas opções */
+  top: 15%;
+  transform: translateY(-50%);
+  line-height: 1; /* Ajuste a altura da linha */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5em; /* Ajuste o tamanho da área do botão */
+  width: 1.5em;
+ }
+
+
+.meu-body-de-toast {
+  font-size: 1rem; /* Exemplo: alterar o tamanho da fonte */
+  padding: 15px; /* Exemplo: aumentar o espaçamento interno */
+}
+
