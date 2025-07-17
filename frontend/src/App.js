@@ -1,6 +1,7 @@
 // frontend/src/App.js
 import React from 'react';
 import TransacaoForm from './components/TransacaoForm';
+import ConsultaSaldo from './components/ConsultaSaldo';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
@@ -13,6 +14,8 @@ function App() {
       </header>
       <main>
         <TransacaoForm />
+        <hr />
+        <ConsultaSaldo />
       </main>
       <ToastContainer
         position="top-right"

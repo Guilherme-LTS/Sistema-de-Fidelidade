@@ -98,3 +98,22 @@ button:disabled {
   padding: 15px; /* Exemplo: aumentar o espaçamento interno */
 }
 
+/* frontend/src/App.css */
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 2rem 0;
+}
+
+.resultado-consulta {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: left;
+  background-color: #f9f9f9;
+}
+
+.resultado-consulta h3 {
+  margin-top: 0;
+}

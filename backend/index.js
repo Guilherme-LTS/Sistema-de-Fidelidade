@@ -87,6 +87,46 @@ app.post('/transacoes', async (req, res) => {
 });
 
 
+// ROTA PARA CONSULTAR SALDO DE PONTOS
+app.get('/clientes/:cpf', async (req, res) => {
+  let connection;
+  try {
+    // 1. Pega o CPF dos parâmetros da URL
+    const cpfParam = req.params.cpf.replace(/\D/g, ''); // Limpa o CPF de pontos e traços
+
+    if (!cpfParam) {
+      return res.status(400).json({ error: 'CPF é obrigatório.' });
+    }
+
+    connection = await db.getConnection();
+
+    // 2. Busca o cliente no banco de dados
+    const [clientes] = await connection.execute(
+      'SELECT nome, cpf, pontos_totais FROM clientes WHERE cpf = ?',
+      [cpfParam]
+    );
+
+    const cliente = clientes[0];
+
+    // 3. Verifica se o cliente foi encontrado
+    if (!cliente) {
+      return res.status(404).json({ error: 'Cliente não encontrado.' });
+    }
+
+    // 4. Retorna os dados do cliente com sucesso
+    res.status(200).json(cliente);
+
+  } catch (error) {
+    console.error('Erro ao consultar cliente:', error);
+    res.status(500).json({ error: 'Ocorreu um erro no servidor ao consultar o cliente.' });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
+
+
+
 // 5. Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
