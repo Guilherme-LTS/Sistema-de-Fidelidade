@@ -36,7 +36,7 @@ function TransacaoForm() {
     // Não precisamos mais limpar mensagens aqui
 
     try {
-      const response = await fetch('http://localhost:3001/transacoes', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/transacoes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

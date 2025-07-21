@@ -28,7 +28,7 @@ function ConsultaSaldo() {
     const cpfLimpo = cpf.replace(/\D/g, '');
 
     try {
-      const response = await fetch(`http://localhost:3001/clientes/${cpfLimpo}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/clientes/${cpfLimpo}`);
       const data = await response.json();
 
       if (!response.ok) {

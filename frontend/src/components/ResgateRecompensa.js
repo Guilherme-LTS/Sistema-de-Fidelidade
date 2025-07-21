@@ -13,7 +13,7 @@ function ResgateRecompensa() {
   useEffect(() => {
     const fetchRecompensas = async () => {
       try {
-        const response = await fetch('http://localhost:3001/recompensas');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas`);
         const data = await response.json();
         if (!response.ok) throw new Error('Falha ao buscar recompensas');
         setRecompensas(data);
@@ -36,7 +36,7 @@ function ResgateRecompensa() {
     }
     setCarregando(true);
     try {
-      const response = await fetch('http://localhost:3001/resgates', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cpf, recompensa_id: selectedRecompensa })
