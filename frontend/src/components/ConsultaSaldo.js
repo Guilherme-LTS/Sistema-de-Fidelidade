@@ -1,6 +1,7 @@
 // frontend/src/components/ConsultaSaldo.js
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
+import './ConsultaSaldo.css';
 
 function ConsultaSaldo() {
   const [cpf, setCpf] = useState('');

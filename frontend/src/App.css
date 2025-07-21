@@ -1,29 +1,43 @@
-/* frontend/src/App.css */
+/* =========================
+   Estilos Globais e Layout
+   ========================= */
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: #f4f7f6;
   margin: 0;
   padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .App {
   text-align: center;
-  background-color: white;
+  background-color: #fff;
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 500px;
+  margin: 2rem auto;
 }
 
 .App-header h1 {
-  color: #333;
+  color: #222;
   margin-bottom: 2rem;
+  font-size: 2rem;
+  font-weight: 600;
 }
+
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 2rem 0;
+}
+
+/* =========================
+   Formulários e Botões
+   ========================= */
 
 .form-group {
   margin-bottom: 1.5rem;
@@ -33,87 +47,96 @@ body {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #555;
-  font-weight: bold;
+  color: #444;
+  font-weight: 500;
 }
 
-.form-group input {
+.form-group input,
+select {
   width: 100%;
   padding: 0.8rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box; /* Importante para o padding não aumentar o tamanho */
+  box-sizing: border-box;
+  font-size: 1rem;
+  background: #fff;
 }
 
 button {
   width: 100%;
   padding: 1rem;
   background-color: #007bff;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 4px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 
 button:hover {
-  background-color: #0056b3;
+  background: #0056b3;
 }
 
 button:disabled {
-  background-color: #aaa;
+  background: #aaa;
   cursor: not-allowed;
 }
+
+/* =========================
+   Mensagens Globais
+   ========================= */
 
 .mensagem-sucesso {
   margin-top: 1rem;
   color: #28a745;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .mensagem-erro {
   margin-top: 1rem;
   color: #dc3545;
-  font-weight: bold;
+  font-weight: 600;
 }
 
-/* App.css */
+/* =========================
+   Toastify (Notificações)
+   ========================= */
+
 .Toastify__close-button {
-  /* Tente uma ou mais destas opções */
   top: 15%;
   transform: translateY(-50%);
-  line-height: 1; /* Ajuste a altura da linha */
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 1.5em; /* Ajuste o tamanho da área do botão */
+  height: 1.5em;
   width: 1.5em;
- }
-
+}
 
 .meu-body-de-toast {
-  font-size: 1rem; /* Exemplo: alterar o tamanho da fonte */
-  padding: 15px; /* Exemplo: aumentar o espaçamento interno */
+  font-size: 1rem;
+  padding: 15px;
 }
 
-/* frontend/src/App.css */
-hr {
-  border: none;
-  border-top: 1px solid #eee;
-  margin: 2rem 0;
+/* =========================
+   Responsividade
+   ========================= */
+
+@media (max-width: 600px) {
+  .App {
+    padding: 1rem;
+    max-width: 98vw;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .App-header h1 {
+    font-size: 1.3rem;
+  }
 }
 
-.resultado-consulta {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  text-align: left;
-  background-color: #f9f9f9;
-}
-
-.resultado-consulta h3 {
-  margin-top: 0;
-}
+/* =========================
+   Removidos estilos específicos de componentes
+   (mover para arquivos próprios dos componentes)
+   ========================= */
