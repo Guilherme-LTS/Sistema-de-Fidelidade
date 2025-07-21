@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { toast } from 'react-toastify'; // A importação do toast continua aqui
+import './TransacaoForm.css';
 
 function TransacaoForm() {
   // 1. Estados para os campos do formulário
@@ -63,42 +64,42 @@ function TransacaoForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Lançar Pontos de Fidelidade</h2>
+    <div className="transacao-container">
+      <form onSubmit={handleSubmit}>
+        <h2>Lançar Pontos de Fidelidade</h2>
 
-      <div className="form-group">
-        <label htmlFor="cpf">CPF do Cliente</label>
-        <input
-          type="text"
-          id="cpf"
-          value={cpf}
-          onChange={handleCpfChange}
-          placeholder="000.000.000-00"
-          maxLength="14"
-          required
-        />
-      </div>
+        <div className="form-group">
+          <label htmlFor="cpf">CPF do Cliente</label>
+          <input
+            type="text"
+            id="cpf"
+            value={cpf}
+            onChange={handleCpfChange}
+            placeholder="000.000.000-00"
+            maxLength="14"
+            required
+          />
+        </div>
 
-      <div className="form-group">
-        <label htmlFor="valor">Valor da Compra (R$)</label>
-        <input
-          type="number"
-          id="valor"
-          value={valor}
-          onChange={(e) => setValor(e.target.value)}
-          placeholder="Ex: 150.75"
-          step="0.01"
-          min="0"
-          required
-        />
-      </div>
+        <div className="form-group">
+          <label htmlFor="valor">Valor da Compra (R$)</label>
+          <input
+            type="number"
+            id="valor"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            placeholder="Ex: 150.75"
+            step="0.01"
+            min="0"
+            required
+          />
+        </div>
 
-      <button type="submit" disabled={carregando}>
-        {carregando ? 'Processando...' : 'Lançar Pontos'}
-      </button>
-
-      {/* As mensagens de feedback em texto foram removidas daqui */}
-    </form>
+        <button type="submit" disabled={carregando}>
+          {carregando ? 'Processando...' : 'Lançar Pontos'}
+        </button>
+      </form>
+    </div>
   );
 }
 
