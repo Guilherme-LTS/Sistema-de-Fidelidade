@@ -10,6 +10,7 @@ const { cpf: cpfValidator } = require('cpf-cnpj-validator'); // Adicione esta li
 // 2. Inicialização do App
 const app = express();
 const PORT = process.env.PORT || 3001; // Usa a porta do .env ou 3001 como padrão
+const allowedOrigins = ['http://localhost:3000', 'https://sistema-fidelidade-flax.vercel.app'];
 
 // 3. Middlewares
 app.use(cors()); // Permite que o frontend acesse a API
