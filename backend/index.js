@@ -10,10 +10,30 @@ const { cpf: cpfValidator } = require('cpf-cnpj-validator'); // Adicione esta li
 // 2. Inicialização do App
 const app = express();
 const PORT = process.env.PORT || 3001; // Usa a porta do .env ou 3001 como padrão
-const allowedOrigins = ['http://localhost:3000', 'https://sistema-fidelidade-flax.vercel.app'];
+
+// --- CONFIGURAÇÃO DE SEGURANÇA CORS ---
+// A sua lista de endereços que podem acessar a API
+const allowedOrigins = [
+  'http://localhost:3000',                  // Acesso para desenvolvimento local
+  'https://sistema-fidelidade-flax.vercel.app' // Acesso para o seu site em produção
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permite requisições sem 'origin' (como Postman ou apps mobile)
+    if (!origin) return callback(null, true);
+
+    // Verifica se a origem da requisição está na nossa lista de permissões
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true); // Acesso permitido
+    } else {
+      callback(new Error('Acesso não permitido pela política de CORS')); // Acesso negado
+    }
+  }
+};
 
 // 3. Middlewares
-app.use(cors()); // Permite que o frontend acesse a API
+app.use(cors(corsOptions)); // APLICA AS NOSSAS REGRAS DE CORS
 app.use(express.json()); // Permite que o express entenda requisições com corpo em JSON
 
 // 4. Rota principal - POST /transacoes
