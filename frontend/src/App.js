@@ -10,16 +10,19 @@ import './App.css';
 function App() {
   return (
     <div className="App">
+      
       <header className="App-header">
         <h1>Sistema de Fidelidade</h1>
       </header>
+      
       <main>
         <TransacaoForm />
         <hr />
         <ConsultaSaldo />
-        <hr /> 
+        <hr />
         <ResgateRecompensa />
       </main>
+      
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -33,6 +36,10 @@ function App() {
         theme="light"
         bodyClassName="meu-body-de-toast"
       />
+      
+      <footer style={{marginTop: '2rem', fontSize: '0.9rem', color: '#888'}}>
+        &copy; {new Date().getFullYear()} Sistema de Fidelidade
+      </footer>
     </div>
   );
 }
