@@ -124,7 +124,76 @@ app.get('/clientes/:cpf', async (req, res) => {
   }
 });
 
+// ROTA PARA BUSCAR RECOMPENSAS DISPONÍVEIS
+app.get('/recompensas', async (req, res) => {
+  try {
+    const [recompensas] = await db.execute('SELECT * FROM recompensas WHERE ativo = true ORDER BY custo_pontos ASC');
+    res.status(200).json(recompensas);
+  } catch (error) {
+    console.error('Erro ao buscar recompensas:', error);
+    res.status(500).json({ error: 'Erro ao buscar recompensas.' });
+  }
+});
 
+
+// ROTA PARA PROCESSAR O RESGATE DE UMA RECOMPENSA
+app.post('/resgates', async (req, res) => {
+  let connection;
+  try {
+    const { cpf, recompensa_id } = req.body;
+    const cpfLimpo = cpf.replace(/\D/g, '');
+
+    if (!cpfLimpo || !recompensa_id) {
+      return res.status(400).json({ error: 'CPF e ID da recompensa são obrigatórios.' });
+    }
+
+    connection = await db.getConnection();
+    await connection.beginTransaction(); // Inicia a transação!
+
+    // 1. Buscar dados do cliente
+    const [clientes] = await connection.execute('SELECT * FROM clientes WHERE cpf = ? FOR UPDATE', [cpfLimpo]);
+    const cliente = clientes[0];
+    if (!cliente) {
+      throw new Error('Cliente não encontrado.');
+    }
+
+    // 2. Buscar dados da recompensa
+    const [recompensas] = await connection.execute('SELECT * FROM recompensas WHERE id = ?', [recompensa_id]);
+    const recompensa = recompensas[0];
+    if (!recompensa) {
+      throw new Error('Recompensa não encontrada.');
+    }
+
+    // 3. VERIFICAR SE HÁ PONTOS SUFICIENTES
+    if (cliente.pontos_totais < recompensa.custo_pontos) {
+      throw new Error('Pontos insuficientes para resgatar esta recompensa.');
+    }
+
+    // 4. Se chegou até aqui, pode prosseguir: subtrair os pontos
+    await connection.execute(
+      'UPDATE clientes SET pontos_totais = pontos_totais - ? WHERE id = ?',
+      [recompensa.custo_pontos, cliente.id]
+    );
+
+    // 5. Registrar na tabela de histórico de resgates
+    await connection.execute(
+      'INSERT INTO resgates (cliente_id, recompensa_id, pontos_gastos) VALUES (?, ?, ?)',
+      [cliente.id, recompensa.id, recompensa.custo_pontos]
+    );
+
+    await connection.commit(); // Confirma a transação!
+
+    const pontosRestantes = cliente.pontos_totais - recompensa.custo_pontos;
+    res.status(200).json({ message: 'Recompensa resgatada com sucesso!', pontos_restantes: pontosRestantes });
+
+  } catch (error) {
+    if (connection) await connection.rollback(); // Desfaz tudo em caso de erro!
+    console.error('Erro no resgate:', error);
+    res.status(500).json({ error: error.message || 'Ocorreu um erro no servidor durante o resgate.' });
+  } finally {
+    if (connection) connection.release();
+  }
+});
 
 
 // 5. Iniciar o servidor

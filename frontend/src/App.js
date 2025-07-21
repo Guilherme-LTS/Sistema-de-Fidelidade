@@ -2,6 +2,7 @@
 import React from 'react';
 import TransacaoForm from './components/TransacaoForm';
 import ConsultaSaldo from './components/ConsultaSaldo';
+import ResgateRecompensa from './components/ResgateRecompensa';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
@@ -16,6 +17,8 @@ function App() {
         <TransacaoForm />
         <hr />
         <ConsultaSaldo />
+        <hr /> 
+        <ResgateRecompensa />
       </main>
       <ToastContainer
         position="top-right"
