@@ -1,6 +1,7 @@
 // frontend/src/components/ResgateRecompensa.js
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import './ResgateRecompensa.css';
 
 function ResgateRecompensa() {
   const [cpf, setCpf] = useState('');
