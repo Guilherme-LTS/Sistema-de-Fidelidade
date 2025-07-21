@@ -1,18 +1,24 @@
+// backend/db.js
+const { Pool } = require('pg');
+require('dotenv').config();
 
-const mysql = require('mysql2/promise');
-require('dotenv').config(); // Carrega as variáveis do .env
-
-// Cria um "pool" de conexões, que é mais eficiente que criar uma nova conexão a cada consulta
-const pool = mysql.createPool({
+const pool = new Pool({
   host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  ssl: {
+    rejectUnauthorized: false // Necessário para algumas conexões na nuvem
+  }
 });
 
-console.log("Pool de conexões com o MySQL criado com sucesso!");
+pool.connect((err) => {
+  if (err) {
+    console.error('Erro de conexão com o PostgreSQL', err.stack);
+  } else {
+    console.log('Conectado com sucesso ao PostgreSQL!');
+  }
+});
 
 module.exports = pool;
