@@ -199,7 +199,6 @@ app.post('/usuarios/login', async (req, res) => {
     const usuario = result.rows[0];
 
     if (!usuario) {
-      // Usamos uma mensagem genérica para não informar a um atacante se o email existe ou não
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
