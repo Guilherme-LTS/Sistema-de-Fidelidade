@@ -1,20 +1,14 @@
-// frontend/src/App.js
+// frontend/src/App.js - VERSÃO DE TESTE
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import LoginPage from './pages/LoginPage';
-import HomePage from './pages/HomePage';
-import './App.css';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/home" element={<HomePage />} />
+        <Route path="/" element={<h1>SE ISTO APARECER, A ROTA DE LOGIN FUNCIONA</h1>} />
+        <Route path="/home" element={<h1>SE ISTO APARECER, A ROTA HOME FUNCIONA</h1>} />
       </Routes>
-      <ToastContainer position="top-right" autoClose={5000} theme="light" />
     </BrowserRouter>
   );
 }
