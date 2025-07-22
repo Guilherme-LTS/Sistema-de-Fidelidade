@@ -1,6 +1,5 @@
-// frontend/src/pages/HomePage.js
 import React from 'react';
-import { Box, Heading, Container, Divider } from '@chakra-ui/react'; // Voltamos a usar o Divider
+import { Box, Heading, Container, Divider } from '@chakra-ui/react';
 import TransacaoForm from '../components/TransacaoForm';
 import ConsultaSaldo from '../components/ConsultaSaldo';
 import ResgateRecompensa from '../components/ResgateRecompensa';
@@ -13,9 +12,9 @@ function HomePage() {
           Sistema de Fidelidade
         </Heading>
         <TransacaoForm />
-        <Divider my={10} /> {/* E usamos ele aqui */}
+        <Divider my={10} />
         <ConsultaSaldo />
-        <Divider my={10} /> {/* E aqui */}
+        <Divider my={10} />
         <ResgateRecompensa />
       </Container>
     </Box>

@@ -1,4 +1,3 @@
-// frontend/src/pages/LoginPage.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,9 +9,8 @@ import {
   Heading,
   Input,
   Stack,
-  useToast, // O useToast original
 } from '@chakra-ui/react';
-import { toast as reactToastify } from 'react-toastify'; // Usando o react-toastify
+import { toast } from 'react-toastify';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -33,11 +31,11 @@ function LoginPage() {
       if (!response.ok) {
         throw new Error(data.error || 'Falha no login.');
       }
-      reactToastify.success('Login bem-sucedido!');
+      toast.success('Login bem-sucedido!');
       localStorage.setItem('token', data.token);
       navigate('/home');
     } catch (error) {
-      reactToastify.error(error.message);
+      toast.error(error.message);
     } finally {
       setCarregando(false);
     }
