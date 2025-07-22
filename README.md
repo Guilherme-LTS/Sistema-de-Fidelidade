@@ -7,7 +7,6 @@ Um sistema de fidelidade full-stack desenvolvido para digitalizar e automatizar 
 
 ![Demonstração do Sistema](https://cdn.discordapp.com/attachments/1012098738363318416/1397262183800246312/Sistema-fidelidade-v1.0.gif?ex=68811550&is=687fc3d0&hm=fe1136fd8b93cec6ba53a4c07b1b7f04c1999b4ec7ac0c378ef26275eb3f3fdd&)
 
-> **Dica:** Grave um pequeno vídeo da tela (como o que você ia usar no LinkedIn), converta para GIF em um site como [ezgif.com](https://www.ezgif.com/video-to-gif) e coloque o link aqui para uma demonstração visual incrível!
 
 ---
 
@@ -162,6 +161,6 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 ---
 
-Feito com ❤️ por **Guilherme L. T. dos Santos**
+Feito por **Guilherme L. T. Silva**
 
-[<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />](https://www.linkedin.com/in/seu-linkedin-aqui/)
+[<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />](https://www.linkedin.com/in/guilherme-lucas-teixeira-silva/)
