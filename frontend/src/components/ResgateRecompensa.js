@@ -37,6 +37,7 @@ function ResgateRecompensa() {
     setCarregando(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/resgates`, {
+      // const response = await fetch('https://sistema-fidelidade-api.onrender.com/resgates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), recompensa_id: selectedRecompensa })
