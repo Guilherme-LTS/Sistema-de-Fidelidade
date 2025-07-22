@@ -13,7 +13,7 @@ function ResgateRecompensa() {
   useEffect(() => {
     const fetchRecompensas = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}recompensas`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas`);
         const data = await response.json();
         if (!response.ok) throw new Error('Falha ao buscar recompensas');
         setRecompensas(data);
@@ -36,14 +36,13 @@ function ResgateRecompensa() {
     }
     setCarregando(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/resgates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf, recompensa_id: selectedRecompensa })
+        body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), recompensa_id: selectedRecompensa })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-
       toast.success(`Resgate realizado! Pontos restantes: ${data.pontos_restantes}`);
       setCpf('');
       setSelectedRecompensa('');
