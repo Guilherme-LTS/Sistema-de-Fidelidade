@@ -19,7 +19,7 @@ Um sistema de fidelidade full-stack desenvolvido para digitalizar e automatizar 
 * [📄 Endpoints da API](#-endpoints-da-api)
 * [☁️ Arquitetura de Deploy](#-arquitetura-de-deploy)
 * [🔮 Melhorias Futuras](#-melhorias-futuras)
-* [⚖️ Licença](#-licenca)
+* [⚖️ Licença](#-licença)
 
 ---
 
