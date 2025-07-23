@@ -14,10 +14,12 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // --- CONFIGURAÇÃO DE SEGURANÇA CORS ---
+// --- CONFIGURAÇÃO DE SEGURANÇA CORS ---
 const allowedOrigins = [
-  'http://localhost:3000',
-  'https://sistema-fidelidade-flax.vercel.app'
+  'http://localhost:3000',                  // Para o nosso desenvolvimento local
+  'https://sistema-fidelidade-flax.vercel.app' // Para o site em produção
 ];
+
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
@@ -28,20 +30,8 @@ const corsOptions = {
   }
 };
 
-// backend/index.js
-
-// ... (inicialização do app) ...
-
-// MIDDLEWARE DE LOG GLOBAL - COLOQUE NO TOPO
-app.use((req, res, next) => {
-  console.log(`[${new Date().toLocaleTimeString()}] Nova Requisição Recebida: ${req.method} ${req.originalUrl}`);
-  next(); // Passa a requisição para o próximo middleware (o cors)
-});
-
 // 3. Middlewares
-app.use(cors({
-    origin: 'http://localhost:3000'
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // ... (o resto do seu código com as rotas) ...
