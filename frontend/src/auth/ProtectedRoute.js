@@ -2,18 +2,18 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-// Este componente recebe os 'children', que são os componentes que ele deve proteger
 const ProtectedRoute = ({ children }) => {
-  // 1. Verificamos se o token existe no localStorage
+  // 1. Verificamos se o token de acesso existe no localStorage do navegador
   const token = localStorage.getItem('token');
 
-  // 2. Se não houver token, redirecionamos para a página de login
+  // 2. Se NÃO houver token, redirecionamos o usuário para a página de login
   if (!token) {
     // O componente <Navigate> do React Router faz o redirecionamento
-    return <Navigate to="/" />;
+    // `replace` impede que o usuário use o botão "voltar" para acessar a página protegida
+    return <Navigate to="/" replace />;
   }
 
-  // 3. Se houver um token, renderizamos os componentes filhos (a página protegida)
+  // 3. Se houver um token, permitimos a passagem e renderizamos a página solicitada
   return children;
 };
 
