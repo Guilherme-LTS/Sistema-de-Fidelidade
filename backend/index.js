@@ -124,7 +124,7 @@ app.post('/resgates', async (req, res) => {
     }
     await client.query('BEGIN');
 
-    const resCliente = await client.query('SELECT * FROM clientes WHERE cpf = $1 FOR UPDATE', [cpfLimpo]);
+    const resCliente = await client.query('SELECT * FROM clientes WHERE cpf = $1', [cpfLimpo]);
     const cliente = resCliente.rows[0];
     if (!cliente) throw new Error('Cliente não encontrado.');
 
