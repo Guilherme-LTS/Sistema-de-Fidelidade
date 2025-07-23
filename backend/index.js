@@ -31,7 +31,6 @@ const corsOptions = {
 };
 
 
-app.options('*', cors(corsOptions));
 
 
 // 3. Middlewares
