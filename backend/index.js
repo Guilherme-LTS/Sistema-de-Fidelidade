@@ -30,6 +30,10 @@ const corsOptions = {
   }
 };
 
+
+app.options('*', cors(corsOptions));
+
+
 // 3. Middlewares
 app.use(cors(corsOptions));
 app.use(express.json());
