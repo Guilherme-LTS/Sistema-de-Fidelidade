@@ -6,23 +6,19 @@ import 'react-toastify/dist/ReactToastify.css';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import ProtectedRoute from './auth/ProtectedRoute';
+import './App.css'; // Usaremos este para estilos gerais da página
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+    <div className="app-container">
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        </Routes>
+      </BrowserRouter>
       <ToastContainer position="top-right" autoClose={5000} theme="light" />
-    </BrowserRouter>
+    </div>
   );
 }
 

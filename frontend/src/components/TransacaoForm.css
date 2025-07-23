@@ -1,28 +1,60 @@
-/* Estilos específicos do componente TransacaoForm */
-
-.transacao-container {
-  background: #fff;
+/* frontend/src/components/TransacaoForm.module.css */
+.formBox {
+  width: 100%;
+  background-color: #ffffff;
+  padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
-.transacao-container h2 {
-  font-size: 1.3rem;
-  margin-bottom: 1.5rem;
-  color: #222;
+.heading {
+  font-size: 1.5rem;
   font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
-@media (max-width: 600px) {
-  .transacao-container {
-    padding: 1rem;
-    max-width: 98vw;
-    border-radius: 0;
-    box-shadow: none;
-  }
-} 
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.button {
+  padding: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
