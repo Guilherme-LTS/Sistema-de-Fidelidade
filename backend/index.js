@@ -28,10 +28,23 @@ const corsOptions = {
   }
 };
 
+// backend/index.js
+
+// ... (inicialização do app) ...
+
+// MIDDLEWARE DE LOG GLOBAL - COLOQUE NO TOPO
+app.use((req, res, next) => {
+  console.log(`[${new Date().toLocaleTimeString()}] Nova Requisição Recebida: ${req.method} ${req.originalUrl}`);
+  next(); // Passa a requisição para o próximo middleware (o cors)
+});
+
 // 3. Middlewares
-app.use(cors(corsOptions));
+app.use(cors({
+    origin: 'http://localhost:3000'
+}));
 app.use(express.json());
 
+// ... (o resto do seu código com as rotas) ...
 // 4. Rotas da API
 
 // Rota principal - POST /transacoes
@@ -187,14 +200,17 @@ app.post('/usuarios/registro', async (req, res) => {
 
 // ROTA PARA LOGIN DE USUÁRIO
 app.post('/usuarios/login', async (req, res) => {
+  console.log("\n--- RECEBIDO NO BACKEND ---");
   const { email, senha } = req.body;
+  console.log(`Email: [${email}]`);
+  console.log(`Senha: [${senha}]`); // Vamos ver o que realmente chegou aqui
+  console.log("--------------------------");
 
   if (!email || !senha) {
     return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
   }
 
   try {
-    // 1. Encontrar o usuário pelo email
     const result = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
     const usuario = result.rows[0];
 
@@ -202,14 +218,12 @@ app.post('/usuarios/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
-    // 2. Comparar a senha enviada com a hash guardada no banco
     const senhaValida = await bcrypt.compare(senha, usuario.hash_senha);
 
     if (!senhaValida) {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
-    // 3. Se a senha for válida, gerar um token JWT
     const tokenPayload = {
       id: usuario.id,
       nome: usuario.nome,
@@ -217,10 +231,9 @@ app.post('/usuarios/login', async (req, res) => {
     };
 
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-      expiresIn: '8h' // O token expira em 8 horas
+      expiresIn: '8h'
     });
 
-    // 4. Enviar o token de volta para o cliente
     res.status(200).json({
       message: 'Login bem-sucedido!',
       token: token
@@ -231,7 +244,6 @@ app.post('/usuarios/login', async (req, res) => {
     res.status(500).json({ error: 'Ocorreu um erro no servidor durante o login.' });
   }
 });
-
 
 // 5. Iniciar o servidor
 app.listen(PORT, () => {

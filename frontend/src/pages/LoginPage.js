@@ -22,6 +22,11 @@ function LoginPage() {
     event.preventDefault();
     setCarregando(true);
     try {
+
+    console.log('--- ENVIANDO DO FRONTEND ---');
+    console.log('Email:', email);
+    console.log('Senha:', senha);
+    
       const response = await fetch(`${process.env.REACT_APP_API_URL}/usuarios/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
