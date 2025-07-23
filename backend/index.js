@@ -14,10 +14,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // --- CONFIGURAÇÃO DE SEGURANÇA CORS ---
-// --- CONFIGURAÇÃO DE SEGURANÇA CORS ---
+
 const allowedOrigins = [
-  'http://localhost:3000',                  // Para o nosso desenvolvimento local
-  'https://sistema-fidelidade-flax.vercel.app' // Para o site em produção
+  'http://localhost:3000',
+  'https://sistema-fidelidade-flax.vercel.app' // A URL do seu site
 ];
 
 const corsOptions = {

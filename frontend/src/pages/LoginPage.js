@@ -22,29 +22,25 @@ function LoginPage() {
     event.preventDefault();
     setCarregando(true);
     try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/usuarios/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, senha }),
+        });
 
-    console.log('--- ENVIANDO DO FRONTEND ---');
-    console.log('Email:', email);
-    console.log('Senha:', senha);
-    
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/usuarios/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Falha no login.');
-      }
-      toast.success('Login bem-sucedido!');
-      localStorage.setItem('token', data.token);
-      navigate('/home');
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Falha no login.');
+        }
+        toast.success('Login bem-sucedido!');
+        localStorage.setItem('token', data.token);
+        navigate('/home');
     } catch (error) {
-      toast.error(error.message);
+        toast.error(error.message);
     } finally {
-      setCarregando(false);
+        setCarregando(false);
     }
-  };
+};
 
   return (
     <Box display="flex" alignItems="center" justifyContent="center" height="100vh" bg="gray.50">
