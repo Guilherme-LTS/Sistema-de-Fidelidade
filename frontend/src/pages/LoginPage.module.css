@@ -100,24 +100,27 @@
 
 @media (max-width: 480px) {
   .pageContainer {
-    display: block;
-    padding: 0.5rem 0;
-    background: #f7fafc;
-    overflow-x: hidden;
-  }
-  .formContainer {
-    box-sizing: border-box;
-    max-width: 100%;
-    width: 100%;
-    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
-    border: 1px solid #e2e8f0;
-    padding: 1.2rem 0.8rem;
-    border-radius: 10px;
-    margin: 0 auto;
-    background: #fff;
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 0.5rem 0;
+    background: #f7fafc;
+    overflow-x: hidden;
+    min-width: 0;
+  }
+  .formContainer {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
+    border: 1px solid #e2e8f0;
+    padding: 1.2rem 1rem;
+    border-radius: 10px;
+    margin: 1.2rem auto;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
   .heading {
     font-size: 1.2rem;
@@ -131,7 +134,8 @@
     background: #f9fafb;
     border: 1px solid #cbd5e1;
     box-sizing: border-box;
-    max-width: 100%;
+    width: 100%;
+    margin: 0;
   }
   .button {
     font-size: 1rem;
@@ -139,7 +143,8 @@
     border-radius: 6px;
     background: linear-gradient(90deg, #3182ce 60%, #63b3ed 100%);
     box-shadow: 0 1px 4px 0 rgba(49,130,206,0.08);
-    max-width: 100%;
+    width: 100%;
+    margin: 0;
   }
   .stack {
     gap: 0.9rem;

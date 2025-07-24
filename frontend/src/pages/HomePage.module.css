@@ -37,20 +37,25 @@
 
 @media (max-width: 480px) {
   .pageContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     padding: 0.7rem 0;
     min-height: 100vh;
     background: #f7fafc;
     overflow-x: hidden;
+    min-width: 0;
   }
   .contentContainer {
     box-sizing: border-box;
-    padding: 0 0.8rem;
-    max-width: 100%;
+    padding: 0 1rem;
+    max-width: 400px;
     border-radius: 10px;
     background: #fff;
     box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
     border: 1px solid #e2e8f0;
     margin: 0 auto;
+    width: 100%;
   }
   .heading {
     font-size: 1.2rem;
