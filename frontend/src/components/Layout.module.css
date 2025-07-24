@@ -39,6 +39,12 @@
     box-shadow: 2px 0 16px 0 rgba(0,0,0,0.08);
     transition: left 0.3s, box-shadow 0.2s;
     z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   .sidebarHeader {
@@ -124,14 +130,15 @@
     background: #f7fafc;
     min-height: 100vh;
     transition: background 0.2s;
+    margin-left: 250px;
   }
 
   @media (max-width: 900px) {
     .sidebar {
       width: 200px;
-      padding: 0.5rem;
     }
     .mainContent {
+      margin-left: 200px;
       padding: 1rem;
     }
   }
@@ -148,11 +155,13 @@
       width: 220px;
       transition: left 0.3s;
       box-shadow: 2px 0 16px 0 rgba(0,0,0,0.12);
+      margin-left: 0;
     }
     .sidebarOpen {
       left: 0;
     }
     .mainContent {
+      margin-left: 0;
       padding: 1rem;
     }
   }
