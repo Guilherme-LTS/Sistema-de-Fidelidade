@@ -1,12 +1,15 @@
 // frontend/src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { ChakraProvider } from '@chakra-ui/react';
+import './index.css';
 import App from './App';
-import './index.css'; // Podemos adicionar estilos globais aqui depois
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
   </React.StrictMode>
 );
