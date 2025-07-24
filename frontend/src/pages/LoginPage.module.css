@@ -97,3 +97,32 @@
       font-size: 1.5rem;
     }
   }
+
+@media (max-width: 480px) {
+  .pageContainer {
+    display: block;
+    padding: 0.5rem;
+  }
+  .formContainer {
+    max-width: 100vw;
+    box-shadow: none;
+    border: none;
+    padding: 1rem;
+    border-radius: 0;
+  }
+  .heading {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .input {
+    font-size: 0.95rem;
+    padding: 0.6rem;
+  }
+  .button {
+    font-size: 0.95rem;
+    padding: 0.8rem;
+  }
+  .stack {
+    gap: 0.7rem;
+  }
+}

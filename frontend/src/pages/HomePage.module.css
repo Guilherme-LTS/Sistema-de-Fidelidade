@@ -34,3 +34,21 @@
       margin: 1.5rem 0;
     }
   }
+
+@media (max-width: 480px) {
+  .pageContainer {
+    padding: 0.7rem 0;
+    min-height: 100vh;
+  }
+  .contentContainer {
+    padding: 0 0.3rem;
+    max-width: 100vw;
+  }
+  .heading {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  .divider {
+    margin: 1rem 0;
+  }
+}

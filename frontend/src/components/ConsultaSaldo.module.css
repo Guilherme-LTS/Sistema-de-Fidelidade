@@ -88,3 +88,34 @@
       font-size: 1.25rem;
     }
   }
+
+  @media (max-width: 480px) {
+    .formContainer {
+      padding: 0.5rem;
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+      min-width: 0;
+      width: 100vw;
+      margin: 0 -1rem;
+    }
+    .heading {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    .input {
+      font-size: 0.95rem;
+      padding: 0.6rem;
+    }
+    .button {
+      font-size: 0.95rem;
+      padding: 0.8rem;
+    }
+    .formGroup {
+      margin-bottom: 0.7rem;
+    }
+    .resultadoContainer {
+      padding: 0.7rem;
+      font-size: 0.95rem;
+    }
+  }
