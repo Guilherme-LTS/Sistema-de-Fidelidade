@@ -1,23 +1,24 @@
+// frontend/src/pages/HomePage.js
 import React from 'react';
-import { Box, Heading, Container, Divider } from '@chakra-ui/react';
+import styles from './HomePage.module.css';
 import TransacaoForm from '../components/TransacaoForm';
 import ConsultaSaldo from '../components/ConsultaSaldo';
 import ResgateRecompensa from '../components/ResgateRecompensa';
 
 function HomePage() {
   return (
-    <Box textAlign="center" py={10}>
-      <Container maxW="container.lg">
-        <Heading as="h1" size="xl" mb={6}>
+    <div className={styles.pageContainer}>
+      <div className={styles.contentContainer}>
+        <h1 className={styles.heading}>
           Sistema de Fidelidade
-        </Heading>
+        </h1>
         <TransacaoForm />
-        <Divider my={10} />
+        <hr className={styles.divider} />
         <ConsultaSaldo />
-        <Divider my={10} />
+        <hr className={styles.divider} />
         <ResgateRecompensa />
-      </Container>
-    </Box>
+      </div>
+    </div>
   );
 }
 

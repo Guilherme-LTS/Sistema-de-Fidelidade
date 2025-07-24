@@ -1,19 +1,16 @@
 // frontend/src/components/ConsultaSaldo.js
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import './ConsultaSaldo.css';
+// 1. Importe o CSS Module
+import styles from './ConsultaSaldo.module.css';
 
 function ConsultaSaldo() {
   const [cpf, setCpf] = useState('');
-  const [cliente, setCliente] = useState(null); // Para guardar os dados do cliente encontrado
+  const [cliente, setCliente] = useState(null);
   const [carregando, setCarregando] = useState(false);
 
   const formatarCPF = (valor) => {
-    // Reutilizando a mesma lógica de formatação
-    return valor.replace(/\D/g, '')
-                 .replace(/(\d{3})(\d)/, '$1.$2')
-                 .replace(/(\d{3})(\d)/, '$1.$2')
-                 .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    return valor.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
   };
 
   const handleCpfChange = (e) => {
@@ -23,7 +20,7 @@ function ConsultaSaldo() {
   const handleConsulta = async (event) => {
     event.preventDefault();
     setCarregando(true);
-    setCliente(null); // Limpa resultados anteriores
+    setCliente(null);
 
     const cpfLimpo = cpf.replace(/\D/g, '');
 
@@ -35,7 +32,7 @@ function ConsultaSaldo() {
         throw new Error(data.error);
       }
 
-      setCliente(data); // Guarda os dados do cliente no estado
+      setCliente(data);
       toast.success("Cliente encontrado!");
 
     } catch (error) {
@@ -47,14 +44,16 @@ function ConsultaSaldo() {
   };
 
   return (
-    <div className="consulta-container">
-      <h2>Consultar Saldo de Pontos</h2>
+    // 2. Aplicamos as novas classes de estilo
+    <div className={styles.formContainer}>
+      <h2 className={styles.heading}>Consultar Saldo de Pontos</h2>
       <form onSubmit={handleConsulta}>
-        <div className="form-group">
-          <label htmlFor="cpf-consulta">CPF do Cliente</label>
+        <div className={styles.formGroup}>
+          <label htmlFor="cpf-consulta" className={styles.label}>CPF do Cliente</label>
           <input
             type="text"
             id="cpf-consulta"
+            className={styles.input}
             value={cpf}
             onChange={handleCpfChange}
             placeholder="000.000.000-00"
@@ -62,17 +61,16 @@ function ConsultaSaldo() {
             required
           />
         </div>
-        <button type="submit" disabled={carregando}>
+        <button type="submit" className={styles.button} disabled={carregando}>
           {carregando ? 'Consultando...' : 'Consultar'}
         </button>
       </form>
 
-      {/* Área para exibir o resultado */}
       {cliente && (
-        <div className="resultado-consulta">
-          <h3>Dados do Cliente</h3>
-          <p><strong>CPF:</strong> {formatarCPF(cliente.cpf)}</p>
-          <p><strong>Pontos:</strong> {cliente.pontos_totais}</p>
+        <div className={styles.resultadoContainer}>
+          <h3 className={styles.resultadoHeading}>Dados do Cliente</h3>
+          <p className={styles.resultadoParagrafo}><strong>CPF:</strong> {formatarCPF(cliente.cpf)}</p>
+          <p className={styles.resultadoParagrafo}><strong>Pontos:</strong> {cliente.pontos_totais}</p>
         </div>
       )}
     </div>

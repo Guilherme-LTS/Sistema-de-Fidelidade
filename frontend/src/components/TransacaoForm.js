@@ -1,20 +1,15 @@
 // frontend/src/components/TransacaoForm.js
-
 import React, { useState } from 'react';
-import { toast } from 'react-toastify'; // A importação do toast continua aqui
-import './TransacaoForm.css';
+import { toast } from 'react-toastify';
+// 1. Importamos o CSS Module
+import styles from './TransacaoForm.module.css';
 
 function TransacaoForm() {
-  // 1. Estados para os campos do formulário
   const [cpf, setCpf] = useState('');
   const [valor, setValor] = useState('');
-
-  // 2. Estados de feedback foram removidos
-  // const [mensagem, setMensagem] = useState('');
-  // const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  // 3. Sua função de formatar CPF (mantida intacta, está ótima!)
+  // Sua função de formatar CPF (mantida 100% intacta)
   const formatarCPF = (valor) => {
     const cpfLimpo = valor.replace(/\D/g, '');
     const cpfFormatado = cpfLimpo.replace(/(\d{3})(\d)/, '$1.$2')
@@ -23,40 +18,32 @@ function TransacaoForm() {
     return cpfFormatado;
   };
 
-  // 4. Sua função para lidar com mudança no CPF (mantida intacta)
+  // Sua função de lidar com a mudança no CPF (mantida 100% intacta)
   const handleCpfChange = (e) => {
     const valorFormatado = formatarCPF(e.target.value);
     setCpf(valorFormatado);
   };
 
-  // 5. Função de envio atualizada para usar toasts
+  // Sua função de envio (mantida 100% intacta)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setCarregando(true);
-    // Não precisamos mais limpar mensagens aqui
-
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/transacoes`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), valor: parseFloat(valor) }),
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.error || 'Ocorreu um erro na requisição.');
       }
 
-      // SUCESSO: Chamamos o toast de sucesso!
-      toast.success(`Pontos registrados! Pontos ganhos: ${data.pontosGanhos}`);
+      toast.success(`Pontos registrados com sucesso! Pontos ganhos: ${data.pontosGanhos}`);
       setCpf('');
       setValor('');
-
     } catch (error) {
-      // ERRO: Chamamos o toast de erro!
       toast.error(error.message);
     } finally {
       setCarregando(false);
@@ -64,28 +51,32 @@ function TransacaoForm() {
   };
 
   return (
-    <div className="transacao-container">
-      <form onSubmit={handleSubmit}>
-        <h2>Lançar Pontos de Fidelidade</h2>
-
-        <div className="form-group">
-          <label htmlFor="cpf">CPF do Cliente</label>
+    // 2. A única mudança real é aqui, nos nomes das classes
+    <form onSubmit={handleSubmit} className={styles.formContainer}>
+      <h2 className={styles.heading}>
+        Lançar Pontos
+      </h2>
+      <div className={styles.stack}>
+        <div className={styles.formGroup}>
+          <label htmlFor="cpf" className={styles.label}>CPF do Cliente</label>
           <input
             type="text"
             id="cpf"
+            className={styles.input}
             value={cpf}
-            onChange={handleCpfChange}
+            onChange={handleCpfChange} // Usando sua função
             placeholder="000.000.000-00"
             maxLength="14"
             required
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="valor">Valor da Compra (R$)</label>
+        <div className={styles.formGroup}>
+          <label htmlFor="valor" className={styles.label}>Valor da Compra (R$)</label>
           <input
             type="number"
             id="valor"
+            className={styles.input}
             value={valor}
             onChange={(e) => setValor(e.target.value)}
             placeholder="Ex: 150.75"
@@ -95,11 +86,15 @@ function TransacaoForm() {
           />
         </div>
 
-        <button type="submit" disabled={carregando}>
+        <button
+          type="submit"
+          className={styles.button}
+          disabled={carregando}
+        >
           {carregando ? 'Processando...' : 'Lançar Pontos'}
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }
 

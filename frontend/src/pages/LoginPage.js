@@ -1,16 +1,9 @@
+// frontend/src/pages/LoginPage.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Container,
-  FormControl,
-  FormLabel,
-  Heading,
-  Input,
-  Stack,
-} from '@chakra-ui/react';
 import { toast } from 'react-toastify';
+// 1. Importamos nosso CSS
+import styles from './LoginPage.module.css';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -22,49 +15,66 @@ function LoginPage() {
     event.preventDefault();
     setCarregando(true);
     try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/usuarios/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, senha }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Falha no login.');
-        }
-        toast.success('Login bem-sucedido!');
-        localStorage.setItem('token', data.token);
-        navigate('/home');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/usuarios/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Falha no login.');
+      }
+      toast.success('Login bem-sucedido!');
+      localStorage.setItem('token', data.token);
+      navigate('/home');
     } catch (error) {
-        toast.error(error.message);
+      toast.error(error.message);
     } finally {
-        setCarregando(false);
+      setCarregando(false);
     }
-};
+  };
 
   return (
-    <Box display="flex" alignItems="center" justifyContent="center" height="100vh" bg="gray.50">
-      <Container maxW="md" p={8} borderWidth={1} borderRadius="lg" boxShadow="lg" bg="white">
-        <Heading as="h1" size="lg" textAlign="center" mb={6}>
+    <div className={styles.pageContainer}>
+      <div className={styles.formContainer}>
+        <h1 className={styles.heading}>
           Login do Operador
-        </Heading>
+        </h1>
         <form onSubmit={handleLogin}>
-          <Stack spacing={4}>
-            <FormControl id="email" isRequired>
-              <FormLabel>Email</FormLabel>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </FormControl>
-            <FormControl id="password" isRequired>
-              <FormLabel>Senha</FormLabel>
-              <Input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
-            </FormControl>
-            <Button type="submit" colorScheme="blue" width="full" isLoading={carregando}>
-              Entrar
-            </Button>
-          </Stack>
+          <div className={styles.stack}>
+            <div className={styles.formGroup}>
+              <label htmlFor="email" className={styles.label}>Email</label>
+              <input
+                type="email"
+                id="email"
+                className={styles.input}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="password" className={styles.label}>Senha</label>
+              <input
+                type="password"
+                id="password"
+                className={styles.input}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className={styles.button}
+              disabled={carregando}
+            >
+              {carregando ? 'Entrando...' : 'Entrar'}
+            </button>
+          </div>
         </form>
-      </Container>
-    </Box>
+      </div>
+    </div>
   );
 }
 

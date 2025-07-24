@@ -1,7 +1,7 @@
 // frontend/src/components/ResgateRecompensa.js
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import './ResgateRecompensa.css';
+import styles from './ResgateRecompensa.module.css';
 
 function ResgateRecompensa() {
   const [cpf, setCpf] = useState('');
@@ -9,7 +9,6 @@ function ResgateRecompensa() {
   const [selectedRecompensa, setSelectedRecompensa] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  // Efeito para buscar as recompensas disponíveis quando o componente montar
   useEffect(() => {
     const fetchRecompensas = async () => {
       try {
@@ -37,13 +36,13 @@ function ResgateRecompensa() {
     setCarregando(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/resgates`, {
-      // const response = await fetch('https://sistema-fidelidade-api.onrender.com/resgates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), recompensa_id: selectedRecompensa })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
+
       toast.success(`Resgate realizado! Pontos restantes: ${data.pontos_restantes}`);
       setCpf('');
       setSelectedRecompensa('');
@@ -55,17 +54,32 @@ function ResgateRecompensa() {
   };
 
   return (
-    <div className="resgate-container">
-      <h2>Resgatar Recompensa</h2>
-      <form onSubmit={handleResgate}>
-        <div className="form-group">
-          <label htmlFor="cpf-resgate">CPF do Cliente</label>
-          <input type="text" id="cpf-resgate" value={cpf} onChange={e => setCpf(formatarCPF(e.target.value))} placeholder="000.000.000-00" maxLength="14" required />
+    <form onSubmit={handleResgate} className={styles.formContainer}>
+      <h2 className={styles.heading}>Resgatar Recompensa</h2>
+      <div className={styles.stack}>
+        <div className={styles.formGroup}>
+          <label htmlFor="cpf-resgate" className={styles.label}>CPF do Cliente</label>
+          <input 
+            type="text" 
+            id="cpf-resgate" 
+            className={styles.input}
+            value={cpf} 
+            onChange={e => setCpf(formatarCPF(e.target.value))} 
+            placeholder="000.000.000-00" 
+            maxLength="14" 
+            required 
+          />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="recompensa-select">Selecione a Recompensa</label>
-          <select id="recompensa-select" value={selectedRecompensa} onChange={e => setSelectedRecompensa(e.target.value)} required>
+        <div className={styles.formGroup}>
+          <label htmlFor="recompensa-select" className={styles.label}>Selecione a Recompensa</label>
+          <select 
+            id="recompensa-select" 
+            className={styles.select}
+            value={selectedRecompensa} 
+            onChange={e => setSelectedRecompensa(e.target.value)} 
+            required
+          >
             <option value="" disabled>-- Escolha uma recompensa --</option>
             {recompensas.map(rec => (
               <option key={rec.id} value={rec.id}>
@@ -75,11 +89,11 @@ function ResgateRecompensa() {
           </select>
         </div>
 
-        <button type="submit" disabled={carregando}>
+        <button type="submit" className={styles.button} disabled={carregando}>
           {carregando ? 'Processando...' : 'Confirmar Resgate'}
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }
 

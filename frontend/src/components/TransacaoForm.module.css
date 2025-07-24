@@ -1,0 +1,65 @@
+/* frontend/src/components/TransacaoForm.module.css */
+
+.formContainer {
+    width: 100%;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+  
+  .heading {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Espaço entre os elementos */
+  }
+  
+  .formGroup {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    text-align: left;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+  
+  .button {
+    width: 100%;
+    padding: 1rem;
+    background-color: #3182ce; /* Azul */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .button:hover {
+    background-color: #2b6cb0; /* Azul mais escuro */
+  }
+  
+  .button:disabled {
+    background-color: #a0aec0; /* Cinza */
+    cursor: not-allowed;
+  }
