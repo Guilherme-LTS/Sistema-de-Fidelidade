@@ -8,6 +8,8 @@ const db = require('./db'); // Nosso pool de conexão PostgreSQL
 const { cpf: cpfValidator } = require('cpf-cnpj-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const verificaToken = require('./middleware/autenticacao');
+
 
 // 2. Inicialização do App
 const app = express();
@@ -237,6 +239,58 @@ app.post('/usuarios/login', async (req, res) => {
     res.status(500).json({ error: 'Ocorreu um erro no servidor durante o login.' });
   }
 });
+
+
+
+
+// ROTA PROTEGIDA PARA ESTATÍSTICAS DO DASHBOARD
+app.get('/dashboard/stats', verificaToken, async (req, res) => {
+  try {
+    // Query para as métricas gerais
+    const metricasQuery = `
+      SELECT
+        (SELECT COUNT(*) FROM clientes) as total_clientes,
+        (SELECT SUM(pontos_ganhos) FROM transacoes) as total_pontos_distribuidos;
+    `;
+    const resMetricas = await db.query(metricasQuery);
+
+    // Query para o Top 5 clientes
+    const topClientesQuery = `
+      SELECT nome, cpf, pontos_totais
+      FROM clientes
+      ORDER BY pontos_totais DESC
+      LIMIT 5;
+    `;
+    const resTopClientes = await db.query(topClientesQuery);
+
+    // Query para as recompensas mais resgatadas
+    const recompensasQuery = `
+      SELECT r.nome, COUNT(res.id) as total_resgates
+      FROM resgates res
+      JOIN recompensas r ON res.recompensa_id = r.id
+      GROUP BY r.nome
+      ORDER BY total_resgates DESC
+      LIMIT 5;
+    `;
+    const resRecompensas = await db.query(recompensasQuery);
+
+    // Monta o objeto de resposta
+    const stats = {
+      metricas: resMetricas.rows[0],
+      topClientes: resTopClientes.rows,
+      recompensasPopulares: resRecompensas.rows,
+    };
+
+    res.status(200).json(stats);
+
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas do dashboard:', error);
+    res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
+  }
+});
+
+
+
 
 // 5. Iniciar o servidor
 app.listen(PORT, () => {
