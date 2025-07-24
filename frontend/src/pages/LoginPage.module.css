@@ -103,26 +103,35 @@
     display: block;
     padding: 0.5rem 0;
     background: #f7fafc;
+    overflow-x: hidden;
   }
   .formContainer {
-    max-width: 100vw;
+    box-sizing: border-box;
+    max-width: 100%;
+    width: 100%;
     box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
     border: 1px solid #e2e8f0;
-    padding: 1.2rem 1.2rem;
+    padding: 1.2rem 0.8rem;
     border-radius: 10px;
-    margin: 0 1.2rem;
+    margin: 0 auto;
     background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .heading {
     font-size: 1.2rem;
     margin-bottom: 1.1rem;
     color: #2d3748;
+    text-align: center;
   }
   .input {
     font-size: 1rem;
     padding: 0.7rem;
     background: #f9fafb;
     border: 1px solid #cbd5e1;
+    box-sizing: border-box;
+    max-width: 100%;
   }
   .button {
     font-size: 1rem;
@@ -130,6 +139,7 @@
     border-radius: 6px;
     background: linear-gradient(90deg, #3182ce 60%, #63b3ed 100%);
     box-shadow: 0 1px 4px 0 rgba(49,130,206,0.08);
+    max-width: 100%;
   }
   .stack {
     gap: 0.9rem;
