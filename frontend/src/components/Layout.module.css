@@ -5,65 +5,154 @@
     background-color: #f7fafc;
   }
   
+  .menuButton {
+    display: none;
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    z-index: 1100;
+    background: #1a202c;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.10);
+    transition: background 0.2s;
+  }
+  .menuButton:hover {
+    background: #2d3748;
+  }
+  .menuIcon {
+    display: flex;
+    align-items: center;
+  }
+
   .sidebar {
     width: 250px;
-    background-color: #1a202c; /* Cinza bem escuro */
+    background-color: #1a202c;
     color: white;
     display: flex;
     flex-direction: column;
     padding: 1rem;
+    box-shadow: 2px 0 16px 0 rgba(0,0,0,0.08);
+    transition: left 0.3s, box-shadow 0.2s;
+    z-index: 1000;
   }
-  
+
   .sidebarHeader {
     font-size: 1.5rem;
     font-weight: bold;
     text-align: center;
     padding: 1rem 0;
     border-bottom: 1px solid #4a5568;
+    letter-spacing: 1px;
   }
-  
+
   .nav {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     margin-top: 2rem;
-    flex-grow: 1; /* Faz a navegação ocupar o espaço disponível */
+    flex-grow: 1;
   }
-  
+
   .navLink {
     color: #e2e8f0;
     text-decoration: none;
     padding: 0.75rem 1rem;
-    border-radius: 6px;
-    transition: background-color 0.2s;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.08rem;
+    font-weight: 500;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    position: relative;
   }
-  
+
   .navLink:hover {
     background-color: #2d3748;
+    color: #fff;
+    box-shadow: 0 2px 8px 0 rgba(49,130,206,0.08);
   }
-  
+
+  .active {
+    background: linear-gradient(90deg, #3182ce 0%, #2b6cb0 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px 0 rgba(49,130,206,0.10);
+  }
+
+  .active::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 10%;
+    height: 80%;
+    width: 4px;
+    border-radius: 4px;
+    background: #63b3ed;
+  }
+
   .sidebarFooter {
     padding-top: 1rem;
   }
-  
+
   .logoutButton {
     width: 100%;
     padding: 0.75rem;
-    background-color: #c53030; /* Vermelho */
+    background-color: #c53030;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.2s;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
   }
-  
+
   .logoutButton:hover {
     background-color: #9b2c2c;
   }
-  
+
   .mainContent {
-    flex: 1; /* Ocupa o resto da tela */
+    flex: 1;
     padding: 2rem;
-    overflow-y: auto; /* Adiciona scroll se o conteúdo for muito grande */
+    overflow-y: auto;
+    background: #f7fafc;
+    min-height: 100vh;
+    transition: background 0.2s;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar {
+      width: 200px;
+      padding: 0.5rem;
+    }
+    .mainContent {
+      padding: 1rem;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .menuButton {
+      display: block;
+    }
+    .sidebar {
+      position: fixed;
+      left: -260px;
+      top: 0;
+      height: 100vh;
+      width: 220px;
+      transition: left 0.3s;
+      box-shadow: 2px 0 16px 0 rgba(0,0,0,0.12);
+    }
+    .sidebarOpen {
+      left: 0;
+    }
+    .mainContent {
+      padding: 1rem;
+    }
   }
