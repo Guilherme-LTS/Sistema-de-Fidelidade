@@ -91,31 +91,48 @@
 
   @media (max-width: 480px) {
     .formContainer {
-      padding: 0.5rem;
-      border-radius: 0;
-      box-shadow: none;
-      border: none;
-      min-width: 0;
-      width: 100vw;
-      margin: 0 -1rem;
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
+      border: 1px solid #e2e8f0;
+      width: 100%;
+      margin: 0 auto;
+      background: #fff;
     }
     .heading {
-      font-size: 1rem;
-      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      margin-bottom: 1.1rem;
+      color: #2d3748;
     }
     .input {
-      font-size: 0.95rem;
-      padding: 0.6rem;
+      font-size: 1rem;
+      padding: 0.7rem;
+      background: #f9fafb;
+      border: 1px solid #cbd5e1;
     }
     .button {
-      font-size: 0.95rem;
-      padding: 0.8rem;
+      font-size: 1rem;
+      padding: 0.9rem;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #2d3748 60%, #4a5568 100%);
+      box-shadow: 0 1px 4px 0 rgba(45,55,72,0.08);
     }
     .formGroup {
-      margin-bottom: 0.7rem;
+      margin-bottom: 0.9rem;
     }
     .resultadoContainer {
-      padding: 0.7rem;
-      font-size: 0.95rem;
+      padding: 0.9rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 4px 0 rgba(45,55,72,0.04);
     }
   }
+
+.formContainer {
+  transition: box-shadow 0.2s, border 0.2s;
+}
+.button {
+  transition: background 0.2s, box-shadow 0.2s;
+}
