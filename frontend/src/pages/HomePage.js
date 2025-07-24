@@ -4,6 +4,7 @@ import styles from './HomePage.module.css';
 import TransacaoForm from '../components/TransacaoForm';
 import ConsultaSaldo from '../components/ConsultaSaldo';
 import ResgateRecompensa from '../components/ResgateRecompensa';
+import Dashboard from '../components/Dashboard'; // 1. Importe o Dashboard
 
 function HomePage() {
   return (
@@ -12,11 +13,15 @@ function HomePage() {
         <h1 className={styles.heading}>
           Sistema de Fidelidade
         </h1>
-        <TransacaoForm />
+
+        <Dashboard />
         <hr className={styles.divider} />
-        <ConsultaSaldo />
-        <hr className={styles.divider} />
-        <ResgateRecompensa />
+
+        <div className={styles.operacoesGrid}>
+          <TransacaoForm />
+          <ConsultaSaldo />
+          <ResgateRecompensa />
+        </div>
       </div>
     </div>
   );
