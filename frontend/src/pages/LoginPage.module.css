@@ -73,3 +73,27 @@
     background-color: #a0aec0;
     cursor: not-allowed;
   }
+
+  /* Adicione no final de LoginPage.module.css */
+
+@media (max-width: 768px) {
+    .pageContainer {
+      /* Em telas pequenas, removemos o alinhamento central para um fluxo mais natural */
+      display: block;
+      padding: 1rem;
+    }
+  
+    .formContainer {
+      /* O formulário agora ocupa a largura total */
+      max-width: 100%;
+      /* Removemos a sombra e a borda para um visual mais limpo no mobile */
+      box-shadow: none;
+      border: none;
+      padding: 1.5rem;
+    }
+  
+    .heading {
+      /* Diminuímos um pouco o título */
+      font-size: 1.5rem;
+    }
+  }

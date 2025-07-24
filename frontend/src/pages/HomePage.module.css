@@ -23,3 +23,14 @@
     border-top: 1px solid #e2e8f0;
     margin: 2.5rem 0; /* my={10} */
   }
+
+
+  @media (max-width: 768px) {
+    .pageContainer {
+      padding: 1.5rem 0;
+    }
+  
+    .divider {
+      margin: 1.5rem 0;
+    }
+  }

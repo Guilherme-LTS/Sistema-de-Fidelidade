@@ -64,3 +64,13 @@
     background-color: #a0aec0;
     cursor: not-allowed;
   }
+
+  @media (max-width: 768px) {
+    .formContainer {
+      padding: 1rem;
+    }
+  
+    .heading {
+      font-size: 1.25rem;
+    }
+  }
