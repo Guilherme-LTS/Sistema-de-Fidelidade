@@ -1,7 +1,7 @@
 
 
 
-# Sistema de Fidelidade para Restaurantes V.1.0
+# Sistema de Fidelidade para Restaurantes V.2.0
 
 Um sistema de fidelidade full-stack desenvolvido para digitalizar e automatizar o programa de pontos de um pequeno restaurante familiar. O projeto transforma um processo manual em uma aplicação web rápida, intuitiva e escalável.
 
