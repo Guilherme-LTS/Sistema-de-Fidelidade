@@ -26,7 +26,7 @@ function LoginPage() {
       }
       toast.success('Login bem-sucedido!');
       localStorage.setItem('token', data.token);
-      navigate('/home');
+      navigate('/admin/dashboard');
     } catch (error) {
       toast.error(error.message);
     } finally {

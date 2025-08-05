@@ -10,7 +10,7 @@ const ProtectedRoute = ({ children }) => {
   if (!token) {
     // O componente <Navigate> do React Router faz o redirecionamento
     // `replace` impede que o usuário use o botão "voltar" para acessar a página protegida
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // 3. Se houver um token, permitimos a passagem e renderizamos a página solicitada
