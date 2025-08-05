@@ -34,7 +34,7 @@ function Layout() {
         <nav className={styles.nav}>
           <Link
             to="/home/dashboard"
-            className={`${styles.navLink} ${location.pathname === '/home/dashboard' ? styles.active : ''}`}
+            className={`${styles.navLink} ${location.pathname === '/admin/dashboard' ? styles.active : ''}`}
             onClick={() => setSidebarOpen(false)}
           >
             {dashboardIcon}
@@ -42,7 +42,7 @@ function Layout() {
           </Link>
           <Link
             to="/home/operacoes"
-            className={`${styles.navLink} ${location.pathname === '/home/operacoes' ? styles.active : ''}`}
+            className={`${styles.navLink} ${location.pathname === '/admin/operacoes' ? styles.active : ''}`}
             onClick={() => setSidebarOpen(false)}
           >
             {operacoesIcon}
