@@ -3,23 +3,33 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+// Importações das Páginas
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import OperacoesPage from './pages/OperacoesPage';
+
+// Importação do Protetor de Rotas
 import ProtectedRoute from './auth/ProtectedRoute';
-import DashboardPage from './pages/DashboardPage'; // Importe as novas páginas
-import OperacoesPage from './pages/OperacoesPage'; // Importe as novas páginas
+
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
+        {/* Rota Pública Principal */}
+        <Route path="/" element={<LandingPage />} />
 
+        {/* Rota Pública de Login */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Grupo de Rotas Protegidas do Admin */}
         <Route
-          path="/home"
+          path="/admin" // Todas as rotas de admin começarão com /admin
           element={<ProtectedRoute><HomePage /></ProtectedRoute>}
         >
-          {/* Rotas Aninhadas: Elas serão renderizadas dentro do <Outlet> do Layout */}
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="operacoes" element={<OperacoesPage />} />
