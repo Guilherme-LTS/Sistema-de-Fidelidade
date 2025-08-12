@@ -52,10 +52,9 @@ function ResgateRecompensa() {
   }, [debouncedCpf]);
 
 
-  // Efeito para buscar as recompensas (continua o mesmo)
+  // Efeito para buscar as recompensas
   useEffect(() => {
     const fetchRecompensas = async () => {
-      // ... (código existente para buscar recompensas)
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas`,{
@@ -77,7 +76,6 @@ function ResgateRecompensa() {
 
   const handleResgate = async (e) => {
     e.preventDefault();
-    // ... (código existente para o resgate)
     if (!selectedRecompensa) {
       toast.warn('Por favor, selecione uma recompensa.');
       return;

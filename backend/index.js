@@ -39,48 +39,43 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ... (o resto do seu código com as rotas) ...
 // 4. Rotas da API
 
 // Rota principal - POST /transacoes
 app.post('/transacoes', async (req, res) => {
-  const client = await db.connect(); // Pega um cliente do pool
+  const client = await db.connect();
   try {
-    const { cpf, valor } = req.body;
+    // 1. Recebe o nome do corpo da requisição
+    const { cpf, valor, nome } = req.body; 
     if (!cpf || !valor || valor <= 0) {
-      return res.status(400).json({ error: 'CPF e valor (maior que zero) são obrigatórios.' });
     }
     const cpfLimpo = cpf.replace(/\D/g, '');
-    if (!cpfValidator.isValid(cpfLimpo)) {
-      return res.status(400).json({ error: 'CPF inválido. Por favor, verifique os dados.' });
-    }
-    const pontosGanhos = Math.floor(valor);
 
-    await client.query('BEGIN'); // Inicia a transação
+    await client.query('BEGIN');
 
     let resCliente = await client.query('SELECT * FROM clientes WHERE cpf = $1', [cpfLimpo]);
     let cliente = resCliente.rows[0];
     let clienteId;
 
     if (!cliente) {
-      const resNovoCliente = await client.query('INSERT INTO clientes (cpf, pontos_totais) VALUES ($1, 0) RETURNING id', [cpfLimpo]);
+      // 2. Se o cliente é novo, usamos o nome recebido para criá-lo
+      const resNovoCliente = await client.query(
+        'INSERT INTO clientes (cpf, nome, pontos_totais) VALUES ($1, $2, 0) RETURNING id', 
+        [cpfLimpo, nome] // Passa o nome para a query
+      );
       clienteId = resNovoCliente.rows[0].id;
     } else {
       clienteId = cliente.id;
     }
 
-    await client.query('INSERT INTO transacoes (cliente_id, valor_gasto, pontos_ganhos) VALUES ($1, $2, $3)', [clienteId, valor, pontosGanhos]);
-    await client.query('UPDATE clientes SET pontos_totais = pontos_totais + $1 WHERE id = $2', [pontosGanhos, clienteId]);
-    
-    await client.query('COMMIT'); // Confirma a transação
+    await client.query('INSERT INTO transacoes (cliente_id, valor_gasto, pontos_ganhos) VALUES ($1, $2, $3)', [clienteId, valor, Math.floor(valor)]);
+    await client.query('UPDATE clientes SET pontos_totais = pontos_totais + $1 WHERE id = $2', [Math.floor(valor), clienteId]);
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'Transação registrada e pontos computados com sucesso!', pontosGanhos: Math.floor(valor) });
 
-    res.status(201).json({ message: 'Transação registrada e pontos computados com sucesso!', pontosGanhos });
   } catch (error) {
-    await client.query('ROLLBACK'); // Desfaz tudo em caso de erro
-    console.error('Erro ao processar a transação:', error);
-    res.status(500).json({ error: 'Ocorreu um erro no servidor ao processar a transação.' });
   } finally {
-    client.release(); // Libera o cliente de volta para o pool
+    client.release();
   }
 });
 

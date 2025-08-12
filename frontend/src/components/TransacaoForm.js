@@ -7,7 +7,9 @@ import useDebounce from '../hooks/useDebounce'; // 2. Importamos nosso novo hook
 function TransacaoForm() {
   const [cpf, setCpf] = useState('');
   const [valor, setValor] = useState('');
+  const [nome, setNome] = useState('');
   const [carregando, setCarregando] = useState(false);
+
 
   // --- NOVA SEÇÃO DE ESTADOS ---
   const [clienteInfo, setClienteInfo] = useState(null);
@@ -64,13 +66,11 @@ function TransacaoForm() {
     return cpfFormatado;
   };
 
-  // Sua função de lidar com a mudança no CPF (mantida 100% intacta)
   const handleCpfChange = (e) => {
     const valorFormatado = formatarCPF(e.target.value);
     setCpf(valorFormatado);
   };
 
-  // Sua função de envio (ATUALIZADA com o token e para limpar o clienteInfo)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setCarregando(true);
@@ -82,7 +82,7 @@ function TransacaoForm() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` // Rota protegida
         },
-        body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), valor: parseFloat(valor) }),
+        body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), valor: parseFloat(valor), nome }),
       });
 
       const data = await response.json();
@@ -93,6 +93,7 @@ function TransacaoForm() {
       toast.success(`Pontos registrados com sucesso! Pontos ganhos: ${data.pontosGanhos}`);
       setCpf('');
       setValor('');
+      setNome('');
       setClienteInfo(null); // Limpa a informação do cliente após o sucesso
     } catch (error) {
       toast.error(error.message);
@@ -133,6 +134,24 @@ function TransacaoForm() {
           </div>
           {/* --- FIM DA NOVA ÁREA --- */}
         </div>
+
+
+        {/* ADICIONE ESTE BLOCO NOVO */}
+        {clienteInfo && clienteInfo.error && (
+          <div className={styles.formGroup}>
+            <label htmlFor="nome" className={styles.label}>Nome do Novo Cliente</label>
+            <input
+              type="text"
+              id="nome"
+              className={styles.input}
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Digite o nome do cliente"
+              required
+            />
+          </div>
+        )}
+
 
         <div className={styles.formGroup}>
           <label htmlFor="valor" className={styles.label}>Valor da Compra (R$)</label>
