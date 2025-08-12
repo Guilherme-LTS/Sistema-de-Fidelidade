@@ -57,7 +57,7 @@ app.post('/transacoes', async (req, res) => {
     // --- LÓGICA DE DATAS (MODIFICADA PARA TESTE) ---
     // Definimos as regras do negócio aqui.
     const minutosParaLiberacao = 1; // <<< MUDANÇA AQUI
-    const diasParaVencimento = 90;
+    const diasParaVencimento = 60;
 
     const agora = new Date();
     // Usamos setMinutes() em vez de setDate() para a liberação
