@@ -134,6 +134,19 @@ button:disabled {
   .App-header h1 {
     font-size: 1.3rem;
   }
+
+  .Toastify__close-button {
+  top: 15%;
+  transform: translateY(-50%);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5em;
+  width: 1em;
+  margin-left: 100px;
+  }
+
 }
 
 /* =========================
