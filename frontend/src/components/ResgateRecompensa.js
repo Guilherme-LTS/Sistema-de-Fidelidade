@@ -123,7 +123,7 @@ function ResgateRecompensa() {
             {buscandoCliente && <p>Buscando cliente...</p>}
             {clienteInfo && !clienteInfo.error && (
               <p className={styles.clienteInfo}>
-                Cliente: <strong>{clienteInfo.nome || 'Não cadastrado'}</strong> | Saldo: <strong>{clienteInfo.pontos_totais} pts</strong>
+                Cliente: <strong>{clienteInfo.nome || 'Não cadastrado'}</strong> | Saldo: <strong>{clienteInfo.pontos_totais || 0} pts</strong>
               </p>
             )}
             {clienteInfo && clienteInfo.error && (
