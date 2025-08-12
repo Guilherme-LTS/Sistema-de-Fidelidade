@@ -65,6 +65,23 @@
     cursor: not-allowed;
   }
 
+.feedbackArea {
+  min-height: 24px;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.clienteInfo {
+  color: #2f855a; /* Verde */
+  font-weight: 500;
+}
+
+.clienteErro {
+  color: #c53030; /* Vermelho */
+  font-weight: 500;
+}
+
   @media (max-width: 768px) {
     .formContainer {
       padding: 1rem;

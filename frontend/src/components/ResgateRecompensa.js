@@ -1,7 +1,8 @@
 // frontend/src/components/ResgateRecompensa.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Adicionado useEffect
 import { toast } from 'react-toastify';
 import styles from './ResgateRecompensa.module.css';
+import useDebounce from '../hooks/useDebounce'; // Importe nosso hook
 
 function ResgateRecompensa() {
   const [cpf, setCpf] = useState('');
@@ -9,10 +10,57 @@ function ResgateRecompensa() {
   const [selectedRecompensa, setSelectedRecompensa] = useState('');
   const [carregando, setCarregando] = useState(false);
 
+  // --- NOVOS ESTADOS PARA O FEEDBACK ---
+  const [clienteInfo, setClienteInfo] = useState(null);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+
+  const debouncedCpf = useDebounce(cpf, 500);
+
+  // --- LÓGICA DE BUSCA DO CLIENTE ---
+  useEffect(() => {
+    const buscarCliente = async () => {
+      const cpfLimpo = debouncedCpf.replace(/\D/g, '');
+      if (cpfLimpo.length !== 11) {
+        setClienteInfo(null);
+        return;
+      }
+
+      setBuscandoCliente(true);
+      setClienteInfo(null);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/clientes/${cpfLimpo}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          setClienteInfo(data);
+        } else {
+          setClienteInfo({ error: data.error || 'Cliente não encontrado.' });
+        }
+      } catch (error) {
+        setClienteInfo({ error: 'Erro de conexão.' });
+      } finally {
+        setBuscandoCliente(false);
+      }
+    };
+
+    if (debouncedCpf) {
+      buscarCliente();
+    }
+  }, [debouncedCpf]);
+
+
+  // Efeito para buscar as recompensas (continua o mesmo)
   useEffect(() => {
     const fetchRecompensas = async () => {
+      // ... (código existente para buscar recompensas)
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas`);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas`,{
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
         const data = await response.json();
         if (!response.ok) throw new Error('Falha ao buscar recompensas');
         setRecompensas(data);
@@ -29,15 +77,17 @@ function ResgateRecompensa() {
 
   const handleResgate = async (e) => {
     e.preventDefault();
+    // ... (código existente para o resgate)
     if (!selectedRecompensa) {
       toast.warn('Por favor, selecione uma recompensa.');
       return;
     }
     setCarregando(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${process.env.REACT_APP_API_URL}/resgates`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), recompensa_id: selectedRecompensa })
       });
       const data = await response.json();
@@ -46,6 +96,7 @@ function ResgateRecompensa() {
       toast.success(`Resgate realizado! Pontos restantes: ${data.pontos_restantes}`);
       setCpf('');
       setSelectedRecompensa('');
+      setClienteInfo(null); // Limpa o feedback
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -69,6 +120,18 @@ function ResgateRecompensa() {
             maxLength="14" 
             required 
           />
+          {/* --- NOVA ÁREA DE FEEDBACK --- */}
+          <div className={styles.feedbackArea}>
+            {buscandoCliente && <p>Buscando cliente...</p>}
+            {clienteInfo && !clienteInfo.error && (
+              <p className={styles.clienteInfo}>
+                Cliente: <strong>{clienteInfo.nome || 'Não cadastrado'}</strong> | Saldo: <strong>{clienteInfo.pontos_totais} pts</strong>
+              </p>
+            )}
+            {clienteInfo && clienteInfo.error && (
+              <p className={styles.clienteErro}>{clienteInfo.error}</p>
+            )}
+          </div>
         </div>
 
         <div className={styles.formGroup}>
@@ -89,7 +152,7 @@ function ResgateRecompensa() {
           </select>
         </div>
 
-        <button type="submit" className={styles.button} disabled={carregando}>
+        <button type="submit" className={styles.button} disabled={carregando || (clienteInfo && clienteInfo.error)}>
           {carregando ? 'Processando...' : 'Confirmar Resgate'}
         </button>
       </div>
