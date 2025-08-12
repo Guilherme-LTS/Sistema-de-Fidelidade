@@ -41,7 +41,7 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     if (!cpfValidator.isValid(cpfLimpo)) { return res.status(400).json({ error: 'CPF inválido.' }); }
     
     const pontosGanhos = Math.floor(valor);
-    const diasParaLiberacao = 2; // Mude para 0 se quiser testar sem delay
+    const diasParaLiberacao = 0; 
     const diasParaVencimento = 90;
 
     const agora = new Date();
