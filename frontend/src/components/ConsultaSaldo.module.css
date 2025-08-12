@@ -1,152 +1,118 @@
 /* frontend/src/components/ConsultaSaldo.module.css */
-
 .formContainer {
-    width: 100%;
-    padding: 1.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background-color: #ffffff;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  }
-  
-  .heading {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    text-align: center;
-  }
-  
-  .formGroup {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 1rem;
-  }
-  
-  .label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    text-align: left;
-  }
-  
-  .input {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1rem;
-  }
-  
-  .button {
-    width: 100%;
-    padding: 1rem;
-    background-color: #2d3748; /* Cinza escuro */
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .button:hover {
-    background-color: #1a202c;
-  }
-  
-  .button:disabled {
-    background-color: #a0aec0;
-    cursor: not-allowed;
-  }
-  
-  /* Estilos específicos para a área de resultado */
-  .resultadoContainer {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    text-align: left;
-    background-color: #f7fafc;
-  }
-  
-  .resultadoHeading {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.25rem;
-  }
-  
-  .resultadoParagrafo {
-    margin: 0.5rem 0;
-  }
-
-  @media (max-width: 768px) {
-    .formContainer {
-      padding: 1rem;
-    }
-  
-    .heading {
-      font-size: 1.25rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .formContainer {
-      box-sizing: border-box;
-      width: 100%;
-      max-width: 400px;
-      margin: 1.2rem auto;
-      padding: 1.2rem 1rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
-      border: 1px solid #e2e8f0;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .heading {
-      font-size: 1.1rem;
-      margin-bottom: 1.1rem;
-      color: #2d3748;
-      text-align: center;
-    }
-    .input {
-      font-size: 1rem;
-      padding: 0.7rem;
-      background: #f9fafb;
-      border: 1px solid #cbd5e1;
-      box-sizing: border-box;
-      width: 100%;
-      margin: 0;
-    }
-    .button {
-      font-size: 1rem;
-      padding: 0.9rem;
-      border-radius: 6px;
-      background: linear-gradient(90deg, #2d3748 60%, #4a5568 100%);
-      box-shadow: 0 1px 4px 0 rgba(45,55,72,0.08);
-      width: 100%;
-      margin: 0;
-    }
-    .formGroup {
-      margin-bottom: 0.9rem;
-    }
-    .resultadoContainer {
-      box-sizing: border-box;
-      padding: 0.9rem;
-      font-size: 1rem;
-      border-radius: 10px;
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 1px 4px 0 rgba(45,55,72,0.04);
-      width: 100%;
-      margin: 0 auto;
-    }
-  }
-
-.formContainer {
-  transition: box-shadow 0.2s, border 0.2s;
+  width: 100%;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #2d3748;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-align: left;
+  color: #4a5568;
+}
+
+.input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
 .button {
-  transition: background 0.2s, box-shadow 0.2s;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background-color: #2d3748;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button:hover {
+  background-color: #1a202c;
+}
+
+.button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* --- NOVOS ESTILOS PARA A ÁREA DE RESULTADO --- */
+.resultadoContainer {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.welcomeMessage {
+  font-size: 1.125rem;
+  text-align: center;
+  color: #4a5568;
+  margin-bottom: 1rem;
+}
+
+.pointsDisplay {
+  background-color: #2d3748;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.pointsLabel {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.pointsValue {
+  display: block;
+  font-size: 3rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.infoMessage {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #718096;
+  background-color: #edf2f7;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.warningMessage {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #9b2c2c; /* Vermelho escuro */
+  background-color: #fed7d7; /* Fundo vermelho claro */
+  padding: 0.5rem;
+  border-radius: 6px;
 }

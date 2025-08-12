@@ -41,15 +41,28 @@ app.use(express.json());
 
 // 4. Rotas da API
 
-// Rota principal - POST /transacoes
+// Rota principal - POST /transacoes (Versão 2.0 com ciclo de vida dos pontos)
 app.post('/transacoes', async (req, res) => {
+  // No V2, esta rota precisa ser protegida, pois só o operador pode lançar pontos.
+  // Futuramente, adicionaremos o 'verificaToken' aqui.
   const client = await db.connect();
   try {
-    // 1. Recebe o nome do corpo da requisição
-    const { cpf, valor, nome } = req.body; 
-    if (!cpf || !valor || valor <= 0) {
-    }
+    const { cpf, valor, nome } = req.body;
+    if (!cpf || !valor || valor <= 0) { return res.status(400).json({ error: 'CPF e valor (maior que zero) são obrigatórios.' }); }
     const cpfLimpo = cpf.replace(/\D/g, '');
+    if (!cpfValidator.isValid(cpfLimpo)) { return res.status(400).json({ error: 'CPF inválido.' }); }
+
+    const pontosGanhos = Math.floor(valor);
+
+    // --- LÓGICA DE DATAS ---
+    // Definimos as regras do negócio aqui.
+    const diasParaLiberacao = 2;
+    const diasParaVencimento = 60; // Pontos vencem em 2 meses
+
+    const dataAtual = new Date();
+    const data_liberacao = new Date(dataAtual.setDate(dataAtual.getDate() + diasParaLiberacao));
+    const data_vencimento = new Date(dataAtual.setDate(dataAtual.getDate() + diasParaVencimento));
+    // --- FIM DA LÓGICA DE DATAS ---
 
     await client.query('BEGIN');
 
@@ -58,41 +71,115 @@ app.post('/transacoes', async (req, res) => {
     let clienteId;
 
     if (!cliente) {
-      // 2. Se o cliente é novo, usamos o nome recebido para criá-lo
       const resNovoCliente = await client.query(
-        'INSERT INTO clientes (cpf, nome, pontos_totais) VALUES ($1, $2, 0) RETURNING id', 
-        [cpfLimpo, nome] // Passa o nome para a query
+        'INSERT INTO clientes (cpf, nome, pontos_totais) VALUES ($1, $2, 0) RETURNING id',
+        [cpfLimpo, nome]
       );
       clienteId = resNovoCliente.rows[0].id;
     } else {
       clienteId = cliente.id;
     }
 
-    await client.query('INSERT INTO transacoes (cliente_id, valor_gasto, pontos_ganhos) VALUES ($1, $2, $3)', [clienteId, valor, Math.floor(valor)]);
-    await client.query('UPDATE clientes SET pontos_totais = pontos_totais + $1 WHERE id = $2', [Math.floor(valor), clienteId]);
+    // AGORA, inserimos a transação com as novas informações de data e status
+    await client.query(
+      `INSERT INTO transacoes 
+        (cliente_id, valor_gasto, pontos_ganhos, status, data_liberacao, data_vencimento) 
+       VALUES ($1, $2, $3, 'pendente', $4, $5)`,
+      [clienteId, valor, pontosGanhos, data_liberacao, data_vencimento]
+    );
+
+    // IMPORTANTE: Não atualizamos mais o 'pontos_totais' do cliente aqui.
+    // Ele será calculado dinamicamente a partir de agora.
+
     await client.query('COMMIT');
-    res.status(201).json({ message: 'Transação registrada e pontos computados com sucesso!', pontosGanhos: Math.floor(valor) });
+    res.status(201).json({ message: 'Transação registrada! Pontos ficarão disponíveis em breve.', pontosGanhos });
 
   } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao processar a transação:', error);
+    res.status(500).json({ error: 'Ocorreu um erro no servidor ao processar a transação.' });
   } finally {
     client.release();
   }
 });
 
-// ROTA PARA CONSULTAR SALDO DE PONTOS
+// ROTA PARA CONSULTAR SALDO DE PONTOS (Versão 2.0 com Gamificação)
 app.get('/clientes/:cpf', async (req, res) => {
+  // Esta rota é pública para o cliente e protegida para o admin.
+  // A proteção é verificada no frontend (se o token existe ou não).
   try {
     const cpfParam = req.params.cpf.replace(/\D/g, '');
-    if (!cpfParam) {
-      return res.status(400).json({ error: 'CPF é obrigatório.' });
+    if (!cpfParam || cpfParam.length !== 11) {
+      return res.status(400).json({ error: 'Formato de CPF inválido.' });
     }
-    const result = await db.query('SELECT nome, cpf, pontos_totais FROM clientes WHERE cpf = $1', [cpfParam]);
-    const cliente = result.rows[0];
+    const client = await db.connect();
+    
+    try {
+      await client.query('BEGIN');
 
-    if (!cliente) {
-      return res.status(404).json({ error: 'Cliente não encontrado.' });
+      // Passo 1: Encontrar o cliente
+      const clienteResult = await client.query('SELECT id, nome, cpf FROM clientes WHERE cpf = $1', [cpfParam]);
+      const cliente = clienteResult.rows[0];
+
+      if (!cliente) {
+        return res.status(404).json({ error: 'Cliente não encontrado.' });
+      }
+
+      const clienteId = cliente.id;
+
+      // Passo 2: Atualizar transações pendentes que já podem ser liberadas
+      await client.query(
+        `UPDATE transacoes 
+         SET status = 'disponivel' 
+         WHERE cliente_id = $1 AND status = 'pendente' AND data_liberacao <= NOW()`,
+        [clienteId]
+      );
+      
+      // Passo 3: Calcular os pontos disponíveis (que não estão expirados)
+      const pontosDisponiveisResult = await client.query(
+        `SELECT SUM(pontos_ganhos) as total 
+         FROM transacoes 
+         WHERE cliente_id = $1 AND status = 'disponivel' AND data_vencimento > NOW()`,
+        [clienteId]
+      );
+      const pontosDisponiveis = parseInt(pontosDisponiveisResult.rows[0].total) || 0;
+
+      // Passo 4: Calcular os pontos pendentes
+      const pontosPendentesResult = await client.query(
+        `SELECT SUM(pontos_ganhos) as total 
+         FROM transacoes 
+         WHERE cliente_id = $1 AND status = 'pendente'`,
+        [clienteId]
+      );
+      const pontosPendentes = parseInt(pontosPendentesResult.rows[0].total) || 0;
+
+      // Passo 5 (Bônus): Encontrar a data de vencimento mais próxima
+      const proximoVencimentoResult = await client.query(
+        `SELECT MIN(data_vencimento) as proximo_vencimento 
+         FROM transacoes 
+         WHERE cliente_id = $1 AND status = 'disponivel' AND data_vencimento > NOW()`,
+        [clienteId]
+      );
+      const proximoVencimento = proximoVencimentoResult.rows[0].proximo_vencimento;
+
+      await client.query('COMMIT');
+
+      // Passo 6: Retornar o objeto completo com todas as informações
+      res.status(200).json({
+        nome: cliente.nome,
+        cpf: cliente.cpf,
+        pontosDisponiveis,
+        pontosPendentes,
+        proximoVencimento,
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error; // Joga o erro para o catch principal
+    } finally {
+      client.release();
     }
-    res.status(200).json(cliente);
+
   } catch (error) {
     console.error('Erro ao consultar cliente:', error);
     res.status(500).json({ error: 'Ocorreu um erro no servidor ao consultar o cliente.' });

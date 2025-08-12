@@ -1,8 +1,18 @@
 // frontend/src/components/ConsultaSaldo.js
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-// 1. Importe o CSS Module
 import styles from './ConsultaSaldo.module.css';
+
+// Pequena função para formatar a data que vem do banco
+const formatarData = (dataISO) => {
+  if (!dataISO) return '';
+  const data = new Date(dataISO);
+  return data.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
 
 function ConsultaSaldo() {
   const [cpf, setCpf] = useState('');
@@ -21,7 +31,6 @@ function ConsultaSaldo() {
     event.preventDefault();
     setCarregando(true);
     setCliente(null);
-
     const cpfLimpo = cpf.replace(/\D/g, '');
 
     try {
@@ -31,10 +40,7 @@ function ConsultaSaldo() {
       if (!response.ok) {
         throw new Error(data.error);
       }
-
       setCliente(data);
-      toast.success("Cliente encontrado!");
-
     } catch (error) {
       setCliente(null);
       toast.error(error.message);
@@ -44,12 +50,11 @@ function ConsultaSaldo() {
   };
 
   return (
-    // 2. Aplicamos as novas classes de estilo
     <div className={styles.formContainer}>
-      <h2 className={styles.heading}>Consultar Saldo de Pontos</h2>
+      <h2 className={styles.heading}>Consulte seus Pontos</h2>
       <form onSubmit={handleConsulta}>
         <div className={styles.formGroup}>
-          <label htmlFor="cpf-consulta" className={styles.label}>CPF do Cliente</label>
+          <label htmlFor="cpf-consulta" className={styles.label}>Digite seu CPF</label>
           <input
             type="text"
             id="cpf-consulta"
@@ -66,11 +71,29 @@ function ConsultaSaldo() {
         </button>
       </form>
 
+      {/* --- AQUI ESTÁ A NOVA ÁREA DE RESULTADOS --- */}
       {cliente && (
         <div className={styles.resultadoContainer}>
-          <h3 className={styles.resultadoHeading}>Dados do Cliente</h3>
-          <p className={styles.resultadoParagrafo}><strong>CPF:</strong> {formatarCPF(cliente.cpf)}</p>
-          <p className={styles.resultadoParagrafo}><strong>Pontos:</strong> {cliente.pontos_totais}</p>
+          <p className={styles.welcomeMessage}>
+            Olá, {cliente.nome || 'Cliente'}!
+          </p>
+
+          <div className={styles.pointsDisplay}>
+            <span className={styles.pointsLabel}>Pontos Disponíveis</span>
+            <span className={styles.pointsValue}>{cliente.pontosDisponiveis}</span>
+          </div>
+
+          {cliente.pontosPendentes > 0 && (
+            <p className={styles.infoMessage}>
+              Você tem <strong>{cliente.pontosPendentes} pontos</strong> a serem liberados em breve.
+            </p>
+          )}
+
+          {cliente.proximoVencimento && (
+            <p className={styles.warningMessage}>
+              Atenção: Parte dos seus pontos expira em <strong>{formatarData(cliente.proximoVencimento)}</strong>. Aproveite!
+            </p>
+          )}
         </div>
       )}
     </div>
