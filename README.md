@@ -5,8 +5,7 @@
 
 Um sistema de fidelidade full-stack desenvolvido para digitalizar e automatizar o programa de pontos de um pequeno restaurante familiar. O projeto transforma um processo manual em uma aplicação web rápida, intuitiva e escalável.
 
-![Demonstração do Sistema](https://sistema-fidelidade-flax.vercel.app/)
-
+[Demonstração do Sistema](https://sistema-fidelidade-flax.vercel.app/)
 
 ---
 
