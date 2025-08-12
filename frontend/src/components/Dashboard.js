@@ -103,7 +103,7 @@ function Dashboard() {
             {stats.topClientes.map((cliente, index) => (
               <li key={index} className={styles.listItem}>
                 <span>{cliente.nome || `CPF: ...${cliente.cpf.slice(-4)}`}</span>
-                <span className={styles.points}>{cliente.pontos_totais} pts</span>
+                <span className={styles.points}>{cliente.pontos_disponiveis} pts</span>
               </li>
             ))}
           </ul>

@@ -377,16 +377,25 @@ app.get('/dashboard/stats', verificaToken, async (req, res) => {
     `;
     const resMetricas = await db.query(metricasQuery);
 
-    // Query para o Top 5 clientes
+    // Query para o Top 5 clientes 
     const topClientesQuery = `
-      SELECT nome, cpf, pontos_totais
-      FROM clientes
-      ORDER BY pontos_totais DESC
+      SELECT
+        c.nome,
+        c.cpf,
+        COALESCE(SUM(t.pontos_ganhos), 0) as pontos_disponiveis
+      FROM
+        clientes c
+      LEFT JOIN
+        transacoes t ON c.id = t.cliente_id AND t.status = 'disponivel' AND t.data_vencimento > NOW()
+      GROUP BY
+        c.id, c.nome, c.cpf
+      ORDER BY
+        pontos_disponiveis DESC
       LIMIT 5;
     `;
     const resTopClientes = await db.query(topClientesQuery);
 
-    // Query para as recompensas mais resgatadas
+    // Query para as recompensas mais resgatadas 
     const recompensasQuery = `
       SELECT r.nome, COUNT(res.id) as total_resgates
       FROM resgates res
