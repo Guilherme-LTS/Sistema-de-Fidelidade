@@ -209,9 +209,8 @@ app.post('/resgates', verificaToken, async (req, res) => {
       return res.status(400).json({ error: 'CPF e ID da recompensa são obrigatórios.' });
     }
 
-    await client.query('BEGIN'); // Inicia a transação!
+    await client.query('BEGIN');
 
-    // Passo 1: Obter dados do cliente e da recompensa
     const clienteResult = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
     const cliente = clienteResult.rows[0];
     if (!cliente) throw new Error('Cliente não encontrado.');
@@ -222,7 +221,6 @@ app.post('/resgates', verificaToken, async (req, res) => {
 
     let pontosNecessarios = recompensa.custo_pontos;
 
-    // Passo 2: Calcular o total de pontos disponíveis do cliente
     const pontosDisponiveisResult = await client.query(
       `SELECT SUM(pontos_ganhos) as total 
        FROM transacoes 
@@ -231,45 +229,38 @@ app.post('/resgates', verificaToken, async (req, res) => {
     );
     const pontosDisponiveis = parseInt(pontosDisponiveisResult.rows[0].total) || 0;
 
-    // Passo 3: Verificar se o cliente tem pontos suficientes
     if (pontosDisponiveis < pontosNecessarios) {
       throw new Error('Pontos disponíveis insuficientes para resgatar esta recompensa.');
     }
 
-    // Passo 4: Obter as transações disponíveis, das mais antigas para as mais novas
     const transacoesDisponiveisResult = await client.query(
       `SELECT id, pontos_ganhos 
        FROM transacoes 
        WHERE cliente_id = $1 AND status = 'disponivel' AND data_vencimento > NOW() 
-       ORDER BY data_criacao ASC`,
+       ORDER BY data_transacao ASC`, // <--- A CORREÇÃO ESTÁ AQUI
       [cliente.id]
     );
 
-    // Passo 5: "Gastar" os pontos, transação por transação (FIFO)
     for (const transacao of transacoesDisponiveisResult.rows) {
-      if (pontosNecessarios <= 0) break; // Já gastamos o suficiente
-
-      // Marcamos a transação inteira como 'gasto'
+      if (pontosNecessarios <= 0) break;
       await client.query(
         "UPDATE transacoes SET status = 'gasto' WHERE id = $1",
         [transacao.id]
       );
-
       pontosNecessarios -= transacao.pontos_ganhos;
     }
     
-    // Passo 6: Registrar o resgate no histórico
     await client.query(
       'INSERT INTO resgates (cliente_id, recompensa_id, pontos_gastos) VALUES ($1, $2, $3)',
       [cliente.id, recompensa_id, recompensa.custo_pontos]
     );
 
-    await client.query('COMMIT'); // Se tudo deu certo, confirma a transação
+    await client.query('COMMIT');
 
     res.status(200).json({ message: 'Recompensa resgatada com sucesso!' });
 
   } catch (error) {
-    if (client) await client.query('ROLLBACK'); // Desfaz tudo em caso de erro
+    if (client) await client.query('ROLLBACK');
     console.error('Erro no resgate:', error);
     res.status(500).json({ error: error.message || 'Ocorreu um erro no servidor durante o resgate.' });
   } finally {
