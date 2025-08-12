@@ -257,7 +257,13 @@ app.post('/resgates', verificaToken, async (req, res) => {
 
     await client.query('COMMIT');
 
-    res.status(200).json({ message: 'Recompensa resgatada com sucesso!' });
+    
+    const pontosRestantes = pontosDisponiveis - recompensa.custo_pontos;
+    res.status(200).json({ 
+      message: 'Recompensa resgatada com sucesso!',
+      pontos_restantes: pontosRestantes 
+    });
+
 
   } catch (error) {
     if (client) await client.query('ROLLBACK');
