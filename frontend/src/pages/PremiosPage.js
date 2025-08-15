@@ -57,11 +57,18 @@ function PremiosPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const dadosParaEnviar = { ...currentRecompensa };
+
     const url = isEditing 
-      ? `${process.env.REACT_APP_API_URL}/recompensas/${currentRecompensa.id}`
+      ? `${process.env.REACT_APP_API_URL}/recompensas/${dadosParaEnviar.id}`
       : `${process.env.REACT_APP_API_URL}/recompensas`;
     
     const method = isEditing ? 'PUT' : 'POST';
+
+    if (!isEditing) {
+      delete dadosParaEnviar.id;
+    }
 
     try {
       const response = await fetch(url, {
@@ -70,7 +77,8 @@ function PremiosPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(currentRecompensa),
+        // 3. Enviamos a cópia corrigida
+        body: JSON.stringify(dadosParaEnviar),
       });
 
       if (!response.ok) {
@@ -79,12 +87,12 @@ function PremiosPage() {
       }
       
       toast.success(`Recompensa ${isEditing ? 'atualizada' : 'criada'} com sucesso!`);
-      fetchRecompensas(); // Atualiza a lista
+      fetchRecompensas();
       handleCloseModal();
     } catch (error) {
       toast.error(error.message);
     }
-  };
+};
   
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta recompensa?')) {
