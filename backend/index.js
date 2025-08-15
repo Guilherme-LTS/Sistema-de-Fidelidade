@@ -190,6 +190,73 @@ app.get('/recompensas/publica', async (req, res) => {
   }
 });
 
+
+// ROTA PARA CRIAR UMA NOVA RECOMPENSA (CREATE)
+app.post('/recompensas', verificaToken, async (req, res) => {
+  const { nome, descricao, custo_pontos } = req.body;
+
+  if (!nome || !custo_pontos) {
+    return res.status(400).json({ error: 'Nome e custo em pontos são obrigatórios.' });
+  }
+
+  try {
+    const novaRecompensa = await db.query(
+      'INSERT INTO recompensas (nome, descricao, custo_pontos) VALUES ($1, $2, $3) RETURNING *',
+      [nome, descricao, custo_pontos]
+    );
+    res.status(201).json(novaRecompensa.rows[0]);
+  } catch (error) {
+    console.error('Erro ao criar recompensa:', error);
+    res.status(500).json({ error: 'Erro no servidor ao criar recompensa.' });
+  }
+});
+
+// ROTA PARA ATUALIZAR UMA RECOMPENSA (UPDATE)
+app.put('/recompensas/:id', verificaToken, async (req, res) => {
+  const { id } = req.params;
+  const { nome, descricao, custo_pontos } = req.body;
+
+  if (!nome || !custo_pontos) {
+    return res.status(400).json({ error: 'Nome e custo em pontos são obrigatórios.' });
+  }
+
+  try {
+    const recompensaAtualizada = await db.query(
+      'UPDATE recompensas SET nome = $1, descricao = $2, custo_pontos = $3 WHERE id = $4 RETURNING *',
+      [nome, descricao, custo_pontos, id]
+    );
+
+    if (recompensaAtualizada.rows.length === 0) {
+      return res.status(404).json({ error: 'Recompensa não encontrada.' });
+    }
+
+    res.status(200).json(recompensaAtualizada.rows[0]);
+  } catch (error) {
+    console.error('Erro ao atualizar recompensa:', error);
+    res.status(500).json({ error: 'Erro no servidor ao atualizar recompensa.' });
+  }
+});
+
+// ROTA PARA DELETAR UMA RECOMPENSA (DELETE)
+app.delete('/recompensas/:id', verificaToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query('DELETE FROM recompensas WHERE id = $1', [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Recompensa não encontrada.' });
+    }
+
+    res.status(204).send(); // 204 No Content - sucesso, sem corpo de resposta
+  } catch (error) {
+    console.error('Erro ao deletar recompensa:', error);
+    res.status(500).json({ error: 'Erro no servidor ao deletar recompensa.' });
+  }
+});
+
+
+
 // ROTA PARA REGISTRO DE USUÁRIO
 app.post('/usuarios/registro', async (req, res) => {
   const { nome, email, senha } = req.body;
