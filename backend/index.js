@@ -179,6 +179,17 @@ app.get('/recompensas', verificaToken, async (req, res) => {
   }
 });
 
+// NOVA ROTA PÚBLICA PARA BUSCAR RECOMPENSAS (usada pelo cliente)
+app.get('/recompensas/publica', async (req, res) => {
+  try {
+    const result = await db.query('SELECT nome, custo_pontos FROM recompensas WHERE ativo = true ORDER BY custo_pontos ASC');
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Erro ao buscar recompensas públicas:', error);
+    res.status(500).json({ error: 'Erro ao buscar recompensas.' });
+  }
+});
+
 // ROTA PARA REGISTRO DE USUÁRIO
 app.post('/usuarios/registro', async (req, res) => {
   const { nome, email, senha } = req.body;
