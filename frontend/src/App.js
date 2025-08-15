@@ -7,9 +7,10 @@ import 'react-toastify/dist/ReactToastify.css';
 // Páginas
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
-import AdminLayout from './pages/AdminLayout'; // Importamos o novo Layout
+import AdminLayout from './pages/AdminLayout'; 
 import DashboardPage from './pages/DashboardPage';
 import OperacoesPage from './pages/OperacoesPage';
+import PremiosPage from './pages/PremiosPage';
 
 function App() {
   return (
