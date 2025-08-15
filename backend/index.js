@@ -42,11 +42,11 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     
     const pontosGanhos = Math.floor(valor);
     const diasParaLiberacao = 0; 
-    const diasParaVencimento = 30 / (24 * 60 * 60); // 30 segundos
+    const diasParaVencimento = 90;
 
     const agora = new Date();
-    const data_liberacao = new Date(agora.getTime() + diasParaLiberacao * 24 * 60 * 60 * 1000);
-    const data_vencimento = new Date(agora.getTime() + 30 * 1000); // 30 segundos
+    const data_liberacao = new Date(new Date(agora).setDate(agora.getDate() + diasParaLiberacao));
+    const data_vencimento = new Date(new Date(agora).setDate(agora.getDate() + diasParaVencimento));
     
     await client.query('BEGIN');
     let resCliente = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
