@@ -99,3 +99,10 @@
   border-radius: 4px;
   font-size: 0.875rem;
 }
+
+.resgatavel {
+  background-color: #c6f6d5; /* Verde bem claro */
+  border-left: 4px solid #38a169; /* Borda verde escura */
+  padding-left: 0.5rem;
+  transition: background-color 0.3s;
+}
