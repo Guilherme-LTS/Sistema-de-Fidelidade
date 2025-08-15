@@ -49,6 +49,12 @@ function Layout() {
             {operacoesIcon}
             <span>Operações</span>
           </NavLink>
+          <NavLink 
+            to="/admin/premios" 
+            className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}
+          >
+            Gerenciar Prêmios
+          </NavLink>
         </nav>
         <div className={styles.sidebarFooter}>
           <button onClick={handleLogout} className={styles.logoutButton}>

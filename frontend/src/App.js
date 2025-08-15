@@ -24,6 +24,7 @@ function App() {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="operacoes" element={<OperacoesPage />} />
+          <Route path="premios" element={<PremiosPage />} />
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={5000} theme="light" />
