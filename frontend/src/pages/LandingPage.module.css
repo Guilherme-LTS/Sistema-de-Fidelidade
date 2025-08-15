@@ -11,7 +11,7 @@
 
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .header h1 {
@@ -54,7 +54,7 @@
 .recompensasSection {
   width: 100%;
   max-width: 500px;
-  margin-top: 3rem;
+  margin-top: 2rem;
   background-color: white;
   padding: 1.5rem;
   border-radius: 8px;
@@ -96,6 +96,6 @@
   color: #2d3748;
   background-color: #edf2f7;
   padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
+  border-radius: 4px;
   font-size: 0.875rem;
 }
