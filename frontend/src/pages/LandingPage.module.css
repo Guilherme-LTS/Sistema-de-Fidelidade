@@ -48,3 +48,53 @@
   color: #2d3748;
   text-decoration: underline;
 }
+
+
+.recompensasSection {
+  width: 100%;
+  max-width: 500px;
+  margin-top: 3rem;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.recompensasSection h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+.recompensasList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recompensaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.recompensaItem:last-child {
+  border-bottom: none;
+}
+
+.recompensaNome {
+  color: #4a5568;
+}
+
+.recompensaPontos {
+  font-weight: bold;
+  color: #2d3748;
+  background-color: #edf2f7;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
