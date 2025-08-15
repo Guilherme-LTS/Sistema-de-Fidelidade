@@ -74,7 +74,22 @@
     cursor: not-allowed;
   }
 
-  /* Adicione no final de LoginPage.module.css */
+
+.backLink {
+  display: block; 
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #718096;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
+  color: #2d3748;
+  text-decoration: underline;
+}
+
 
 @media (max-width: 768px) {
     .pageContainer {

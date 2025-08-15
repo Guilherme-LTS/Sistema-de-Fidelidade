@@ -1,8 +1,7 @@
 // frontend/src/pages/LoginPage.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-// 1. Importamos nosso CSS
 import styles from './LoginPage.module.css';
 
 function LoginPage() {
@@ -73,6 +72,9 @@ function LoginPage() {
             </button>
           </div>
         </form>
+        <Link to="/" className={styles.backLink}>
+          &larr; Voltar para a página inicial
+        </Link>
       </div>
     </div>
   );
