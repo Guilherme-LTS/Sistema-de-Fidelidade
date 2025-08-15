@@ -7,6 +7,9 @@ Um sistema de fidelidade full-stack desenvolvido para digitalizar e automatizar 
 
 [Demonstração do Sistema](https://sistema-fidelidade-flax.vercel.app/)
 
+![Demonstração do Sistema](https://cdn.discordapp.com/attachments/1012098738363318416/1406034876758491246/0812.gif?ex=68a0ff85&is=689fae05&hm=a7d9c0c28b89fc1b6ac605cea9597b690797a5a2ec94a20573f39c2240cf456f&)
+
+
 ---
 
 ## 📋 Índice
