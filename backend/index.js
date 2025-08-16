@@ -124,6 +124,62 @@ app.get('/clientes/:cpf', async (req, res) => {
   }
 });
 
+app.get('/clientes/:cpf/extrato', async (req, res) => {
+  try {
+    const cpfParam = req.params.cpf.replace(/\D/g, '');
+    if (!cpfParam || cpfParam.length !== 11) {
+      return res.status(400).json({ error: 'Formato de CPF inválido.' });
+    }
+
+    // Primeiro, encontramos o cliente para obter o ID
+    const clienteResult = await db.query('SELECT id FROM clientes WHERE cpf = $1', [cpfParam]);
+    const cliente = clienteResult.rows[0];
+    if (!cliente) {
+      return res.status(404).json({ error: 'Cliente não encontrado.' });
+    }
+    const clienteId = cliente.id;
+
+    // Query para buscar os CRÉDITOS (pontos ganhos)
+    const creditosQuery = `
+      SELECT 
+        'credito' as tipo,
+        pontos_ganhos as pontos,
+        data_transacao as data,
+        'Pontos por compra' as descricao
+      FROM transacoes
+      WHERE cliente_id = $1
+    `;
+    const creditosResult = await db.query(creditosQuery, [clienteId]);
+
+    // Query para buscar os DÉBITOS (pontos gastos)
+    const debitosQuery = `
+      SELECT 
+        'debito' as tipo,
+        res.pontos_gastos as pontos,
+        res.data_resgate as data,
+        rec.nome as descricao
+      FROM resgates res
+      JOIN recompensas rec ON res.recompensa_id = rec.id
+      WHERE res.cliente_id = $1
+    `;
+    const debitosResult = await db.query(debitosQuery, [clienteId]);
+
+    // Juntamos os dois resultados em um único array
+    const extrato = [...creditosResult.rows, ...debitosResult.rows];
+
+    // Ordenamos o extrato pela data, do mais recente para o mais antigo
+    extrato.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    res.status(200).json(extrato);
+
+  } catch (error) {
+    console.error('Erro ao buscar extrato do cliente:', error);
+    res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
+  }
+});
+
+
+
 // ROTA DE RESGATE (CORRIGIDA)
 app.post('/resgates', verificaToken, async (req, res) => {
   const client = await db.connect();
