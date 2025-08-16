@@ -55,6 +55,12 @@ function Layout() {
           >
             Gerenciar Prêmios
           </NavLink>
+          <NavLink 
+            to="/admin/clientes" 
+            className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}
+          >
+            Clientes
+          </NavLink>
         </nav>
         <div className={styles.sidebarFooter}>
           <button onClick={handleLogout} className={styles.logoutButton}>

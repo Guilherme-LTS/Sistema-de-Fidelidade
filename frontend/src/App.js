@@ -11,6 +11,7 @@ import AdminLayout from './pages/AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import OperacoesPage from './pages/OperacoesPage';
 import PremiosPage from './pages/PremiosPage';
+import ClientesPage from './pages/ClientesPage';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="operacoes" element={<OperacoesPage />} />
           <Route path="premios" element={<PremiosPage />} />
+          <Route path="clientes" element={<ClientesPage />} />
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={5000} theme="light" />
