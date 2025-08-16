@@ -115,3 +115,48 @@
   padding: 0.5rem;
   border-radius: 6px;
 }
+
+
+.extratoContainer {
+  margin-top: 1.5rem;
+}
+
+.extratoTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #4a5568;
+  text-align: left;
+}
+
+.extratoTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.extratoTable td {
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid #edf2f7;
+  font-size: 0.875rem;
+}
+
+.extratoTable tr:last-child td {
+  border-bottom: none;
+}
+
+.extratoTable td:nth-child(2) {
+  width: 60%; /* Coluna da descrição com mais espaço */
+  color: #4a5568;
+}
+
+.credito {
+  color: #38a169; /* Verde */
+  font-weight: bold;
+  text-align: right;
+}
+
+.debito {
+  color: #e53e3e; /* Vermelho */
+  font-weight: bold;
+  text-align: right;
+}
