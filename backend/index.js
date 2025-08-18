@@ -31,7 +31,8 @@ app.use(express.json());
 
 // --- ROTAS DA APLICAÇÃO ---
 
-// ROTA PARA LANÇAR PONTOS (CORRIGIDA)
+// backend/index.js
+
 app.post('/transacoes', verificaToken, async (req, res) => {
   const client = await db.connect();
   try {
@@ -39,6 +40,9 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     if (!cpf || !valor || valor <= 0) { return res.status(400).json({ error: 'CPF e valor (maior que zero) são obrigatórios.' }); }
     const cpfLimpo = cpf.replace(/\D/g, '');
     if (!cpfValidator.isValid(cpfLimpo)) { return res.status(400).json({ error: 'CPF inválido.' }); }
+    
+    // 1. Pegamos o ID do operador que está logado, vindo do token
+    const operadorId = req.usuario.id;
     
     const pontosGanhos = Math.floor(valor);
     const diasParaLiberacao = 0; 
@@ -57,12 +61,13 @@ app.post('/transacoes', verificaToken, async (req, res) => {
       const resNovoCliente = await client.query('INSERT INTO clientes (cpf, nome) VALUES ($1, $2) RETURNING id', [cpfLimpo, nome]);
       clienteId = resNovoCliente.rows[0].id;
     } else {
-      clienteId = cliente.id;
+      clienteId = resCliente.rows[0].id;
     }
 
+    
     await client.query(
-      `INSERT INTO transacoes (cliente_id, valor_gasto, pontos_ganhos, data_liberacao, data_vencimento) VALUES ($1, $2, $3, $4, $5)`,
-      [clienteId, valor, pontosGanhos, data_liberacao, data_vencimento]
+      `INSERT INTO transacoes (cliente_id, valor_gasto, pontos_ganhos, data_liberacao, data_vencimento, usuario_id) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [clienteId, valor, pontosGanhos, data_liberacao, data_vencimento, operadorId]
     );
     
     await client.query('COMMIT');
@@ -75,6 +80,7 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     if (client) client.release();
   }
 });
+
 
 // ROTA DE CONSULTA DE PONTOS (CORRIGIDA)
 app.get('/clientes/:cpf', async (req, res) => {
@@ -314,23 +320,34 @@ app.delete('/recompensas/:id', verificaToken, async (req, res) => {
 
 
 // ROTA PARA REGISTRO DE USUÁRIO
+
 app.post('/usuarios/registro', async (req, res) => {
-  const { nome, email, senha } = req.body;
-  if (!nome || !email || !senha) { return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' }); }
+  const { nome, email, senha, role = 'operador' } = req.body;
+
+  if (!nome || !email || !senha) { 
+    return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' }); 
+  }
+
   try {
     const saltRounds = 10;
     const hash_senha = await bcrypt.hash(senha, saltRounds);
+    
     const novoUsuario = await db.query(
       'INSERT INTO usuarios (nome, email, hash_senha, role) VALUES ($1, $2, $3, $4) RETURNING id, nome, email, role',
-      [nome, email, hash_senha, 'admin']
+      [nome, email, hash_senha, role]
     );
+
     res.status(201).json(novoUsuario.rows[0]);
+
   } catch (error) {
-    if (error.code === '23505') { return res.status(409).json({ error: 'Este email já está em uso.' }); }
+    if (error.code === '23505') { 
+      return res.status(409).json({ error: 'Este email já está em uso.' }); 
+    }
     console.error('Erro ao registrar usuário:', error);
     res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
   }
 });
+
 
 // ROTA PARA LOGIN DE USUÁRIO
 app.post('/usuarios/login', async (req, res) => {
