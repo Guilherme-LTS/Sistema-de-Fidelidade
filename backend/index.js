@@ -83,16 +83,20 @@ app.post('/transacoes', verificaToken, async (req, res) => {
 
 // ROTA PROTEGIDA PARA LISTAR E BUSCAR CLIENTES
 app.get('/clientes', verificaToken, async (req, res) => {
-  const { nome } = req.query; // Pega o parâmetro de busca 'nome' da URL, se existir
+  // Usamos um parâmetro genérico 'busca'
+  const { busca } = req.query; 
 
   try {
     let query = 'SELECT id, nome, cpf FROM clientes';
     const params = [];
 
-    // Se um termo de busca foi enviado, adicionamos o filtro à query
-    if (nome) {
-      query += ' WHERE nome ILIKE $1';
-      params.push(`%${nome}%`); // O '%' é um coringa para buscar nomes que contenham o termo
+    // Se um termo de busca foi enviado, ajustamos a query
+    if (busca) {
+      const termoLimpo = busca.replace(/\D/g, '');
+      
+      // A query agora busca no nome (com ILIKE) OU no CPF (com LIKE)
+      query += ' WHERE nome ILIKE $1 OR cpf LIKE $1';
+      params.push(`%${termoLimpo}%`); 
     }
 
     query += ' ORDER BY nome ASC';
