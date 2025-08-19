@@ -155,9 +155,12 @@
 
 /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
 @media (max-width: 992px) {
+  .container {
+    margin-top: 50px; 
+  }
+
   .mainGrid {
     grid-template-columns: 1fr;
-    margin-top: 50px; 
   }
 
   .listaClientes {
