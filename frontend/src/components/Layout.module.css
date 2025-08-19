@@ -133,6 +133,13 @@
     margin-left: 250px;
   }
 
+  .userInfo {
+    font-size: 0.8rem;
+    font-weight: 300;
+    color: #a0aec0;
+    margin-top: 0.25rem;
+  }
+
   @media (max-width: 900px) {
     .sidebar {
       width: 200px;
