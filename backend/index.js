@@ -81,6 +81,30 @@ app.post('/transacoes', verificaToken, async (req, res) => {
   }
 });
 
+// ROTA PROTEGIDA PARA LISTAR E BUSCAR CLIENTES
+app.get('/clientes', verificaToken, async (req, res) => {
+  const { nome } = req.query; // Pega o parâmetro de busca 'nome' da URL, se existir
+
+  try {
+    let query = 'SELECT id, nome, cpf FROM clientes';
+    const params = [];
+
+    // Se um termo de busca foi enviado, adicionamos o filtro à query
+    if (nome) {
+      query += ' WHERE nome ILIKE $1';
+      params.push(`%${nome}%`); // O '%' é um coringa para buscar nomes que contenham o termo
+    }
+
+    query += ' ORDER BY nome ASC';
+
+    const result = await db.query(query, params);
+    res.status(200).json(result.rows);
+
+  } catch (error) {
+    console.error('Erro ao listar clientes:', error);
+    res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
+  }
+});
 
 // ROTA DE CONSULTA DE PONTOS (CORRIGIDA)
 app.get('/clientes/:cpf', async (req, res) => {
