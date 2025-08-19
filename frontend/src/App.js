@@ -7,12 +7,15 @@ import 'react-toastify/dist/ReactToastify.css';
 // Páginas
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
-import AdminLayout from './pages/AdminLayout'; 
+import AdminLayout from './pages/AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import OperacoesPage from './pages/OperacoesPage';
-import PremiosPage from './pages/PremiosPage';
 import ClientesPage from './pages/ClientesPage';
-import AuditoriaPage from './pages/AuditoriaPage'; // Página de auditoria
+import PremiosPage from './pages/PremiosPage';
+import AuditoriaPage from './pages/AuditoriaPage';
+
+// Segurança
+import AdminRoute from './auth/AdminRoute'; // Importe o novo segurança
 
 function App() {
   return (
@@ -21,16 +24,20 @@ function App() {
         {/* Rotas Públicas */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-
+        
         {/* Grupo de Rotas do Admin */}
         <Route path="/admin" element={<AdminLayout />}>
+          {/* Redirecionamento padrão */}
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="operacoes" element={<OperacoesPage />} />
-          <Route path="premios" element={<PremiosPage />} />
-          <Route path="clientes" element={<ClientesPage />} />
-          <Route path="auditoria" element={<AuditoriaPage />} />
           
+          {/* Rotas de Admin */}
+          <Route path="dashboard" element={<AdminRoute><DashboardPage /></AdminRoute>} />
+          <Route path="premios" element={<AdminRoute><PremiosPage /></AdminRoute>} />
+          <Route path="auditoria" element={<AdminRoute><AuditoriaPage /></AdminRoute>} />
+          
+          {/* Rotas de Operador (e Admin) */}
+          <Route path="operacoes" element={<OperacoesPage />} />
+          <Route path="clientes" element={<ClientesPage />} />
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={5000} theme="light" />
