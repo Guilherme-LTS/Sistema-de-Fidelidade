@@ -61,6 +61,12 @@ function Layout() {
           >
             Clientes
           </NavLink>
+          <NavLink 
+            to="/admin/auditoria" 
+            className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}
+          >
+            Admin Page
+          </NavLink>
         </nav>
         <div className={styles.sidebarFooter}>
           <button onClick={handleLogout} className={styles.logoutButton}>

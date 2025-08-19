@@ -12,6 +12,7 @@ import DashboardPage from './pages/DashboardPage';
 import OperacoesPage from './pages/OperacoesPage';
 import PremiosPage from './pages/PremiosPage';
 import ClientesPage from './pages/ClientesPage';
+import AuditoriaPage from './pages/AuditoriaPage'; // Página de auditoria
 
 function App() {
   return (
@@ -28,6 +29,8 @@ function App() {
           <Route path="operacoes" element={<OperacoesPage />} />
           <Route path="premios" element={<PremiosPage />} />
           <Route path="clientes" element={<ClientesPage />} />
+          <Route path="auditoria" element={<AuditoriaPage />} />
+          
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={5000} theme="light" />
