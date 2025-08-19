@@ -1,6 +1,9 @@
 /* frontend/src/pages/ClientesPage.module.css */
 .container {
   padding: 1rem;
+  height: calc(100vh - 4rem); /* Altura total menos o padding */
+  display: flex;
+  flex-direction: column;
 }
 
 .container h1 {
@@ -9,34 +12,83 @@
   margin-bottom: 1.5rem;
 }
 
-.searchForm {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
+.searchBar {
+  margin-bottom: 1.5rem;
 }
 
-.searchForm input {
-  flex-grow: 1;
+.searchBar input {
+  width: 100%;
   padding: 0.75rem;
   border: 1px solid #cbd5e0;
   border-radius: 6px;
   font-size: 1rem;
 }
 
-.searchForm button {
-  background-color: #3182ce;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
+.mainGrid {
+  display: grid;
+  grid-template-columns: 300px 1fr; /* Coluna fixa para a lista, resto para os detalhes */
+  gap: 2rem;
+  flex-grow: 1;
+  overflow: hidden; /* Evita que o layout quebre */
+}
+
+.listaClientes {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow-y: auto; /* Adiciona scroll se a lista for grande */
+}
+
+.listaClientes ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listaClientes li {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.resultsContainer {
-  margin-top: 2rem;
+.listaClientes li:hover {
+  background-color: #f7fafc;
 }
 
+.listaClientes li.ativo {
+  background-color: #ebf8ff;
+  border-left: 4px solid #3182ce;
+}
+
+.nomeCliente {
+  display: block;
+  font-weight: 600;
+}
+
+.cpfCliente {
+  display: block;
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.detalhesCliente {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #a0aec0;
+}
+
+/* Reutilizando estilos que já temos */
 .resultsContainer h2 {
   font-size: 1.5rem;
   font-weight: 600;
@@ -51,11 +103,10 @@
 }
 
 .summaryCard {
-  background-color: white;
+  background-color: #f7fafc;
   padding: 1.5rem;
   border-radius: 8px;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .summaryCard h4 {
@@ -69,7 +120,7 @@
   font-weight: bold;
 }
 
-.resultsContainer h3 {
+.detalhesCliente h3 {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 1rem;
@@ -80,14 +131,10 @@
 .extratoTable {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  border-radius: 8px;
-  overflow: hidden;
 }
 
 .extratoTable th, .extratoTable td {
-  padding: 1rem;
+  padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
 }
