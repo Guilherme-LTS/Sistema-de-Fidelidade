@@ -1,0 +1,53 @@
+/* frontend/src/pages/AuditoriaPage.module.css */
+.container {
+  padding: 1rem;
+}
+
+.container h1 {
+  font-size: 2.25rem;
+  font-weight: bold;
+}
+
+.container p {
+  font-size: 1rem;
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+.tableContainer {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.logTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.logTable th, .logTable td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.logTable th {
+  background-color: #f7fafc;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.logTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.credito {
+  color: #38a169; /* Verde */
+  font-weight: bold;
+}
+
+.debito {
+  color: #e53e3e; /* Vermelho */
+  font-weight: bold;
+}
