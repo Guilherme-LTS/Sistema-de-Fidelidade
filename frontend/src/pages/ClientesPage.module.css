@@ -156,16 +156,17 @@
 /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
 @media (max-width: 992px) {
   .mainGrid {
-    grid-template-columns: 1fr; /* Colunas ficam uma sobre a outra */
+    grid-template-columns: 1fr;
+    margin-top: 50px; 
   }
 
   .listaClientes {
-    max-height: 300px; /* Limita a altura da lista no mobile */
+    max-height: 300px; 
     margin-bottom: 1.5rem;
   }
 
   .container {
-    height: auto; /* Permite que o container cresça conforme o conteúdo */
+    height: auto; 
   }
   .detalhesCliente {
     padding: 1rem;
@@ -183,7 +184,6 @@
     font-size: 0.95rem;
   }
   .extratoTable {
-    display: block;
     width: 100%;
     overflow-x: auto;
     font-size: 0.95rem;
