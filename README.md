@@ -81,8 +81,8 @@ Para rodar este projeto na sua máquina local, siga os passos abaixo.
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/seu-usuario/seu-repositorio.git](https://github.com/seu-usuario/seu-repositorio.git)
-    cd seu-repositorio
+    git clone https://github.com/Guilherme-LTS/Sistema-de-Fidelidade.git
+    cd Sistema-de-Fidelidade
     ```
 
 2.  **Setup do Backend:**
