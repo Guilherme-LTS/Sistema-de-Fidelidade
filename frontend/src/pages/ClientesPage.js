@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import styles from './ClientesPage.module.css';
-import useDebounce from '../hooks/useDebounce'; // Reutilizando nosso hook!
+import useDebounce from '../hooks/useDebounce';
 
 const formatarData = (dataISO) => {
   if (!dataISO) return '';
@@ -14,24 +14,21 @@ function ClientesPage() {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Para o campo de busca
   const [termoBusca, setTermoBusca] = useState('');
-  const debouncedBusca = useDebounce(termoBusca, 500); // Atraso de 500ms para a busca
+  const debouncedBusca = useDebounce(termoBusca, 500);
 
-  // Para o cliente selecionado e seu extrato
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [extrato, setExtrato] = useState([]);
   const [loadingExtrato, setLoadingExtrato] = useState(false);
 
   const token = localStorage.getItem('token');
 
-  // Efeito para buscar a lista de clientes (roda ao carregar e ao mudar a busca)
   useEffect(() => {
     const fetchClientes = async () => {
       setLoading(true);
       try {
-        // A URL agora pode incluir o parâmetro de busca
-        const url = `${process.env.REACT_APP_API_URL}/clientes?nome=${debouncedBusca}`;
+        // A URL agora usa o parâmetro de busca genérico 'busca'
+        const url = `${process.env.REACT_APP_API_URL}/clientes?busca=${debouncedBusca}`;
         const response = await fetch(url, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
@@ -45,9 +42,8 @@ function ClientesPage() {
       }
     };
     fetchClientes();
-  }, [debouncedBusca, token]); // Depende da busca "atrasada"
+  }, [debouncedBusca, token]);
 
-  // Função para quando um cliente é clicado na lista
   const handleSelecionarCliente = async (cliente) => {
     setLoadingExtrato(true);
     setClienteSelecionado(cliente);
@@ -62,7 +58,7 @@ function ClientesPage() {
 
       const dataCliente = await resCliente.json();
       if (!resCliente.ok) throw new Error(dataCliente.error);
-      setClienteSelecionado(dataCliente); // Atualiza com dados completos (pontos, etc.)
+      setClienteSelecionado(dataCliente);
 
       const dataExtrato = await resExtrato.json();
       if (!resExtrato.ok) throw new Error(dataExtrato.error);
@@ -84,12 +80,11 @@ function ClientesPage() {
           type="text"
           value={termoBusca}
           onChange={(e) => setTermoBusca(e.target.value)}
-          placeholder="Buscar cliente por nome..."
+          placeholder="Buscar cliente por nome ou CPF..."
         />
       </div>
 
       <div className={styles.mainGrid}>
-        {/* Coluna da Lista de Clientes */}
         <div className={styles.listaClientes}>
           {loading ? <p>Carregando clientes...</p> : (
             <ul>
@@ -107,7 +102,6 @@ function ClientesPage() {
           )}
         </div>
 
-        {/* Coluna dos Detalhes do Cliente */}
         <div className={styles.detalhesCliente}>
           {loadingExtrato ? <p>Carregando detalhes...</p> : (
             clienteSelecionado ? (

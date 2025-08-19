@@ -152,3 +152,19 @@
   color: #e53e3e;
   font-weight: bold;
 }
+
+/* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
+@media (max-width: 992px) {
+  .mainGrid {
+    grid-template-columns: 1fr; /* Colunas ficam uma sobre a outra */
+  }
+
+  .listaClientes {
+    max-height: 300px; /* Limita a altura da lista no mobile */
+    margin-bottom: 1.5rem;
+  }
+
+  .container {
+    height: auto; /* Permite que o container cresça conforme o conteúdo */
+  }
+}
