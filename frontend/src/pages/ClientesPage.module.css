@@ -167,4 +167,58 @@
   .container {
     height: auto; /* Permite que o container cresça conforme o conteúdo */
   }
+  .detalhesCliente {
+    padding: 1rem;
+  }
+  .summaryGrid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .summaryCard {
+    padding: 1rem;
+    font-size: 0.95rem;
+  }
+  .extratoTable th, .extratoTable td {
+    padding: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .extratoTable {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    font-size: 0.95rem;
+  }
+  .container h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .searchBar input {
+    padding: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .placeholder {
+    font-size: 1rem;
+    padding: 1rem;
+  }
+}
+/* Melhorias extras para telas muito pequenas */
+@media (max-width: 600px) {
+  .container {
+    padding: 0.5rem;
+  }
+  .detalhesCliente {
+    padding: 0.5rem;
+  }
+  .summaryCard {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  .extratoTable th, .extratoTable td {
+    padding: 0.3rem;
+    font-size: 0.9rem;
+  }
+  .container h1 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
 }
