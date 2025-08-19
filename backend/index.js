@@ -215,18 +215,20 @@ app.get('/clientes/:cpf/extrato', async (req, res) => {
 
 
 // ROTA DE RESGATE (CORRIGIDA)
+
 app.post('/resgates', verificaToken, async (req, res) => {
   const client = await db.connect();
   try {
     const { cpf, recompensa_id } = req.body;
+    // 1. Pegamos o ID do operador logado
+    const operadorId = req.usuario.id; 
     const cpfLimpo = cpf.replace(/\D/g, '');
+    
     if (!cpfLimpo || !recompensa_id) { return res.status(400).json({ error: 'CPF e ID da recompensa são obrigatórios.' }); }
-
     await client.query('BEGIN');
     const clienteResult = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
     const cliente = clienteResult.rows[0];
     if (!cliente) throw new Error('Cliente não encontrado.');
-
     const recompensaResult = await client.query('SELECT custo_pontos FROM recompensas WHERE id = $1', [recompensa_id]);
     const recompensa = recompensaResult.rows[0];
     if (!recompensa) throw new Error('Recompensa não encontrada.');
@@ -234,14 +236,12 @@ app.post('/resgates', verificaToken, async (req, res) => {
     const creditosResult = await client.query(`SELECT COALESCE(SUM(pontos_ganhos), 0) as total FROM transacoes WHERE cliente_id = $1 AND data_liberacao <= NOW() AND data_vencimento > NOW()`, [cliente.id]);
     const debitosResult = await client.query(`SELECT COALESCE(SUM(pontos_gastos), 0) as total FROM resgates WHERE cliente_id = $1`, [cliente.id]);
     const pontosDisponiveis = parseInt(creditosResult.rows[0].total) - parseInt(debitosResult.rows[0].total);
+    if (pontosDisponiveis < recompensa.custo_pontos) { throw new Error('Pontos disponíveis insuficientes.'); }
 
-    if (pontosDisponiveis < recompensa.custo_pontos) {
-      throw new Error('Pontos disponíveis insuficientes.');
-    }
-
+    // 2. Na hora de inserir o resgate, salvamos também o ID do operador
     await client.query(
-      'INSERT INTO resgates (cliente_id, recompensa_id, pontos_gastos) VALUES ($1, $2, $3)',
-      [cliente.id, recompensa_id, recompensa.custo_pontos]
+      'INSERT INTO resgates (cliente_id, recompensa_id, pontos_gastos, usuario_id) VALUES ($1, $2, $3, $4)',
+      [cliente.id, recompensa_id, recompensa.custo_pontos, operadorId] // Adicionado operadorId
     );
     
     await client.query('COMMIT');
@@ -257,6 +257,7 @@ app.post('/resgates', verificaToken, async (req, res) => {
     if (client) client.release();
   }
 });
+
 
 // ROTA PARA BUSCAR RECOMPENSAS
 app.get('/recompensas', verificaToken, async (req, res) => {
@@ -430,6 +431,56 @@ app.get('/dashboard/stats', verificaToken, async (req, res) => {
     res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
   }
 });
+
+// backend/index.js
+
+app.get('/admin/auditoria', verificaToken, async (req, res) => {
+  // Apenas usuários com cargo 'admin' podem acessar esta rota
+  if (req.usuario.role !== 'admin') {
+    return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
+  }
+
+  try {
+    const query = `
+      -- Seleciona os lançamentos de pontos
+      SELECT 
+        t.id,
+        t.data_transacao as data,
+        'Lançamento de Pontos' as acao,
+        c.nome as nome_cliente,
+        u.nome as nome_operador,
+        t.pontos_ganhos as pontos
+      FROM transacoes t
+      JOIN clientes c ON t.cliente_id = c.id
+      JOIN usuarios u ON t.usuario_id = u.id
+
+      UNION ALL
+
+      -- Seleciona os resgates de recompensas
+      SELECT 
+        r.id,
+        r.data_resgate as data,
+        rec.nome as acao,
+        c.nome as nome_cliente,
+        u.nome as nome_operador,
+        r.pontos_gastos * -1 as pontos -- Mostra como um valor negativo
+      FROM resgates r
+      JOIN clientes c ON r.cliente_id = c.id
+      JOIN usuarios u ON r.usuario_id = u.id
+      JOIN recompensas rec ON r.recompensa_id = rec.id
+
+      ORDER BY data DESC; -- Ordena o resultado final pela data
+    `;
+
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+
+  } catch (error) {
+    console.error('Erro ao buscar log de auditoria:', error);
+    res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
+  }
+});
+
 
 // 5. Iniciar o servidor
 app.listen(PORT, () => {
