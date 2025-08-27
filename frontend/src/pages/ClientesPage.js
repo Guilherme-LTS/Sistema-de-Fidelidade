@@ -1,5 +1,5 @@
 // frontend/src/pages/ClientesPage.js
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import styles from './ClientesPage.module.css';
 import useDebounce from '../hooks/useDebounce';
