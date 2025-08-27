@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import styles from './ClientesPage.module.css';
 import useDebounce from '../hooks/useDebounce';
+import Spinner from '../components/Spinner';
 
 const formatarData = (dataISO) => {
   if (!dataISO) return '';
@@ -86,7 +87,7 @@ function ClientesPage() {
 
       <div className={styles.mainGrid}>
         <div className={styles.listaClientes}>
-          {loading ? <p>Carregando clientes...</p> : (
+          {loading ? <div className={styles.spinnerContainer}><Spinner /></div> : (
             <ul>
               {clientes.map(cliente => (
                 <li 
@@ -103,7 +104,7 @@ function ClientesPage() {
         </div>
 
         <div className={styles.detalhesCliente}>
-          {loadingExtrato ? <p>Carregando detalhes...</p> : (
+          {loadingExtrato ? <div className={styles.spinnerContainer}><Spinner /></div> : (
             clienteSelecionado ? (
               <div>
                 <h2>{clienteSelecionado.nome || `CPF ${clienteSelecionado.cpf}`}</h2>

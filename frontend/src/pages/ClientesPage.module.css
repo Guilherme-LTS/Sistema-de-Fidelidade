@@ -153,6 +153,15 @@
   font-weight: bold;
 }
 
+/* Adicione no final de ClientesPage.module.css */
+.spinnerContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 2rem;
+}
+
 /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
 @media (max-width: 992px) {
   .container {

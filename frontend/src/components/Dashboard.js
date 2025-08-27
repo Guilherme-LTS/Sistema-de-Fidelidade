@@ -75,7 +75,16 @@ function Dashboard() {
     ],
   };
 
-  if (loading) return <p>Carregando dashboard...</p>;
+  if (loading) {
+    return (
+      <div className={styles.dashboardContainer}>
+        <div className={styles.spinnerContainer}>
+          <Spinner />
+        </div>
+      </div>
+    );
+  }  
+  
   if (error) return <p className={styles.error}>{error}</p>;
   if (!stats) return null;
 

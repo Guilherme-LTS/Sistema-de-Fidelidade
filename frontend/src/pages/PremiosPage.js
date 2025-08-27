@@ -116,8 +116,17 @@ function PremiosPage() {
   };
 
 
-  if (loading) return <p>Carregando recompensas...</p>;
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.spinnerContainer}>
+          <Spinner size="large" />
+        </div>
+      </div>
+    );
+  }
 
+  
   return (
     <div className={styles.container}>
       <div className={styles.header}>
