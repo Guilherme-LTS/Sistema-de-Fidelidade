@@ -51,3 +51,10 @@
   color: #e53e3e; /* Vermelho */
   font-weight: bold;
 }
+
+.spinnerContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem;
+}

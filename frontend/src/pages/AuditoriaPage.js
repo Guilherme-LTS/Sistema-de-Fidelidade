@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import styles from './AuditoriaPage.module.css';
+import Spinner from '../components/Spinner';
 
 const formatarData = (dataISO) => {
   if (!dataISO) return '';
@@ -35,8 +36,15 @@ function AuditoriaPage() {
     fetchLog();
   }, []);
 
-  if (loading) return <p>Carregando log de atividades...</p>;
-
+  if (loading) {
+    return (
+      <div className={styles.Container}>
+        <div className={styles.spinnerContainer}>
+          <Spinner />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={styles.container}>
       <h1>Log de Atividades</h1>

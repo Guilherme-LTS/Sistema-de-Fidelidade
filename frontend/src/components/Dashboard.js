@@ -78,7 +78,7 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className={styles.dashboardContainer}>
+      <div className={styles.Container}>
         <div className={styles.spinnerContainer}>
           <Spinner />
         </div>
