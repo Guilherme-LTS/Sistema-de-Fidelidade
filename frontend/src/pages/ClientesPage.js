@@ -40,8 +40,8 @@ function ClientesPage() {
         const data = await response.json();
         if (!response.ok) throw new Error('Falha ao buscar clientes');
         
-        setClientes(data.clientes);
-        setTotalPaginas(data.totalPaginas);
+        setClientes(data.clientes || []); 
+        setTotalPaginas(data.totalPaginas || 1);
 
       } catch (error) {
         toast.error(error.message);
