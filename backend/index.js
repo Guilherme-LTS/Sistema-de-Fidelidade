@@ -81,28 +81,41 @@ app.post('/transacoes', verificaToken, async (req, res) => {
   }
 });
 
-// ROTA PROTEGIDA PARA LISTAR E BUSCAR CLIENTES
+// ROTA PROTEGIDA PARA LISTAR E BUSCAR CLIENTES (COM PAGINAÇÃO)
 app.get('/clientes', verificaToken, async (req, res) => {
-  // Usamos um parâmetro genérico 'busca'
-  const { busca } = req.query; 
+  const { busca, page = 1, limit = 15 } = req.query; // Padrão: página 1, 15 itens por página
 
   try {
-    let query = 'SELECT id, nome, cpf FROM clientes';
+    const offset = (page - 1) * limit; // Calcula o deslocamento
     const params = [];
+    let paramIndex = 1;
 
-    // Se um termo de busca foi enviado, ajustamos a query
+    // Query para contar o total de resultados (para o frontend saber o total de páginas)
+    let countQuery = 'SELECT COUNT(*) FROM clientes';
     if (busca) {
-      const termoLimpo = busca.replace(/\D/g, '');
-      
-      // A query agora busca no nome (com ILIKE) OU no CPF (com LIKE)
-      query += ' WHERE nome ILIKE $1 OR cpf LIKE $1';
-      params.push(`%${termoLimpo}%`); 
+      countQuery += ` WHERE nome ILIKE $${paramIndex} OR cpf LIKE $${paramIndex}`;
+      params.push(`%${busca.replace(/\D/g, '')}%`);
     }
+    
+    const totalResult = await db.query(countQuery, params);
+    const totalClientes = parseInt(totalResult.rows[0].count, 10);
 
-    query += ' ORDER BY nome ASC';
+    // Query principal para buscar os clientes da página atual
+    let dataQuery = 'SELECT id, nome, cpf FROM clientes';
+    if (busca) {
+      dataQuery += ` WHERE nome ILIKE $${paramIndex} OR cpf LIKE $${paramIndex}`;
+    }
+    dataQuery += ` ORDER BY nome ASC LIMIT $${paramIndex + 1} OFFSET $${paramIndex + 2}`;
+    params.push(limit, offset);
 
-    const result = await db.query(query, params);
-    res.status(200).json(result.rows);
+    const result = await db.query(dataQuery, params);
+    
+    res.status(200).json({
+      clientes: result.rows,
+      total: totalClientes,
+      paginaAtual: parseInt(page, 10),
+      totalPaginas: Math.ceil(totalClientes / limit),
+    });
 
   } catch (error) {
     console.error('Erro ao listar clientes:', error);
