@@ -81,54 +81,60 @@ app.post('/transacoes', verificaToken, async (req, res) => {
   }
 });
 
-// ROTA PROTEGIDA PARA LISTAR E BUSCAR CLIENTES (COM PAGINAÇÃO CORRIGIDA)
+// backend/index.js
+
+// ROTA PROTEGIDA PARA LISTAR E BUSCAR CLIENTES (VERSÃO REVISADA E CORRIGIDA)
 app.get('/clientes', verificaToken, async (req, res) => {
   const { busca, page = 1, limit = 15 } = req.query;
 
   try {
     const offset = (page - 1) * limit;
-    let params = [];
-    let whereClause = '';
+    let totalClientes;
+    let clientes;
 
-    // Se um termo de busca foi enviado, construímos a cláusula WHERE
-    if (busca) {
-      // Usamos dois placeholders ($1 e $2) para buscar no nome e no CPF
-      whereClause = ' WHERE nome ILIKE $1 OR cpf LIKE $2';
-      // O primeiro parâmetro é para o nome, o segundo é só com números para o CPF
-      params = [`%${busca}%`, `%${busca.replace(/\D/g, '')}%`];
+    // Lógica separada para quando HÁ um termo de busca
+    if (busca && busca.trim() !== '') {
+      const termoBuscaNome = `%${busca}%`;
+      const termoBuscaCpf = `%${busca.replace(/\D/g, '')}%`;
+      const params = [termoBuscaNome, termoBuscaCpf];
+
+      const countResult = await db.query(
+        'SELECT COUNT(*) FROM clientes WHERE nome ILIKE $1 OR cpf LIKE $2',
+        params
+      );
+      totalClientes = parseInt(countResult.rows[0].count, 10);
+
+      const dataResult = await db.query(
+        'SELECT id, nome, cpf FROM clientes WHERE nome ILIKE $1 OR cpf LIKE $2 ORDER BY nome ASC LIMIT $3 OFFSET $4',
+        [...params, limit, offset]
+      );
+      clientes = dataResult.rows;
+
+    } else {
+      // Lógica separada para quando NÃO HÁ busca (listar todos)
+      const countResult = await db.query('SELECT COUNT(*) FROM clientes');
+      totalClientes = parseInt(countResult.rows[0].count, 10);
+
+      const dataResult = await db.query(
+        'SELECT id, nome, cpf FROM clientes ORDER BY nome ASC LIMIT $1 OFFSET $2',
+        [limit, offset]
+      );
+      clientes = dataResult.rows;
     }
-
-    // Query para contar o total de resultados
-    const countQuery = `SELECT COUNT(*) FROM clientes${whereClause}`;
-    const totalResult = await db.query(countQuery, params);
-    const totalClientes = parseInt(totalResult.rows[0].count, 10);
-
-    // Adicionamos os parâmetros de paginação DEPOIS dos de busca
-    const dataParams = [...params, limit, offset];
-    // A query de dados agora usa os placeholders de forma dinâmica
-    const dataQuery = `
-      SELECT id, nome, cpf 
-      FROM clientes
-      ${whereClause}
-      ORDER BY nome ASC 
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
-    `;
-
-    const result = await db.query(dataQuery, dataParams);
     
     res.status(200).json({
-      clientes: result.rows,
+      clientes: clientes,
       total: totalClientes,
       paginaAtual: parseInt(page, 10),
       totalPaginas: Math.ceil(totalClientes / limit),
     });
 
-  } catch (error)
- {
+  } catch (error) {
     console.error('Erro ao listar clientes:', error);
     res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
   }
 });
+
 // ROTA DE CONSULTA DE PONTOS (CORRIGIDA)
 app.get('/clientes/:cpf', async (req, res) => {
   try {
