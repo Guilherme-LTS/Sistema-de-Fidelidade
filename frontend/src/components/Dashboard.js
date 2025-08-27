@@ -11,6 +11,7 @@ import {
   Legend,
 } from 'chart.js';
 import styles from './Dashboard.module.css';
+import Spinner from './Spinner';
 
 // Registra os componentes do Chart.js que vamos usar
 ChartJS.register(
@@ -84,7 +85,7 @@ function Dashboard() {
       </div>
     );
   }  
-  
+
   if (error) return <p className={styles.error}>{error}</p>;
   if (!stats) return null;
 

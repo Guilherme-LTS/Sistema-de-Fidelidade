@@ -151,3 +151,10 @@
   border: none;
   color: white;
 }
+
+.spinnerContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem;
+}

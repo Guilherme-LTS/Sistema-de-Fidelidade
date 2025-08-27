@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import styles from './PremiosPage.module.css';
+import Spinner from '../components/Spinner';
 
 function PremiosPage() {
   const [recompensas, setRecompensas] = useState([]);
@@ -126,7 +127,7 @@ function PremiosPage() {
     );
   }
 
-  
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
