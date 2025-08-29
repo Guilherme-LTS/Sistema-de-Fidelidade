@@ -360,21 +360,27 @@ app.put('/recompensas/:id', verificaToken, async (req, res) => {
   }
 });
 
-// ROTA PARA DELETAR UMA RECOMPENSA (DELETE)
+// ROTA PARA "DELETAR" (DESATIVAR) UMA RECOMPENSA
 app.delete('/recompensas/:id', verificaToken, async (req, res) => {
   const { id } = req.params;
-
   try {
-    const result = await db.query('DELETE FROM recompensas WHERE id = $1', [id]);
+    // Em vez de DELETAR, nós ATUALIZAMOS a coluna 'ativo' para 'false'
+    const result = await db.query(
+      "UPDATE recompensas SET ativo = false WHERE id = $1 RETURNING *",
+      [id]
+    );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Recompensa não encontrada.' });
     }
+    
+    // Atualizamos a mensagem para refletir a nova ação
+    res.status(200).json({ message: 'Recompensa desativada com sucesso!' });
 
-    res.status(204).send(); // 204 No Content - sucesso, sem corpo de resposta
   } catch (error) {
-    console.error('Erro ao deletar recompensa:', error);
-    res.status(500).json({ error: 'Erro no servidor ao deletar recompensa.' });
+    // O erro de foreign key não acontecerá mais, mas mantemos o tratamento de erros
+    console.error('Erro ao desativar recompensa:', error);
+    res.status(500).json({ error: 'Erro no servidor ao desativar recompensa.' });
   }
 });
 
