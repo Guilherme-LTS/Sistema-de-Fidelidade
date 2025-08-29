@@ -83,7 +83,7 @@ app.post('/transacoes', verificaToken, async (req, res) => {
 
 // backend/index.js
 
-// ROTA PROTEGIDA PARA LISTAR E BUSCAR CLIENTES (VERSÃO REVISADA E CORRIGIDA)
+// ROTA PROTEGIDA PARA LISTAR E BUSCAR CLIENTES (VERSÃO FINAL CORRIGIDA)
 app.get('/clientes', verificaToken, async (req, res) => {
   const { busca, page = 1, limit = 15 } = req.query;
 
@@ -92,26 +92,33 @@ app.get('/clientes', verificaToken, async (req, res) => {
     let totalClientes;
     let clientes;
 
-    // Lógica separada para quando HÁ um termo de busca
+    // Se HÁ um termo de busca, a lógica é mais complexa
     if (busca && busca.trim() !== '') {
       const termoBuscaNome = `%${busca}%`;
-      const termoBuscaCpf = `%${busca.replace(/\D/g, '')}%`;
-      const params = [termoBuscaNome, termoBuscaCpf];
+      const cpfBusca = busca.replace(/\D/g, ''); // Extrai apenas os números
 
-      const countResult = await db.query(
-        'SELECT COUNT(*) FROM clientes WHERE nome ILIKE $1 OR cpf LIKE $2',
-        params
-      );
+      let whereClause = 'WHERE nome ILIKE $1';
+      let params = [termoBuscaNome];
+
+      // SÓ adicionamos a busca por CPF se o termo de busca contiver números
+      if (cpfBusca) {
+        whereClause += ' OR cpf LIKE $2';
+        params.push(`%${cpfBusca}%`);
+      }
+
+      const countResult = await db.query(`SELECT COUNT(*) FROM clientes ${whereClause}`, params);
       totalClientes = parseInt(countResult.rows[0].count, 10);
 
+      // Ajustamos os placeholders de LIMIT e OFFSET dinamicamente
+      const limitOffsetPlaceholders = `LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
       const dataResult = await db.query(
-        'SELECT id, nome, cpf FROM clientes WHERE nome ILIKE $1 OR cpf LIKE $2 ORDER BY nome ASC LIMIT $3 OFFSET $4',
+        `SELECT id, nome, cpf FROM clientes ${whereClause} ORDER BY nome ASC ${limitOffsetPlaceholders}`,
         [...params, limit, offset]
       );
       clientes = dataResult.rows;
 
     } else {
-      // Lógica separada para quando NÃO HÁ busca (listar todos)
+      // Se NÃO HÁ busca, a lógica é simples (listar todos)
       const countResult = await db.query('SELECT COUNT(*) FROM clientes');
       totalClientes = parseInt(countResult.rows[0].count, 10);
 
