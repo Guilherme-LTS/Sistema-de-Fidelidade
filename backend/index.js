@@ -416,6 +416,51 @@ app.post('/usuarios/registro', async (req, res) => {
 });
 
 
+// ROTA PÚBLICA PARA CADASTRO DE NOVOS CLIENTES
+app.post('/clientes/cadastro', async (req, res) => {
+  const { nome, cpf, lgpd_consentimento } = req.body;
+
+  // 1. Validação dos dados recebidos
+  if (!nome || !cpf) {
+    return res.status(400).json({ error: 'Nome e CPF são obrigatórios.' });
+  }
+  if (lgpd_consentimento !== true) {
+    return res.status(400).json({ error: 'É necessário aceitar os termos de uso e a política de privacidade.' });
+  }
+
+  const cpfLimpo = cpf.replace(/\D/g, '');
+  if (!cpfValidator.isValid(cpfLimpo)) {
+    return res.status(400).json({ error: 'O CPF informado é inválido.' });
+  }
+
+  try {
+    const data_consentimento = new Date(); // Registra a data e hora exatas do consentimento
+
+    // 2. Insere o novo cliente no banco de dados
+    const novoCliente = await db.query(
+      `INSERT INTO clientes (nome, cpf, lgpd_consentimento, data_consentimento) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING id, nome, cpf`,
+      [nome, cpfLimpo, lgpd_consentimento, data_consentimento]
+    );
+
+    // 3. Responde com sucesso
+    res.status(201).json({
+      message: 'Cadastro realizado com sucesso!',
+      cliente: novoCliente.rows[0],
+    });
+
+  } catch (error) {
+    // Erro comum: CPF já cadastrado
+    if (error.code === '23505') { 
+      return res.status(409).json({ error: 'Este CPF já está cadastrado em nosso sistema.' });
+    }
+    
+    console.error('Erro ao cadastrar cliente:', error);
+    res.status(500).json({ error: 'Ocorreu um erro no servidor ao realizar o cadastro.' });
+  }
+});
+
 // ROTA PARA LOGIN DE USUÁRIO
 app.post('/usuarios/login', async (req, res) => {
   const { email, senha } = req.body;
