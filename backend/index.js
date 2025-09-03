@@ -416,11 +416,11 @@ app.post('/usuarios/registro', async (req, res) => {
 });
 
 
-// ROTA PÚBLICA PARA CADASTRO DE NOVOS CLIENTES
+// ROTA PÚBLICA PARA CADASTRO DE NOVOS CLIENTES (VERSÃO ATUALIZADA E INTELIGENTE)
 app.post('/clientes/cadastro', async (req, res) => {
   const { nome, cpf, lgpd_consentimento } = req.body;
 
-  // 1. Validação dos dados recebidos
+  // 1. Validação dos dados de entrada (continua a mesma)
   if (!nome || !cpf) {
     return res.status(400).json({ error: 'Nome e CPF são obrigatórios.' });
   }
@@ -433,31 +433,58 @@ app.post('/clientes/cadastro', async (req, res) => {
     return res.status(400).json({ error: 'O CPF informado é inválido.' });
   }
 
+  const client = await db.connect();
   try {
-    const data_consentimento = new Date(); // Registra a data e hora exatas do consentimento
+    await client.query('BEGIN');
 
-    // 2. Insere o novo cliente no banco de dados
-    const novoCliente = await db.query(
-      `INSERT INTO clientes (nome, cpf, lgpd_consentimento, data_consentimento) 
-       VALUES ($1, $2, $3, $4) 
-       RETURNING id, nome, cpf`,
-      [nome, cpfLimpo, lgpd_consentimento, data_consentimento]
-    );
+    // 2. Verifica se um cliente com este CPF já existe
+    const existingClientResult = await client.query('SELECT * FROM clientes WHERE cpf = $1', [cpfLimpo]);
+    const existingClient = existingClientResult.rows[0];
 
-    // 3. Responde com sucesso
+    let finalClient;
+
+    if (existingClient) {
+      // 3. Se o cliente JÁ EXISTE:
+      if (existingClient.nome) {
+        // Se ele já tem um nome, ele está totalmente cadastrado.
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'Este CPF já está cadastrado em nosso sistema.' });
+      } else {
+        // Se ele existe mas não tem nome, é um "resgate de conta". ATUALIZAMOS os dados.
+        const updatedClientResult = await client.query(
+          `UPDATE clientes 
+           SET nome = $1, lgpd_consentimento = $2, data_consentimento = $3 
+           WHERE cpf = $4 
+           RETURNING id, nome, cpf`,
+          [nome, lgpd_consentimento, new Date(), cpfLimpo]
+        );
+        finalClient = updatedClientResult.rows[0];
+      }
+    } else {
+      // 4. Se o cliente NÃO EXISTE, criamos um novo.
+      const newClientResult = await client.query(
+        `INSERT INTO clientes (nome, cpf, lgpd_consentimento, data_consentimento) 
+         VALUES ($1, $2, $3, $4) 
+         RETURNING id, nome, cpf`,
+        [nome, cpfLimpo, lgpd_consentimento, new Date()]
+      );
+      finalClient = newClientResult.rows[0];
+    }
+
+    await client.query('COMMIT');
+
+    // 5. Responde com sucesso
     res.status(201).json({
       message: 'Cadastro realizado com sucesso!',
-      cliente: novoCliente.rows[0],
+      cliente: finalClient,
     });
 
   } catch (error) {
-    // Erro comum: CPF já cadastrado
-    if (error.code === '23505') { 
-      return res.status(409).json({ error: 'Este CPF já está cadastrado em nosso sistema.' });
-    }
-    
+    await client.query('ROLLBACK');
     console.error('Erro ao cadastrar cliente:', error);
     res.status(500).json({ error: 'Ocorreu um erro no servidor ao realizar o cadastro.' });
+  } finally {
+    if (client) client.release();
   }
 });
 
