@@ -1,23 +1,17 @@
-// frontend/src/App.js
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Páginas
+// Importações das Páginas
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import AdminLayout from './pages/AdminLayout';
 import DashboardPage from './pages/DashboardPage';
-import OperacoesPage from './pages/OperacoesPage';
 import ClientesPage from './pages/ClientesPage';
 import PremiosPage from './pages/PremiosPage';
-import AuditoriaPage from './pages/AuditoriaPage';
-import RegulamentoPage from './pages/RegulamentoPage';
-import CadastroPage from './pages/CadastroPage';
-
-// Segurança
-import AdminRoute from './auth/AdminRoute'; // Importe o novo segurança
+import CadastroPage from './pages/CadastroPage'; // Nova página
+import RegulamentoPage from './pages/RegulamentoPage'; // Nova página
 
 function App() {
   return (
@@ -31,17 +25,10 @@ function App() {
         
         {/* Grupo de Rotas do Admin */}
         <Route path="/admin" element={<AdminLayout />}>
-          {/* Redirecionamento padrão */}
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          
-          {/* Rotas de Admin */}
-          <Route path="dashboard" element={<AdminRoute><DashboardPage /></AdminRoute>} />
-          <Route path="premios" element={<AdminRoute><PremiosPage /></AdminRoute>} />
-          <Route path="auditoria" element={<AdminRoute><AuditoriaPage /></AdminRoute>} />
-          
-          {/* Rotas de Operador (e Admin) */}
-          <Route path="operacoes" element={<OperacoesPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="clientes" element={<ClientesPage />} />
+          <Route path="premios" element={<PremiosPage />} />
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={5000} theme="light" />
@@ -50,3 +37,4 @@ function App() {
 }
 
 export default App;
+

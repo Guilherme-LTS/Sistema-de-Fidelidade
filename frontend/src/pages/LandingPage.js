@@ -1,67 +1,53 @@
-// frontend/src/pages/LandingPage.js
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import ConsultaSaldo from '../components/ConsultaSaldo';
 import styles from './LandingPage.module.css';
 
 function LandingPage() {
-  const [recompensas, setRecompensas] = useState([]);
-  const [loadingRecompensas, setLoadingRecompensas] = useState(true);
-  const [saldoCliente, setSaldoCliente] = useState(null);
+  // Novo estado para controlar a visão atual: 'escolha' (padrão), ou 'consulta'
+  const [view, setView] = useState('escolha');
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchRecompensas = async () => {
-      try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas/publica`);
-        const data = await response.json();
-        if (!response.ok) throw new Error('Não foi possível carregar as recompensas.');
-        setRecompensas(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoadingRecompensas(false);
-      }
-    };
-    fetchRecompensas();
-  }, []);
-
-  // 2. Função que será passada para o ConsultaSaldo
-  const handleConsulta = (saldo) => {
-    setSaldoCliente(saldo);
+  // Esta função será chamada pelo ConsultaSaldo quando um CPF não for encontrado
+  const handleClienteNaoEncontrado = () => {
+    toast.info("CPF não encontrado. Por favor, faça seu cadastro para começar!");
+    // Forçamos o redirecionamento para a página de cadastro
+    navigate('/cadastro');
   };
 
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
         <h1>Bem-vindo ao Programa de Fidelidade!</h1>
-        <p>Consulte seus pontos e veja os prêmios que você pode resgatar.</p>
+        <p>Participe do nosso programa de pontos e troque por prêmios incríveis.</p>
       </header>
       
       <main className={styles.mainContent}>
-        {/* 3. Passamos a função como uma propriedade */}
-        <ConsultaSaldo onConsulta={handleConsulta} />
+        {/* Renderização Condicional com base na escolha do usuário */}
 
-        <div className={styles.recompensasSection}>
-          <h2>Nossos Prêmios</h2>
-          {loadingRecompensas ? (
-            <p>Carregando prêmios...</p>
-          ) : (
-            <ul className={styles.recompensasList}>
-              {recompensas.map((rec, index) => {
-                // 4. Verificamos se o cliente pode resgatar este prêmio
-                const podeResgatar = saldoCliente !== null && saldoCliente >= rec.custo_pontos;
-                const itemClass = `${styles.recompensaItem} ${podeResgatar ? styles.resgatavel : ''}`;
+        {view === 'escolha' && (
+          <div className={styles.escolhaContainer}>
+            <Link to="/cadastro" className={styles.cadastroButton}>
+              Quero Fazer Meu Cadastro
+            </Link>
+            <button onClick={() => setView('consulta')} className={styles.consultaButton}>
+              Já Tenho Cadastro
+            </button>
+          </div>
+        )}
 
-                return (
-                  <li key={index} className={itemClass}>
-                    <span className={styles.recompensaNome}>{rec.nome}</span>
-                    <span className={styles.recompensaPontos}>{rec.custo_pontos} pts</span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+        {view === 'consulta' && (
+          <div className={styles.consultaSection}>
+            {/* Passamos a nova função 'onNotFound' como propriedade.
+                O componente ConsultaSaldo precisará de um pequeno ajuste para usá-la. */}
+            <ConsultaSaldo onNotFound={handleClienteNaoEncontrado} />
+            <button onClick={() => setView('escolha')} className={styles.backLink}>
+              &larr; Voltar
+            </button>
+          </div>
+        )}
+
       </main>
 
       <footer className={styles.footer}>
@@ -74,3 +60,4 @@ function LandingPage() {
 }
 
 export default LandingPage;
+

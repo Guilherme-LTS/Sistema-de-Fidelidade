@@ -1,15 +1,16 @@
-// frontend/src/components/ConsultaSaldo.js
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import styles from './ConsultaSaldo.module.css';
 
+// 1. A função formatarData foi movida para fora para melhor organização
 const formatarData = (dataISO) => {
   if (!dataISO) return '';
   const data = new Date(dataISO);
   return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-function ConsultaSaldo({ onConsulta }) {
+// 2. Aceitamos a nova propriedade 'onNotFound'
+function ConsultaSaldo({ onConsulta, onNotFound }) {
   const [cpf, setCpf] = useState('');
   const [cliente, setCliente] = useState(null);
   const [carregando, setCarregando] = useState(false);
@@ -32,14 +33,26 @@ function ConsultaSaldo({ onConsulta }) {
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/clientes/${cpfLimpo}`);
-      const data = await response.json();
+      
+      // 3. Verificamos especificamente se o cliente não foi encontrado (status 404)
+      if (response.status === 404) {
+        // Se for 404, chamamos a função onNotFound que veio da LandingPage
+        if (onNotFound) {
+          onNotFound();
+        }
+        setCarregando(false);
+        return; // Interrompemos a execução para não dar erro de JSON
+      }
 
+      const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error);
       }
-      setCliente(data);
-      if (onConsulta) onConsulta(data.pontosDisponiveis);
 
+      setCliente(data);
+      if (onConsulta) {
+        onConsulta(data.pontosDisponiveis);
+      }
     } catch (error) {
       setCliente(null);
       toast.error(error.message);
@@ -48,6 +61,7 @@ function ConsultaSaldo({ onConsulta }) {
     }
   };
 
+  // O JSX do componente permanece o mesmo
   return (
     <div className={styles.formContainer}>
       <h2 className={styles.heading}>Consulte seus Pontos</h2>
@@ -61,7 +75,6 @@ function ConsultaSaldo({ onConsulta }) {
         </button>
       </form>
 
-      {/* A área de resultado agora é mais limpa, sem a tabela de extrato */}
       {cliente && (
         <div className={styles.resultadoContainer}>
           <p className={styles.welcomeMessage}>Olá, {cliente.nome || 'Cliente'}!</p>
@@ -78,3 +91,4 @@ function ConsultaSaldo({ onConsulta }) {
 }
 
 export default ConsultaSaldo;
+
