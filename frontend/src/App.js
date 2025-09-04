@@ -13,6 +13,8 @@ import OperacoesPage from './pages/OperacoesPage';
 import ClientesPage from './pages/ClientesPage';
 import PremiosPage from './pages/PremiosPage';
 import AuditoriaPage from './pages/AuditoriaPage';
+import RegulamentoPage from './pages/RegulamentoPage';
+import CadastroPage from './pages/CadastroPage';
 
 // Segurança
 import AdminRoute from './auth/AdminRoute'; // Importe o novo segurança
@@ -24,6 +26,8 @@ function App() {
         {/* Rotas Públicas */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/cadastro" element={<CadastroPage />} />
+        <Route path="/regulamento" element={<RegulamentoPage />} />
         
         {/* Grupo de Rotas do Admin */}
         <Route path="/admin" element={<AdminLayout />}>
