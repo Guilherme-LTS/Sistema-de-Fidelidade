@@ -1,19 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ConsultaSaldo from '../components/ConsultaSaldo';
 import styles from './LandingPage.module.css';
 
 function LandingPage() {
-  // Novo estado para controlar a visão atual: 'escolha' (padrão), ou 'consulta'
   const [view, setView] = useState('escolha');
   const navigate = useNavigate();
 
-  // Esta função será chamada pelo ConsultaSaldo quando um CPF não for encontrado
+  // Estados para a lista de recompensas e o saldo do cliente
+  const [recompensas, setRecompensas] = useState([]);
+  const [loadingRecompensas, setLoadingRecompensas] = useState(true);
+  const [saldoCliente, setSaldoCliente] = useState(null);
+
+  // Efeito para buscar as recompensas uma vez, quando a página carrega
+  useEffect(() => {
+    const fetchRecompensas = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas/publica`);
+        const data = await response.json();
+        if (!response.ok) throw new Error('Não foi possível carregar as recompensas.');
+        setRecompensas(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingRecompensas(false);
+      }
+    };
+    fetchRecompensas();
+  }, []);
+
   const handleClienteNaoEncontrado = () => {
     toast.info("CPF não encontrado. Por favor, faça seu cadastro para começar!");
-    // Forçamos o redirecionamento para a página de cadastro
     navigate('/cadastro');
+  };
+
+  // Função para receber o saldo do componente ConsultaSaldo
+  const handleConsulta = (saldo) => {
+    setSaldoCliente(saldo);
   };
 
   return (
@@ -24,8 +48,6 @@ function LandingPage() {
       </header>
       
       <main className={styles.mainContent}>
-        {/* Renderização Condicional com base na escolha do usuário */}
-
         {view === 'escolha' && (
           <div className={styles.escolhaContainer}>
             <Link to="/cadastro" className={styles.cadastroButton}>
@@ -39,15 +61,34 @@ function LandingPage() {
 
         {view === 'consulta' && (
           <div className={styles.consultaSection}>
-            {/* Passamos a nova função 'onNotFound' como propriedade.
-                O componente ConsultaSaldo precisará de um pequeno ajuste para usá-la. */}
-            <ConsultaSaldo onNotFound={handleClienteNaoEncontrado} />
+            <ConsultaSaldo onNotFound={handleClienteNaoEncontrado} onConsulta={handleConsulta} />
+            
+            {/* Seção de recompensas, agora dentro da visão de consulta */}
+            <div className={styles.recompensasSection}>
+              <h2>Nossos Prêmios</h2>
+              {loadingRecompensas ? (
+                <p>Carregando prêmios...</p>
+              ) : (
+                <ul className={styles.recompensasList}>
+                  {recompensas.map((rec, index) => {
+                    const podeResgatar = saldoCliente !== null && saldoCliente >= rec.custo_pontos;
+                    const itemClass = `${styles.recompensaItem} ${podeResgatar ? styles.resgatavel : ''}`;
+                    return (
+                      <li key={index} className={itemClass}>
+                        <span className={styles.recompensaNome}>{rec.nome}</span>
+                        <span className={styles.recompensaPontos}>{rec.custo_pontos} pts</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+
             <button onClick={() => setView('escolha')} className={styles.backLink}>
               &larr; Voltar
             </button>
           </div>
         )}
-
       </main>
 
       <footer className={styles.footer}>

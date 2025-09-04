@@ -6,7 +6,6 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  /* Fundo com um gradiente suave para dar profundidade */
   background: linear-gradient(170deg, #f7fafc, #edf2f7);
   padding: 2rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -14,20 +13,20 @@
 }
 
 .header {
-  margin-bottom: 2.5rem; /* Aumenta o espaço */
-  animation: fadeInDown 0.8s ease-out; /* Adiciona uma animação de entrada */
+  margin-bottom: 2.5rem;
+  animation: fadeInDown 0.8s ease-out;
 }
 
 .header h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #1a202c; /* Cor mais escura para o título principal */
+  color: #1a202c;
   letter-spacing: -1px;
 }
 
 .header p {
   font-size: 1.125rem;
-  color: #4a5568; /* Cinza um pouco mais escuro para melhor contraste */
+  color: #4a5568;
   margin-top: 0.5rem;
   max-width: 600px;
 }
@@ -55,10 +54,10 @@
   padding: 1rem 2rem;
   font-weight: bold;
   text-decoration: none;
-  border-radius: 8px; /* Bordas um pouco mais arredondadas */
+  border-radius: 8px;
   transition: all 0.2s ease-in-out;
   font-size: 1.1rem;
-  border: 2px solid transparent; /* Prepara para o hover */
+  border: 2px solid transparent;
   cursor: pointer;
 }
 
@@ -69,7 +68,7 @@
 
 .cadastroButton:hover {
   background-color: #1a202c;
-  transform: translateY(-2px); /* Efeito de "levantar" */
+  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -91,7 +90,7 @@
 }
 
 .backLink {
-  display: inline-block; /* Mudança para inline-block */
+  display: inline-block;
   margin-top: 1.5rem;
   color: #718096;
   font-size: 0.9rem;
@@ -124,34 +123,76 @@
   color: #2d3748;
 }
 
-/* Animações sutis para a entrada dos elementos */
+/* Animações */
 @keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
+
+/* --- ESTILOS PARA A SEÇÃO DE RECOMPENSAS --- */
+
+.recompensasSection {
+  width: 100%;
+  margin-top: 2rem;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.recompensasSection h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+.recompensasList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recompensaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.recompensaItem:last-child {
+  border-bottom: none;
+}
+
+.recompensaNome {
+  color: #4a5568;
+}
+
+.recompensaPontos {
+  font-weight: bold;
+  color: #2d3748;
+  background-color: #edf2f7;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+.resgatavel {
+  background-color: #c6f6d5; /* Verde bem claro */
+  border-left: 4px solid #38a169; /* Borda verde escura */
+}
+
