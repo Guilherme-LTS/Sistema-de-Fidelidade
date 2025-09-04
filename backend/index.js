@@ -34,6 +34,11 @@ app.use(express.json());
 // backend/index.js
 
 app.post('/transacoes', verificaToken, async (req, res) => {
+  // ADIÇÃO CRÍTICA: Verifica se o usuário logado tem o cargo 'admin'
+  if (req.usuario.role !== 'admin') {
+    return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem lançar pontos.' });
+  }
+ 
   const client = await db.connect();
   try {
     const { cpf, valor, nome } = req.body;
@@ -46,7 +51,7 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     
     const pontosGanhos = Math.floor(valor);
     const diasParaLiberacao = 0; 
-    const diasParaVencimento = 90;
+    const diasParaVencimento = 180;
 
     const agora = new Date();
     const data_liberacao = new Date(new Date(agora).setDate(agora.getDate() + diasParaLiberacao));
@@ -54,10 +59,9 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     
     await client.query('BEGIN');
     let resCliente = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
-    let cliente = resCliente.rows[0];
     let clienteId;
 
-    if (!cliente) {
+    if (!resCliente.rows[0]) {
       const resNovoCliente = await client.query('INSERT INTO clientes (cpf, nome) VALUES ($1, $2) RETURNING id', [cpfLimpo, nome]);
       clienteId = resNovoCliente.rows[0].id;
     } else {
