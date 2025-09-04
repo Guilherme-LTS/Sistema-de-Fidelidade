@@ -107,9 +107,16 @@
 }
 
 .footer {
-  position: absolute;
-  bottom: 20px;
+  position: fixed;
+  bottom: 0px;
+  width: 100%;
   text-align: center;
+  color: #2d3748;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  max-width: 500px;
+  margin-top: 40px
 }
 
 .adminLink {
@@ -187,7 +194,7 @@
   color: #2d3748;
   background-color: #edf2f7;
   padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
+  border-radius: 5px;
   font-size: 0.875rem;
 }
 
