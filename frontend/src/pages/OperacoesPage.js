@@ -10,7 +10,6 @@ function OperacoesPage() {
     <div>
       <h1 className={styles.heading}>Operações do Caixa</h1>
       <div className={styles.operacoesGrid}>
-        <TransacaoForm />
         <ConsultaSaldo />
         <ResgateRecompensa />
       </div>
