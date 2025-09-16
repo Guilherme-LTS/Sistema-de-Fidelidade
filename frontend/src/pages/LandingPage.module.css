@@ -1,135 +1,148 @@
-/* ===== FUNDAÇÃO: CORES E FUNDO ===== */
+/*
+  ============================================
+  Botteco Videokê - Landing Page Styles V2
+  ============================================
+  Autor: Gemini (para Guilherme)
+  Filosofia: Criar uma experiência imersiva que combine o clássico
+  de um boteco com a modernidade de uma aplicação premium.
+  Foco em micro-interações, tipografia e hierarquia visual.
+*/
+
+/* ===== FUNDAÇÃO: Variáveis e Fundo ===== */
+
+:root {
+  --preto: #0d0d0d;
+  --amarelo-principal: #F4C542;
+  --dourado-detalhe: #D18F28;
+  --branco: #FFFFFF;
+  --cinza-texto: #c7c7c7;
+  --fundo-card: #1a1a1a;
+  --borda-suave: rgba(244, 197, 66, 0.2);
+}
 
 .pageContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Alinha ao topo para header e rodapé fixos */
+  justify-content: center;
   min-height: 100vh;
-  /* Fundo escuro que remete a um ambiente de boteco */
-  background-color: #1a1a1a; 
-  /* Uma textura sutil para não ser um preto chapado */
-  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23333333' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
   padding: 2rem;
+  background-color: var(--preto);
+  /* Gradiente sutil para criar um "foco de luz", como um palco */
+  background-image: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.05) 0%, var(--preto) 60%);
   text-align: center;
-  color: var(--branco); /* Cor do texto padrão será branca */
+  color: var(--branco);
+  overflow: hidden; /* Previne barras de rolagem de animações */
+}
+
+/* ===== CONTAINER PRINCIPAL ("O Palco") ===== */
+
+.mainContent {
+  width: 100%;
+  max-width: 550px;
+  background-color: var(--fundo-card);
+  border: 1px solid var(--borda-suave);
+  border-radius: 16px;
+  padding: clamp(1.5rem, 5vw, 3rem); /* Padding responsivo */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--borda-suave);
+  backdrop-filter: blur(10px); /* Efeito de vidro para navegadores que suportam */
 }
 
 /* ===== CABEÇALHO (HEADER) ===== */
 
 .header {
-  margin-bottom: 3rem;
-  animation: fadeInDown 0.8s ease-out;
-  max-width: 600px;
+  margin-bottom: 2.5rem;
+  animation: fadeInDown 0.8s ease-out both;
 }
 
-/* Título principal com a fonte bold e cor de destaque */
 .header h1 {
-  font-size: clamp(2rem, 5vw, 3rem); /* Responsivo */
-  font-weight: 700; /* Bold */
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  font-weight: 700;
   color: var(--amarelo-principal);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Sombra para dar profundidade */
+  letter-spacing: 2px;
+  /* Efeito de "letreiro" sutil */
+  text-shadow: 0 0 5px rgba(244, 197, 66, 0.3), 0 0 15px rgba(244, 197, 66, 0.2);
 }
 
-/* Subtítulo mais sutil */
 .header p {
   font-size: 1.125rem;
-  color: #ccc; /* Um cinza claro para contraste */
-  margin-top: 0.5rem;
+  color: var(--cinza-texto);
+  margin-top: 0.75rem;
+  max-width: 450px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* ===== CONTEÚDO PRINCIPAL ===== */
-
-.mainContent {
-  width: 100%;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+/* ===== ÁREA DE ESCOLHA ===== */
 
 .escolhaContainer {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* Aumenta o espaçamento */
-  width: 100%;
+  gap: 1.25rem;
   align-items: center;
-  animation: fadeInUp 0.8s ease-out;
+  animation: fadeInUp 0.8s 0.2s ease-out both; /* Delay para entrar após o header */
 }
 
-/* ===== BOTÕES ===== */
-/* Removido .cadastroButton e .consultaButton para criar estilos reutilizáveis */
+/* ===== BOTÕES (DESIGN PREMIUM) ===== */
 
-/* Estilo do botão principal (Amarelo, chamativo) */
-.btnPrimario {
-  background-color: var(--amarelo-principal);
-  color: var(--preto);
-  border: 2px solid var(--dourado-detalhe);
-  font-weight: 700; /* Bold */
-  text-transform: uppercase;
-}
-
-/* Estilo do botão secundário (Vazado, discreto) */
-.btnSecundario {
-  background-color: transparent;
-  color: var(--amarelo-principal);
-  border: 2px solid var(--amarelo-principal);
-}
-
-/* Estilo base para AMBOS os botões */
+/* Estilo Base */
 .btn {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 350px;
-  padding: 1rem 2rem;
+  max-width: 380px;
+  padding: 1rem;
+  font-weight: 700; /* Bold */
   text-decoration: none;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  border-radius: 10px;
   font-size: 1.1rem;
+  border: 2px solid transparent;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-.btn:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+/* Botão Primário (Ação Principal) */
+.btnPrimario {
+  background-color: var(--amarelo-principal);
+  color: var(--preto);
+  box-shadow: 0 4px 15px rgba(244, 197, 66, 0.2);
 }
 
-/* Efeito de hover específico para o botão primário */
 .btnPrimario:hover {
+  transform: translateY(-4px) scale(1.03);
   background-color: var(--dourado-detalhe);
+  box-shadow: 0 8px 25px rgba(209, 143, 40, 0.3);
+}
+
+/* Botão Secundário (Ação Alternativa) */
+.btnSecundario {
+  background-color: transparent;
+  color: var(--amarelo-principal);
   border-color: var(--amarelo-principal);
 }
 
-/* Efeito de hover específico para o botão secundário */
 .btnSecundario:hover {
+  transform: translateY(-4px);
   background-color: var(--amarelo-principal);
   color: var(--preto);
+  box-shadow: 0 6px 20px rgba(244, 197, 66, 0.25);
 }
-
 
 /* ===== SEÇÃO DE CONSULTA E RECOMPENSAS ===== */
 
 .consultaSection {
   width: 100%;
-  animation: fadeIn 0.5s ease-out;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  animation: fadeIn 0.6s ease-out;
 }
 
 .recompensasSection {
   width: 100%;
   margin-top: 2rem;
-  /* Estilo de "card" escuro, como uma lousa de bar */
-  background-color: #262626; 
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid #444;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  text-align: left;
 }
 
 .recompensasSection h2 {
@@ -139,97 +152,108 @@
   margin-bottom: 1.5rem;
   color: var(--amarelo-principal);
   text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .recompensasList {
   list-style: none;
   padding: 0;
   margin: 0;
+  max-height: 250px; /* Altura máxima com scroll, se necessário */
+  overflow-y: auto;
+  padding-right: 10px; /* Espaço para a barra de rolagem */
 }
 
 .recompensaItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 0.5rem;
-  border-bottom: 1px solid #444;
-  transition: background-color 0.3s ease;
-}
-
-.recompensaItem:last-child {
-  border-bottom: none;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  margin-bottom: 0.75rem;
+  transition: all 0.3s ease;
+  animation: popIn 0.5s ease-out both;
 }
 
 .recompensaNome {
-  color: #e0e0e0;
+  color: var(--branco);
+  font-weight: 500;
 }
 
 .recompensaPontos {
   font-weight: bold;
   color: var(--preto);
-  background-color: var(--amarelo-principal);
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px; /* Formato de pílula */
-  font-size: 0.875rem;
+  background-color: var(--dourado-detalhe);
+  padding: 0.35rem 0.85rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  white-space: nowrap; /* Evita quebra de linha */
+  margin-left: 1rem;
 }
 
 /* Destaque para prêmios que o cliente pode resgatar */
 .resgatavel {
-  background-color: rgba(209, 143, 40, 0.1);
-  border-left: 4px solid var(--dourado-detalhe); 
-  padding-left: 1rem;
+  background-color: rgba(244, 197, 66, 0.1);
+  border-color: var(--borda-suave);
 }
 
-/* ===== RODAPÉ E LINKS ===== */
+.resgatavel .recompensaNome {
+  color: var(--amarelo-principal);
+}
 
-.backLink {
+/* ===== LINKS E RODAPÉ ===== */
+
+.backLink, .adminLink {
   display: inline-block;
-  margin-top: 2rem;
-  color: #aaa;
+  color: var(--cinza-texto);
   font-size: 0.9rem;
   text-decoration: none;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0.5rem;
-  transition: color 0.3s;
+  transition: color 0.3s ease;
 }
 
-.backLink:hover {
+.backLink {
+  margin-top: 2rem;
+}
+
+.backLink:hover, .adminLink:hover {
   color: var(--amarelo-principal);
 }
 
 .footer {
-  /* Mantido fixo para fácil acesso do operador */
-  position: fixed;
+  position: absolute; /* Posição absoluta relativa ao body */
   bottom: 1rem;
-  right: 1.5rem;
-  width: auto;
-  text-align: right;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
 }
 
-.adminLink {
-  color: #aaa;
-  font-size: 0.875rem;
-  text-decoration: none;
-  transition: color 0.2s;
-  padding: 0.5rem;
-  background-color: rgba(0,0,0,0.3);
-  border-radius: 6px;
+
+/* ===== ANIMAÇÕES E EFEITOS ESPECIAIS ===== */
+
+/* Animação de entrada dos itens da lista */
+@for $i from 1 through 20 {
+  .recompensaItem:nth-child(#{$i}) {
+    animation-delay: #{$i * 0.05}s;
+  }
 }
 
-.adminLink:hover {
-  color: var(--branco);
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* ===== ANIMAÇÕES (Mantidas) ===== */
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
+  from { opacity: 0; transform: translateY(-30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -237,3 +261,16 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Scrollbar customizada para a lista */
+.recompensasList::-webkit-scrollbar {
+  width: 6px;
+}
+.recompensasList::-webkit-scrollbar-track {
+  background: transparent;
+}
+.recompensasList::-webkit-scrollbar-thumb {
+  background-color: var(--dourado-detalhe);
+  border-radius: 10px;
+}
+
