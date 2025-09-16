@@ -1,136 +1,228 @@
-/* frontend/src/pages/LandingPage.module.css */
+/* ===== FUNDAÇÃO: CORES E FUNDO ===== */
 
 .pageContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Alinha ao topo para header e rodapé fixos */
   min-height: 100vh;
-  background: linear-gradient(170deg, #f7fafc, #edf2f7);
+  /* Fundo escuro que remete a um ambiente de boteco */
+  background-color: #1a1a1a; 
+  /* Uma textura sutil para não ser um preto chapado */
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23333333' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
   padding: 2rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   text-align: center;
+  color: var(--branco); /* Cor do texto padrão será branca */
 }
+
+/* ===== CABEÇALHO (HEADER) ===== */
 
 .header {
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
   animation: fadeInDown 0.8s ease-out;
-}
-
-.header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1a202c;
-  letter-spacing: -1px;
-}
-
-.header p {
-  font-size: 1.125rem;
-  color: #4a5568;
-  margin-top: 0.5rem;
   max-width: 600px;
 }
+
+/* Título principal com a fonte bold e cor de destaque */
+.header h1 {
+  font-size: clamp(2rem, 5vw, 3rem); /* Responsivo */
+  font-weight: 700; /* Bold */
+  color: var(--amarelo-principal);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Sombra para dar profundidade */
+}
+
+/* Subtítulo mais sutil */
+.header p {
+  font-size: 1.125rem;
+  color: #ccc; /* Um cinza claro para contraste */
+  margin-top: 0.5rem;
+}
+
+/* ===== CONTEÚDO PRINCIPAL ===== */
 
 .mainContent {
   width: 100%;
   max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .escolhaContainer {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem; /* Aumenta o espaçamento */
+  width: 100%;
   align-items: center;
   animation: fadeInUp 0.8s ease-out;
 }
 
-.cadastroButton,
-.consultaButton {
+/* ===== BOTÕES ===== */
+/* Removido .cadastroButton e .consultaButton para criar estilos reutilizáveis */
+
+/* Estilo do botão principal (Amarelo, chamativo) */
+.btnPrimario {
+  background-color: var(--amarelo-principal);
+  color: var(--preto);
+  border: 2px solid var(--dourado-detalhe);
+  font-weight: 700; /* Bold */
+  text-transform: uppercase;
+}
+
+/* Estilo do botão secundário (Vazado, discreto) */
+.btnSecundario {
+  background-color: transparent;
+  color: var(--amarelo-principal);
+  border: 2px solid var(--amarelo-principal);
+}
+
+/* Estilo base para AMBOS os botões */
+.btn {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   max-width: 350px;
   padding: 1rem 2rem;
-  font-weight: bold;
   text-decoration: none;
   border-radius: 8px;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease;
   font-size: 1.1rem;
-  border: 2px solid transparent;
   cursor: pointer;
 }
 
-.cadastroButton {
-  background-color: #2d3748;
-  color: white;
+.btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }
 
-.cadastroButton:hover {
-  background-color: #1a202c;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+/* Efeito de hover específico para o botão primário */
+.btnPrimario:hover {
+  background-color: var(--dourado-detalhe);
+  border-color: var(--amarelo-principal);
 }
 
-.consultaButton {
-  background-color: #ffffff;
-  color: #2d3748;
-  border-color: #e2e8f0;
+/* Efeito de hover específico para o botão secundário */
+.btnSecundario:hover {
+  background-color: var(--amarelo-principal);
+  color: var(--preto);
 }
 
-.consultaButton:hover {
-  background-color: #edf2f7;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
+
+/* ===== SEÇÃO DE CONSULTA E RECOMPENSAS ===== */
 
 .consultaSection {
   width: 100%;
   animation: fadeIn 0.5s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
+
+.recompensasSection {
+  width: 100%;
+  margin-top: 2rem;
+  /* Estilo de "card" escuro, como uma lousa de bar */
+  background-color: #262626; 
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #444;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.recompensasSection h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--amarelo-principal);
+  text-transform: uppercase;
+}
+
+.recompensasList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recompensaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid #444;
+  transition: background-color 0.3s ease;
+}
+
+.recompensaItem:last-child {
+  border-bottom: none;
+}
+
+.recompensaNome {
+  color: #e0e0e0;
+}
+
+.recompensaPontos {
+  font-weight: bold;
+  color: var(--preto);
+  background-color: var(--amarelo-principal);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px; /* Formato de pílula */
+  font-size: 0.875rem;
+}
+
+/* Destaque para prêmios que o cliente pode resgatar */
+.resgatavel {
+  background-color: rgba(209, 143, 40, 0.1);
+  border-left: 4px solid var(--dourado-detalhe); 
+  padding-left: 1rem;
+}
+
+/* ===== RODAPÉ E LINKS ===== */
 
 .backLink {
   display: inline-block;
-  margin-top: 1.5rem;
-  color: #718096;
+  margin-top: 2rem;
+  color: #aaa;
   font-size: 0.9rem;
   text-decoration: none;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0.5rem;
+  transition: color 0.3s;
 }
 
 .backLink:hover {
-  color: #2d3748;
-  text-decoration: underline;
+  color: var(--amarelo-principal);
 }
 
 .footer {
+  /* Mantido fixo para fácil acesso do operador */
   position: fixed;
-  bottom: 0px;
-  width: 100%;
-  text-align: center;
-  color: #2d3748;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  text-decoration: underline;
-  max-width: 500px;
-  margin-top: 40px
+  bottom: 1rem;
+  right: 1.5rem;
+  width: auto;
+  text-align: right;
 }
 
 .adminLink {
-  color: #718096;
+  color: #aaa;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s;
+  padding: 0.5rem;
+  background-color: rgba(0,0,0,0.3);
+  border-radius: 6px;
 }
 
 .adminLink:hover {
-  color: #2d3748;
+  color: var(--branco);
 }
 
-/* Animações */
+/* ===== ANIMAÇÕES (Mantidas) ===== */
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -145,61 +237,3 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-/* --- ESTILOS PARA A SEÇÃO DE RECOMPENSAS --- */
-
-.recompensasSection {
-  width: 100%;
-  margin-top: 2rem;
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.recompensasSection h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 1rem;
-  color: #2d3748;
-}
-
-.recompensasList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.recompensaItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
-
-.recompensaItem:last-child {
-  border-bottom: none;
-}
-
-.recompensaNome {
-  color: #4a5568;
-}
-
-.recompensaPontos {
-  font-weight: bold;
-  color: #2d3748;
-  background-color: #edf2f7;
-  padding: 0.25rem 0.5rem;
-  border-radius: 5px;
-  font-size: 0.875rem;
-}
-
-.resgatavel {
-  background-color: #c6f6d5; /* Verde bem claro */
-  border-left: 4px solid #38a169; /* Borda verde escura */
-}
-
