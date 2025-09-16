@@ -1,7 +1,7 @@
 
 
 
-# Sistema de Fidelidade para Restaurantes V.2.4
+# Sistema de Fidelidade para Restaurantes (Padrão)
 
 Um sistema de fidelidade full-stack desenvolvido para digitalizar e automatizar o programa de pontos de um restaurante familiar. O projeto transforma um processo manual em uma aplicação web rápida, intuitiva e escalável.
 
@@ -145,15 +145,7 @@ A aplicação está totalmente na nuvem com a seguinte arquitetura:
 
 Essa arquitetura garante que a aplicação seja escalável, segura e resiliente.
 
----
 
-## 🔮 Melhorias Futuras
-
-O projeto está funcional, mas há planos para evoluí-lo:
-
-- [ ] **Sistema de Login:** Autenticação para administradores e talvez para clientes consultarem seus próprios pontos.
-- [ ] **Dashboard Analítico:** Um painel para o dono do estabelecimento com gráficos e dados sobre os clientes mais engajados e as recompensas mais populares.
-- [ ] **Integração com API Fiscal:** Estudar a viabilidade de integrar com APIs da Receita Federal para capturar dados da nota fiscal (CPF e valor) automaticamente via QR Code, eliminando a digitação manual.
 
 ---
 
