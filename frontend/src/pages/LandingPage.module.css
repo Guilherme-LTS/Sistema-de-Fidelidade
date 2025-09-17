@@ -1,15 +1,13 @@
 /*
   ============================================
-  Botteco Videokê - Landing Page Styles V2
+  Botteco Videokê - Landing Page Styles (Premium)
   ============================================
-  Autor: Gemini (para Guilherme)
-  Filosofia: Criar uma experiência imersiva que combine o clássico
-  de um boteco com a modernidade de uma aplicação premium.
-  Foco em micro-interações, tipografia e hierarquia visual.
+  Filosofia: Criar uma experiência imersiva e premium que
+  reflita a identidade de um boteco moderno e divertido.
+  Foco em micro-interações, detalhes visuais e clareza.
 */
 
-/* ===== FUNDAÇÃO: Variáveis e Fundo ===== */
-
+/* ===== FUNDAÇÃO E VARIÁVEIS ===== */
 :root {
   --preto: #0d0d0d;
   --amarelo-principal: #F4C542;
@@ -20,81 +18,71 @@
   --borda-suave: rgba(244, 197, 66, 0.2);
 }
 
+/* ===== ESTRUTURA DA PÁGINA ===== */
 .pageContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 2rem;
+  padding: 2rem 1rem;
   background-color: var(--preto);
-  /* Gradiente sutil para criar um "foco de luz", como um palco */
+  /* Efeito de luz sutil no fundo */
   background-image: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.05) 0%, var(--preto) 60%);
-  text-align: center;
   color: var(--branco);
-  overflow: hidden; /* Previne barras de rolagem de animações */
+  font-family: 'Montserrat', sans-serif;
+  text-align: center;
+  overflow-x: hidden;
 }
 
-/* ===== CONTAINER PRINCIPAL ("O Palco") ===== */
-
+/* ===== CARD PRINCIPAL ===== */
 .mainContent {
   width: 100%;
-  max-width: 550px;
-  background-color: var(--fundo-card);
+  max-width: 600px;
+  background: var(--fundo-card);
   border: 1px solid var(--borda-suave);
   border-radius: 16px;
-  padding: clamp(1.5rem, 5vw, 3rem); /* Padding responsivo */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--borda-suave);
-  backdrop-filter: blur(10px); /* Efeito de vidro para navegadores que suportam */
+  padding: clamp(1.5rem, 5vw, 3rem);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
-/* ===== CABEÇALHO (HEADER) ===== */
-
-.header {
-  margin-bottom: 2.5rem;
-  animation: fadeInDown 0.8s ease-out both;
-}
-
+/* ===== CABEÇALHO ===== */
 .header h1 {
-  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  font-size: clamp(2rem, 6vw, 3rem);
   font-weight: 700;
   color: var(--amarelo-principal);
   text-transform: uppercase;
   letter-spacing: 2px;
-  /* Efeito de "letreiro" sutil */
-  text-shadow: 0 0 5px rgba(244, 197, 66, 0.3), 0 0 15px rgba(244, 197, 66, 0.2);
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 8px rgba(244, 197, 66, 0.3);
 }
 
 .header p {
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: var(--cinza-texto);
-  margin-top: 0.75rem;
+  margin-bottom: 2.5rem;
   max-width: 450px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* ===== ÁREA DE ESCOLHA ===== */
-
+/* ===== BOTÕES DE ESCOLHA ===== */
 .escolhaContainer {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
   align-items: center;
-  animation: fadeInUp 0.8s 0.2s ease-out both; /* Delay para entrar após o header */
 }
 
-/* ===== BOTÕES (DESIGN PREMIUM) ===== */
-
-/* Estilo Base */
 .btn {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   max-width: 380px;
-  padding: 1rem;
-  font-weight: 700; /* Bold */
+  padding: 1rem 2rem;
+  font-weight: 700;
   text-decoration: none;
   border-radius: 10px;
   font-size: 1.1rem;
@@ -105,7 +93,6 @@
   text-transform: uppercase;
 }
 
-/* Botão Primário (Ação Principal) */
 .btnPrimario {
   background-color: var(--amarelo-principal);
   color: var(--preto);
@@ -118,7 +105,6 @@
   box-shadow: 0 8px 25px rgba(209, 143, 40, 0.3);
 }
 
-/* Botão Secundário (Ação Alternativa) */
 .btnSecundario {
   background-color: transparent;
   color: var(--amarelo-principal);
@@ -126,21 +112,18 @@
 }
 
 .btnSecundario:hover {
-  transform: translateY(-4px);
   background-color: var(--amarelo-principal);
   color: var(--preto);
-  box-shadow: 0 6px 20px rgba(244, 197, 66, 0.25);
+  transform: translateY(-4px);
 }
 
 /* ===== SEÇÃO DE CONSULTA E RECOMPENSAS ===== */
-
 .consultaSection {
   width: 100%;
-  animation: fadeIn 0.6s ease-out;
+  animation: fadeIn 0.5s ease-out;
 }
 
 .recompensasSection {
-  width: 100%;
   margin-top: 2rem;
   text-align: left;
 }
@@ -152,14 +135,13 @@
   margin-bottom: 1.5rem;
   color: var(--amarelo-principal);
   text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .recompensasList {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 250px; /* Altura máxima com scroll, se necessário */
+  max-height: 250px;
   overflow-y: auto;
   padding-right: 10px; /* Espaço para a barra de rolagem */
 }
@@ -168,44 +150,57 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  margin-bottom: 0.75rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #333;
   transition: all 0.3s ease;
-  animation: popIn 0.5s ease-out both;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: slideIn 0.5s forwards;
+}
+
+.recompensaItem:last-child {
+  border-bottom: none;
 }
 
 .recompensaNome {
-  color: var(--branco);
-  font-weight: 500;
+  color: var(--cinza-texto);
 }
 
 .recompensaPontos {
   font-weight: bold;
-  color: var(--preto);
-  background-color: var(--dourado-detalhe);
-  padding: 0.35rem 0.85rem;
-  border-radius: 50px;
+  color: var(--amarelo-principal);
+  background-color: #2a2a2a;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
   font-size: 0.9rem;
-  white-space: nowrap; /* Evita quebra de linha */
-  margin-left: 1rem;
 }
 
-/* Destaque para prêmios que o cliente pode resgatar */
+/* ===== ESTILO PARA ITEM RESGATÁVEL (A CORREÇÃO) ===== */
 .resgatavel {
   background-color: rgba(244, 197, 66, 0.1);
-  border-color: var(--borda-suave);
+  border-left: 3px solid var(--amarelo-principal);
+  transform: scale(1.02);
+  border-radius: 4px;
 }
 
 .resgatavel .recompensaNome {
-  color: var(--amarelo-principal);
+  color: var(--branco);
+  font-weight: 600;
 }
 
-/* ===== LINKS E RODAPÉ ===== */
+.resgatavel .recompensaPontos {
+  background-color: var(--amarelo-principal);
+  color: var(--preto);
+  box-shadow: 0 0 10px rgba(244, 197, 66, 0.4);
+}
+
+
+/* ===== RODAPÉ E LINKS ===== */
+.backLink, .footer {
+  margin-top: 2rem;
+}
 
 .backLink, .adminLink {
-  display: inline-block;
   color: var(--cinza-texto);
   font-size: 0.9rem;
   text-decoration: none;
@@ -216,36 +211,16 @@
   transition: color 0.3s ease;
 }
 
-.backLink {
-  margin-top: 2rem;
-}
-
 .backLink:hover, .adminLink:hover {
   color: var(--amarelo-principal);
 }
 
 .footer {
-  position: absolute; /* Posição absoluta relativa ao body */
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
+  text-align: center;
 }
 
-
-/* ===== ANIMAÇÕES E EFEITOS ESPECIAIS ===== */
-
-
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* ===== ANIMAÇÕES ===== */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
@@ -256,15 +231,26 @@
   to { opacity: 1; }
 }
 
-/* Scrollbar customizada para a lista */
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== BARRA DE ROLAGEM CUSTOMIZADA ===== */
 .recompensasList::-webkit-scrollbar {
   width: 6px;
 }
 .recompensasList::-webkit-scrollbar-track {
-  background: transparent;
+  background: #222;
+  border-radius: 10px;
 }
 .recompensasList::-webkit-scrollbar-thumb {
-  background-color: var(--dourado-detalhe);
+  background: var(--dourado-detalhe);
   border-radius: 10px;
+}
+.recompensasList::-webkit-scrollbar-thumb:hover {
+  background: var(--amarelo-principal);
 }
 
