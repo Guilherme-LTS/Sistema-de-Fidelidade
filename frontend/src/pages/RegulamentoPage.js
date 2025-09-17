@@ -1,4 +1,3 @@
-// frontend/src/pages/RegulamentoPage.js
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styles from './RegulamentoPage.module.css';
@@ -7,8 +6,8 @@ function RegulamentoPage() {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.content}>
-        <h1>Regulamento do Programa de Fidelidade & Política de Privacidade</h1>
-        <p><strong>Última atualização: 03 de Setembro de 2025</strong></p>
+        <h1>Regulamento & Privacidade</h1>
+        <p className={styles.updateInfo}><strong>Última atualização: 03 de Setembro de 2025</strong></p>
         <p>Bem-vindo ao nosso programa de fidelidade! Ao se cadastrar, você concorda com os termos e condições descritos abaixo.</p>
 
         <h3>1. Como Funciona o Programa</h3>
@@ -32,7 +31,7 @@ function RegulamentoPage() {
           <li>Uma vez resgatados, os pontos não poderão ser estornados.</li>
         </ul>
 
-        <h3>4. Política de Privacidade e LGPD (Lei Geral de Proteção de Dados)</h3>
+        <h3>4. Política de Privacidade e LGPD</h3>
         <p>Nós levamos a sua privacidade a sério. Esta política descreve como coletamos e utilizamos seus dados.</p>
         <ul>
           <li><strong>Dados Coletados:</strong> Coletamos apenas seu nome completo e CPF para a finalidade exclusiva de administrar sua participação no programa de fidelidade.</li>

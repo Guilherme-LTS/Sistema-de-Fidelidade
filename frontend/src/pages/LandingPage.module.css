@@ -1,11 +1,4 @@
-/*
-  ============================================
-  Botteco Videokê - Landing Page Styles (Premium)
-  ============================================
-  Filosofia: Criar uma experiência imersiva e premium que
-  reflita a identidade de um boteco moderno e divertido.
-  Foco em micro-interações, detalhes visuais e clareza.
-*/
+
 
 /* ===== FUNDAÇÃO E VARIÁVEIS ===== */
 :root {
@@ -16,6 +9,7 @@
   --cinza-texto: #c7c7c7;
   --fundo-card: #1a1a1a;
   --borda-suave: rgba(244, 197, 66, 0.2);
+  --input-fundo: #252525;
 }
 
 /* ===== ESTRUTURA DA PÁGINA ===== */
@@ -123,6 +117,129 @@
   animation: fadeIn 0.5s ease-out;
 }
 
+.consultaSaldoWrapper {
+  margin-bottom: 2.5rem;
+}
+
+.consultaSaldoWrapper > div:first-child {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.consultaSaldoWrapper h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--branco);
+}
+
+.consultaSaldoWrapper label {
+  color: var(--cinza-texto);
+  text-align: left;
+}
+
+.consultaSaldoWrapper input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background-color: var(--input-fundo);
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: var(--branco);
+  transition: all 0.3s ease;
+}
+
+.consultaSaldoWrapper input:focus {
+  outline: none;
+  border-color: var(--amarelo-principal);
+  box-shadow: 0 0 10px rgba(244, 197, 66, 0.2);
+}
+
+.consultaSaldoWrapper button {
+  /* Reutiliza a aparência do botão primário */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background-color: var(--amarelo-principal);
+  color: var(--preto);
+  box-shadow: 0 4px 15px rgba(244, 197, 66, 0.2);
+  margin-top: 1rem;
+}
+
+.consultaSaldoWrapper button:hover {
+  transform: translateY(-4px) scale(1.03);
+  background-color: var(--dourado-detalhe);
+  box-shadow: 0 8px 25px rgba(209, 143, 40, 0.3);
+}
+
+.consultaSaldoWrapper button:disabled {
+  background-color: #555;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Estilos para a área de resultado da consulta */
+.consultaSaldoWrapper > div > div:last-child {
+  margin-top: 2rem;
+  border-top: 1px solid var(--borda-suave);
+  padding-top: 2rem;
+}
+
+.consultaSaldoWrapper p:first-child { /* welcomeMessage */
+  color: var(--cinza-texto);
+}
+
+.consultaSaldoWrapper div[class*="pointsDisplay"] {
+  background-color: rgba(0,0,0,0.2);
+  border: 1px solid var(--borda-suave);
+  color: var(--branco);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.consultaSaldoWrapper span[class*="pointsLabel"] {
+  color: var(--amarelo-principal);
+  opacity: 1;
+}
+
+.consultaSaldoWrapper span[class*="pointsValue"] {
+  font-size: 3rem;
+  font-weight: bold;
+  line-height: 1;
+  color: var(--branco);
+}
+
+.consultaSaldoWrapper p[class*="infoMessage"] {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--cinza-texto);
+}
+
+.consultaSaldoWrapper p[class*="warningMessage"] {
+  background-color: rgba(209, 143, 40, 0.2);
+  color: var(--amarelo-principal);
+  border: 1px solid rgba(209, 143, 40, 0.5);
+}
+
+
+/* ===== SEÇÃO DE RECOMPENSAS ===== */
 .recompensasSection {
   margin-top: 2rem;
   text-align: left;
