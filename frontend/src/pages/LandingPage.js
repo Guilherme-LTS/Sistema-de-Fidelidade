@@ -61,7 +61,9 @@ function LandingPage() {
 
         {view === 'consulta' && (
           <div className={styles.consultaSection}>
-            <ConsultaSaldo onNotFound={handleClienteNaoEncontrado} onConsulta={handleConsulta} />
+            <div className={styles.consultaSaldoWrapper}>
+              <ConsultaSaldo onNotFound={handleClienteNaoEncontrado} onConsulta={handleConsulta} />
+            </div>
             
             {/* Seção de recompensas, agora dentro da visão de consulta */}
             <div className={styles.recompensasSection}>
