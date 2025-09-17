@@ -50,10 +50,10 @@ function LandingPage() {
       <main className={styles.mainContent}>
         {view === 'escolha' && (
           <div className={styles.escolhaContainer}>
-            <Link to="/cadastro" className={styles.cadastroButton}>
+            <Link to="/cadastro" className={`${styles.btn} ${styles.btnPrimario}`}>
               Quero Fazer Meu Cadastro
             </Link>
-            <button onClick={() => setView('consulta')} className={styles.consultaButton}>
+            <button onClick={() => setView('consulta')} className={`${styles.btn} ${styles.btnSecundario}`}>
               Já Tenho Cadastro
             </button>
           </div>
