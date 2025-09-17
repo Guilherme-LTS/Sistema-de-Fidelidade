@@ -46,7 +46,7 @@ function CadastroPage() {
       if (!response.ok) {
         throw new Error(data.error || 'Falha ao realizar o cadastro.');
       }
-      toast.success('Cadastro realizado com sucesso! Agora você já pode consultar seus pontos na página inicial.');
+      toast.success('Cadastro realizado com sucesso! Bem-vindo(a) ao clube!');
       navigate('/'); // Redireciona para a página inicial
     } catch (error) {
       toast.error(error.message);
@@ -65,7 +65,6 @@ function CadastroPage() {
           Cadastre-se para começar a juntar pontos e resgatar prêmios.
         </p>
         <form onSubmit={handleSubmit}>
-          <div className={styles.stack}>
             <div className={styles.formGroup}>
               <label htmlFor="nome" className={styles.label}>Nome Completo</label>
               <input
@@ -99,17 +98,16 @@ function CadastroPage() {
                 className={styles.checkbox}
               />
               <label htmlFor="consentimento" className={styles.checkboxLabel}>
-                Li e aceito o <Link to="/regulamento" target="_blank">Regulamento do Programa</Link> e a Política de Privacidade.
+                Li e aceito o <Link to="/regulamento" target="_blank">Regulamento</Link> e a Política de Privacidade.
               </label>
             </div>
             <button
               type="submit"
               className={styles.button}
-              disabled={carregando}
+              disabled={carregando || !consentimento || !nome || !cpf}
             >
               {carregando ? 'Cadastrando...' : 'Confirmar Cadastro'}
             </button>
-          </div>
         </form>
         <Link to="/" className={styles.backLink}>
           &larr; Voltar para a página inicial
