@@ -1,5 +1,5 @@
 // frontend/src/components/Layout.js
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import styles from './Layout.module.css';
 import { getUser } from '../auth/auth'; 
@@ -9,6 +9,17 @@ function Layout() {
   
   const usuario = getUser();
 
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') {
+        setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/';
@@ -16,10 +27,20 @@ function Layout() {
 
   return (
     <div className={styles.layoutContainer}>
-      <button className={styles.menuButton} onClick={() => setSidebarOpen(!sidebarOpen)}>
+      <button
+        className={styles.menuButton}
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label={sidebarOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+        aria-controls="admin-sidebar"
+        aria-expanded={sidebarOpen}
+      >
         <span className={styles.menuIcon}>&#9776;</span>
       </button>
-      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
+      <aside
+        id="admin-sidebar"
+        className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}
+        aria-label="Navegação do painel administrativo"
+      >
         <div className={styles.sidebarHeader}>
           <h3>Fidelidade</h3>
           {/* Mostra o nome e o cargo do usuário */}
@@ -57,6 +78,7 @@ function Layout() {
           </button>
         </div>
       </aside>
+      {sidebarOpen && <div className={styles.mobileOverlay} onClick={() => setSidebarOpen(false)} aria-hidden="true" />}
       <main className={styles.mainContent}>
         <Outlet />
       </main>

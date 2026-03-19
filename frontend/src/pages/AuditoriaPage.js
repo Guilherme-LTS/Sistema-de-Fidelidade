@@ -51,30 +51,36 @@ function AuditoriaPage() {
       <p>Acompanhe todos os lançamentos e resgates realizados no sistema.</p>
       
       <div className={styles.tableContainer}>
-        <table className={styles.logTable}>
-          <thead>
-            <tr>
-              <th>Data e Hora</th>
-              <th>Operador</th>
-              <th>Cliente</th>
-              <th>Ação</th>
-              <th>Pontos</th>
-            </tr>
-          </thead>
-          <tbody>
-            {log.map((item, index) => (
-              <tr key={index}>
-                <td>{formatarData(item.data)}</td>
-                <td>{item.nome_operador}</td>
-                <td>{item.nome_cliente || 'N/A'}</td>
-                <td>{item.acao}</td>
-                <td className={item.pontos > 0 ? styles.credito : styles.debito}>
-                  {item.pontos > 0 ? `+${item.pontos}` : item.pontos}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {log.length === 0 ? (
+          <p className={styles.emptyState}>Nenhuma atividade registrada ainda.</p>
+        ) : (
+          <div className={styles.tableWrapper}>
+            <table className={styles.logTable}>
+              <thead>
+                <tr>
+                  <th>Data e Hora</th>
+                  <th>Operador</th>
+                  <th>Cliente</th>
+                  <th>Ação</th>
+                  <th>Pontos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {log.map((item, index) => (
+                  <tr key={index}>
+                    <td>{formatarData(item.data)}</td>
+                    <td>{item.nome_operador}</td>
+                    <td>{item.nome_cliente || 'N/A'}</td>
+                    <td>{item.acao}</td>
+                    <td className={item.pontos > 0 ? styles.credito : styles.debito}>
+                      {item.pontos > 0 ? `+${item.pontos}` : item.pontos}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

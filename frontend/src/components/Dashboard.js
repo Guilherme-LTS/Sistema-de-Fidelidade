@@ -76,17 +76,44 @@ function Dashboard() {
     ],
   };
 
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+        },
+      },
+    },
+  };
+
   if (loading) {
     return (
-      <div className={styles.Container}>
+      <div className={styles.dashboardContainer} aria-busy="true" aria-live="polite">
+        <h2 className={styles.dashboardTitle}>Dashboard Analitico</h2>
+        <div className={styles.grid}>
+          <div className={`${styles.card} ${styles.skeletonCard}`} />
+          <div className={`${styles.card} ${styles.skeletonCard}`} />
+        </div>
+        <div className={styles.grid}>
+          <div className={`${styles.card} ${styles.skeletonCardTall}`} />
+          <div className={`${styles.card} ${styles.skeletonCardTall}`} />
+        </div>
         <div className={styles.spinnerContainer}>
-          <Spinner />
+          <Spinner size="small" />
+          <span>Carregando indicadores...</span>
         </div>
       </div>
     );
   }  
 
-  if (error) return <p className={styles.error}>{error}</p>;
+  if (error) return <p className={styles.error} role="alert">{error}</p>;
   if (!stats) return null;
 
   return (
@@ -109,18 +136,26 @@ function Dashboard() {
       <div className={styles.grid}>
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>Top 5 Clientes</h3>
-          <ul className={styles.list}>
-            {stats.topClientes.map((cliente, index) => (
-              <li key={index} className={styles.listItem}>
-                <span>{cliente.nome || `CPF: ...${cliente.cpf.slice(-4)}`}</span>
-                <span className={styles.points}>{cliente.pontos_disponiveis} pts</span>
-              </li>
-            ))}
-          </ul>
+          {stats.topClientes.length === 0 ? (
+            <p className={styles.emptyState}>Ainda nao ha clientes com saldo para exibir.</p>
+          ) : (
+            <ul className={styles.list}>
+              {stats.topClientes.map((cliente, index) => (
+                <li key={index} className={styles.listItem}>
+                  <span>{cliente.nome || `CPF: ...${cliente.cpf.slice(-4)}`}</span>
+                  <span className={styles.points}>{cliente.pontos_disponiveis} pts</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>Recompensas Mais Populares</h3>
-          <Bar data={chartData} options={{ responsive: true }} />
+          {stats.recompensasPopulares.length === 0 ? (
+            <p className={styles.emptyState}>Nenhum resgate registrado ate o momento.</p>
+          ) : (
+            <Bar data={chartData} options={chartOptions} />
+          )}
         </div>
       </div>
     </div>

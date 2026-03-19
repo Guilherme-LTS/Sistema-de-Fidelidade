@@ -1,15 +1,16 @@
 /* frontend/src/pages/ClientesPage.module.css */
 .container {
   padding: 1rem;
-  height: calc(100vh - 4rem); /* Altura total menos o padding */
+  height: calc(100vh - 3rem);
   display: flex;
   flex-direction: column;
 }
 
 .container h1 {
-  font-size: 2.25rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
+  font-size: clamp(1.35rem, 2.5vw, 2.1rem);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #12263b;
 }
 
 .searchBar {
@@ -18,25 +19,28 @@
 
 .searchBar input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 6px;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #c8d2df;
+  border-radius: 10px;
   font-size: 1rem;
+  background: #fff;
 }
 
 .mainGrid {
   display: grid;
-  grid-template-columns: 300px 1fr; /* Coluna fixa para a lista, resto para os detalhes */
-  gap: 2rem;
+  grid-template-columns: 320px 1fr;
+  gap: 1rem;
   flex-grow: 1;
-  overflow: hidden; /* Evita que o layout quebre */
+  overflow: hidden;
 }
 
 .listaClientes {
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  overflow-y: auto; /* Adiciona scroll se a lista for grande */
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  overflow-y: auto;
+  padding: 0.5rem;
 }
 
 .listaClientes ul {
@@ -46,37 +50,47 @@
 }
 
 .listaClientes li {
-  padding: 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  cursor: pointer;
+  border-bottom: 1px solid #ecf1f6;
   transition: background-color 0.2s;
 }
 
 .listaClientes li:hover {
-  background-color: #f7fafc;
+  background-color: #f7fbfd;
 }
 
 .listaClientes li.ativo {
-  background-color: #ebf8ff;
-  border-left: 4px solid #3182ce;
+  background-color: #ecf8f6;
+  border-left: 4px solid #0f766e;
+}
+
+.clienteButton {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.9rem;
+  cursor: pointer;
+  border-radius: 8px;
 }
 
 .nomeCliente {
   display: block;
   font-weight: 600;
+  color: #1f3348;
 }
 
 .cpfCliente {
   display: block;
   font-size: 0.875rem;
-  color: #718096;
+  color: #607287;
 }
 
 .detalhesCliente {
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 1.2rem;
   overflow-y: auto;
 }
 
@@ -85,7 +99,7 @@
   justify-content: center;
   align-items: center;
   height: 100%;
-  color: #a0aec0;
+  color: #71869a;
 }
 
 /* Reutilizando estilos que já temos */
@@ -103,9 +117,10 @@
 }
 
 .summaryCard {
-  background-color: #f7fafc;
-  padding: 1.5rem;
-  border-radius: 8px;
+  background-color: #f6fafb;
+  border: 1px solid #dce8ef;
+  padding: 1rem;
+  border-radius: 10px;
   text-align: center;
 }
 
@@ -116,8 +131,8 @@
 }
 
 .summaryCard p {
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 1.8rem;
+  font-weight: 800;
 }
 
 .detalhesCliente h3 {
@@ -126,6 +141,10 @@
   margin-bottom: 1rem;
   border-top: 1px solid #e2e8f0;
   padding-top: 1.5rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
 }
 
 .extratoTable {
@@ -140,7 +159,8 @@
 }
 
 .extratoTable th {
-  background-color: #f7fafc;
+  background-color: #f6fafb;
+  color: #40576b;
 }
 
 .credito {
@@ -162,10 +182,19 @@
   padding: 2rem;
 }
 
+.emptyState {
+  margin: 0.65rem;
+  padding: 0.9rem;
+  background: #f7fafd;
+  border: 1px dashed #cfdceb;
+  border-radius: 10px;
+  color: #53677a;
+}
+
 /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
 @media (max-width: 992px) {
   .container {
-    margin-top: 50px; 
+    margin-top: 50px;
   }
 
   .mainGrid {
@@ -173,7 +202,7 @@
   }
 
   .listaClientes {
-    max-height: 300px; 
+    max-height: 320px;
     margin-bottom: 1.5rem;
   }
 
@@ -201,7 +230,7 @@
     font-size: 0.95rem;
   }
   .container h1 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     margin-bottom: 1rem;
   }
   .searchBar input {
@@ -230,7 +259,7 @@
     font-size: 0.9rem;
   }
   .container h1 {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     margin-bottom: 0.5rem;
   }
 }

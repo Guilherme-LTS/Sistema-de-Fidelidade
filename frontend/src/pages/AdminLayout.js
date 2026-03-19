@@ -1,6 +1,6 @@
 // frontend/src/pages/AdminLayout.js
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import Layout from '../components/Layout'; // Nosso componente visual com a sidebar
 
 function AdminLayout() {
