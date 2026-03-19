@@ -13,6 +13,7 @@ import OperacoesPage from './pages/OperacoesPage';
 import ClientesPage from './pages/ClientesPage';
 import PremiosPage from './pages/PremiosPage';
 import AuditoriaPage from './pages/AuditoriaPage';
+import ConfiguracoesPage from './pages/ConfiguracoesPage';
 import RegulamentoPage from './pages/RegulamentoPage';
 import CadastroPage from './pages/CadastroPage';
 
@@ -38,6 +39,7 @@ function App() {
           <Route path="dashboard" element={<AdminRoute><DashboardPage /></AdminRoute>} />
           <Route path="premios" element={<AdminRoute><PremiosPage /></AdminRoute>} />
           <Route path="auditoria" element={<AdminRoute><AuditoriaPage /></AdminRoute>} />
+          <Route path="configuracoes" element={<AdminRoute><ConfiguracoesPage /></AdminRoute>} />
           
           {/* Rotas de Operador (e Admin) */}
           <Route path="operacoes" element={<OperacoesPage />} />

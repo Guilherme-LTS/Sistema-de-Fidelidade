@@ -49,13 +49,30 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     // 1. Pegamos o ID do operador que está logado, vindo do token
     const operadorId = req.usuario.id;
     
+    // Obter configuração de expiração
+    const configRes = await client.query("SELECT valor, unidade FROM configuracoes WHERE chave = 'expiracao_pontos'");
+    let confValor = 6;
+    let confUnidade = 'meses';
+    if (configRes.rows.length > 0) {
+      confValor = configRes.rows[0].valor;
+      confUnidade = configRes.rows[0].unidade;
+    }
+
     const pontosGanhos = Math.floor(valor);
     const diasParaLiberacao = 0; 
-    const diasParaVencimento = 180;
 
     const agora = new Date();
     const data_liberacao = new Date(new Date(agora).setDate(agora.getDate() + diasParaLiberacao));
-    const data_vencimento = new Date(new Date(agora).setDate(agora.getDate() + diasParaVencimento));
+    
+    const data_vencimento = new Date(agora);
+    if (confUnidade === 'dias') {
+      data_vencimento.setDate(data_vencimento.getDate() + confValor);
+    } else if (confUnidade === 'anos') {
+      data_vencimento.setFullYear(data_vencimento.getFullYear() + confValor);
+    } else {
+      // default: meses
+      data_vencimento.setMonth(data_vencimento.getMonth() + confValor);
+    }
     
     await client.query('BEGIN');
     let resCliente = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
@@ -166,7 +183,8 @@ app.get('/clientes/:cpf', async (req, res) => {
       `SELECT COALESCE(SUM(pontos_gastos), 0) as total FROM resgates WHERE cliente_id = $1`,
       [clienteId]
     );
-    const pontosDisponiveis = parseInt(creditosResult.rows[0].total) - parseInt(debitosResult.rows[0].total);
+    let pontosDisponiveis = parseInt(creditosResult.rows[0].total) - parseInt(debitosResult.rows[0].total);
+    if (pontosDisponiveis < 0) pontosDisponiveis = 0;
 
     const pontosPendentesResult = await db.query(
       `SELECT COALESCE(SUM(pontos_ganhos), 0) as total FROM transacoes WHERE cliente_id = $1 AND data_liberacao > NOW()`,
@@ -271,7 +289,8 @@ app.post('/resgates', verificaToken, async (req, res) => {
 
     const creditosResult = await client.query(`SELECT COALESCE(SUM(pontos_ganhos), 0) as total FROM transacoes WHERE cliente_id = $1 AND data_liberacao <= NOW() AND data_vencimento > NOW()`, [cliente.id]);
     const debitosResult = await client.query(`SELECT COALESCE(SUM(pontos_gastos), 0) as total FROM resgates WHERE cliente_id = $1`, [cliente.id]);
-    const pontosDisponiveis = parseInt(creditosResult.rows[0].total) - parseInt(debitosResult.rows[0].total);
+    let pontosDisponiveis = parseInt(creditosResult.rows[0].total) - parseInt(debitosResult.rows[0].total);
+    if (pontosDisponiveis < 0) pontosDisponiveis = 0;
     if (pontosDisponiveis < recompensa.custo_pontos) { throw new Error('Pontos disponíveis insuficientes.'); }
 
     // 2. Na hora de inserir o resgate, salvamos também o ID do operador
@@ -521,8 +540,11 @@ app.get('/dashboard/stats', verificaToken, async (req, res) => {
       SELECT
         c.nome,
         c.cpf,
-        (SELECT COALESCE(SUM(t.pontos_ganhos), 0) FROM transacoes t WHERE t.cliente_id = c.id AND t.data_liberacao <= NOW() AND t.data_vencimento > NOW()) - 
-        (SELECT COALESCE(SUM(r.pontos_gastos), 0) FROM resgates r WHERE r.cliente_id = c.id) as pontos_disponiveis
+        GREATEST(
+          (SELECT COALESCE(SUM(t.pontos_ganhos), 0) FROM transacoes t WHERE t.cliente_id = c.id AND t.data_liberacao <= NOW() AND t.data_vencimento > NOW()) - 
+          (SELECT COALESCE(SUM(r.pontos_gastos), 0) FROM resgates r WHERE r.cliente_id = c.id), 
+          0
+        ) as pontos_disponiveis
       FROM
         clientes c
       ORDER BY
@@ -547,6 +569,42 @@ app.get('/dashboard/stats', verificaToken, async (req, res) => {
 });
 
 // backend/index.js
+
+
+// Rota GET /configuracoes/expiracao
+app.get('/configuracoes/expiracao', async (req, res) => {
+  try {
+    const result = await db.query("SELECT valor, unidade FROM configuracoes WHERE chave = 'expiracao_pontos'");
+    if (result.rows.length === 0) {
+      return res.status(200).json({ valor: 6, unidade: 'meses' }); // Default
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Rota PUT /configuracoes/expiracao
+app.put('/configuracoes/expiracao', verificaToken, async (req, res) => {
+  if (req.usuario.role !== 'admin') {
+    return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
+  }
+  const { valor, unidade } = req.body;
+  if (!valor || !unidade) return res.status(400).json({ error: 'Valores inválidos.' });
+
+  try {
+    const result = await db.query(
+      "UPDATE configuracoes SET valor = $1, unidade = $2 WHERE chave = 'expiracao_pontos' RETURNING *",
+      [valor, unidade]
+    );
+    if (result.rowCount === 0) {
+      await db.query("INSERT INTO configuracoes (chave, valor, unidade) VALUES ('expiracao_pontos', $1, $2)", [valor, unidade]);
+    }
+    res.status(200).json({ message: 'Configuração atualizada com sucesso!' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get('/admin/auditoria', verificaToken, async (req, res) => {
   // Apenas usuários com cargo 'admin' podem acessar esta rota

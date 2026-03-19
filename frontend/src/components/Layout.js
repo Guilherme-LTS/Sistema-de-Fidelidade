@@ -71,6 +71,11 @@ function Layout() {
               Auditoria
             </NavLink>
           )}
+          {usuario && usuario.role === 'admin' && (
+            <NavLink to="/admin/configuracoes" className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}>
+              Configurações
+            </NavLink>
+          )}
         </nav>
         <div className={styles.sidebarFooter}>
           <button onClick={handleLogout} className={styles.logoutButton}>
