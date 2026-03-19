@@ -4,21 +4,27 @@
 }
 
 .container h1 {
-  font-size: 2.25rem;
-  font-weight: bold;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: #11253b;
 }
 
 .container p {
   font-size: 1rem;
-  color: #718096;
-  margin-bottom: 2rem;
+  color: #61778b;
+  margin-bottom: 1rem;
 }
 
 .tableContainer {
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   overflow: hidden;
+}
+
+.tableWrapper {
+  overflow-x: auto;
 }
 
 .logTable {
@@ -33,9 +39,9 @@
 }
 
 .logTable th {
-  background-color: #f7fafc;
+  background-color: #f3f8fb;
   font-weight: 600;
-  color: #4a5568;
+  color: #3c5568;
 }
 
 .logTable tbody tr:last-child td {
@@ -43,13 +49,13 @@
 }
 
 .credito {
-  color: #38a169; /* Verde */
-  font-weight: bold;
+  color: #1f8a52;
+  font-weight: 700;
 }
 
 .debito {
-  color: #e53e3e; /* Vermelho */
-  font-weight: bold;
+  color: #c62828;
+  font-weight: 700;
 }
 
 .spinnerContainer {
@@ -57,4 +63,21 @@
   justify-content: center;
   align-items: center;
   padding: 4rem;
+}
+
+.emptyState {
+  margin: 0;
+  padding: 1.2rem;
+  color: #5f7588;
+  background: #f7fafd;
+  border: 1px dashed #d2dfeb;
+  border-radius: 10px;
+}
+
+@media (max-width: 760px) {
+  .logTable th,
+  .logTable td {
+    padding: 0.65rem;
+    font-size: 0.92rem;
+  }
 }

@@ -1,7 +1,7 @@
 /* frontend/src/components/Spinner.module.css */
 .spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #3182ce; /* Azul */
+  border: 4px solid rgba(15, 118, 110, 0.16);
+  border-left-color: #0f766e;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

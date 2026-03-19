@@ -89,7 +89,9 @@ function ClientesPage() {
     <div className={styles.container}>
       <h1>Clientes</h1>
       <div className={styles.searchBar}>
+        <label htmlFor="busca-cliente" className="srOnly">Buscar cliente por nome ou CPF</label>
         <input
+          id="busca-cliente"
           type="text"
           value={termoBusca}
           onChange={(e) => setTermoBusca(e.target.value)}
@@ -101,18 +103,25 @@ function ClientesPage() {
         <div className={styles.listaClientes}>
           {loading ? <div className={styles.spinnerContainer}><Spinner /></div> : (
             <>
-              <ul>
+              {clientes.length === 0 ? (
+                <p className={styles.emptyState}>Nenhum cliente encontrado para essa busca.</p>
+              ) : (
+                <ul>
                 {clientes.map(cliente => (
-                  <li 
-                    key={cliente.id} 
-                    onClick={() => handleSelecionarCliente(cliente)}
-                    className={clienteSelecionado?.id === cliente.id ? styles.ativo : ''}
-                  >
-                    <span className={styles.nomeCliente}>{cliente.nome || 'Nome não cadastrado'}</span>
-                    <span className={styles.cpfCliente}>{cliente.cpf}</span>
+                  <li key={cliente.id} className={clienteSelecionado?.id === cliente.id ? styles.ativo : ''}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelecionarCliente(cliente)}
+                      className={styles.clienteButton}
+                      aria-label={`Ver detalhes de ${cliente.nome || 'cliente sem nome'} CPF ${cliente.cpf}`}
+                    >
+                      <span className={styles.nomeCliente}>{cliente.nome || 'Nome não cadastrado'}</span>
+                      <span className={styles.cpfCliente}>{cliente.cpf}</span>
+                    </button>
                   </li>
                 ))}
-              </ul>
+                </ul>
+              )}
               {/* 2. Adicione o componente de paginação */}
               <Pagination 
                 paginaAtual={paginaAtual}
@@ -139,26 +148,32 @@ function ClientesPage() {
                   </div>
                 </div>
                 <h3>Extrato Completo</h3>
-                <table className={styles.extratoTable}>
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Descrição</th>
-                      <th>Pontos</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {extrato.map((item, index) => (
-                      <tr key={index}>
-                        <td>{formatarData(item.data)}</td>
-                        <td>{item.descricao}</td>
-                        <td className={item.tipo === 'credito' ? styles.credito : styles.debito}>
-                          {item.tipo === 'credito' ? `+${item.pontos}` : `-${item.pontos}`}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {extrato.length === 0 ? (
+                  <p className={styles.emptyState}>Este cliente ainda nao possui movimentacoes no extrato.</p>
+                ) : (
+                  <div className={styles.tableWrapper}>
+                    <table className={styles.extratoTable}>
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Descrição</th>
+                          <th>Pontos</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {extrato.map((item, index) => (
+                          <tr key={index}>
+                            <td>{formatarData(item.data)}</td>
+                            <td>{item.descricao}</td>
+                            <td className={item.tipo === 'credito' ? styles.credito : styles.debito}>
+                              {item.tipo === 'credito' ? `+${item.pontos}` : `-${item.pontos}`}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             ) : (
               <div className={styles.placeholder}>

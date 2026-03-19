@@ -1,6 +1,6 @@
 // frontend/src/pages/PremiosPage.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import styles from './PremiosPage.module.css';
 import Spinner from '../components/Spinner';
@@ -17,7 +17,7 @@ function PremiosPage() {
   const token = localStorage.getItem('token');
 
   // Função para buscar as recompensas
-  const fetchRecompensas = async () => {
+  const fetchRecompensas = useCallback(async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas`, {
         headers: { 'Authorization': `Bearer ${token}` },
@@ -30,11 +30,22 @@ function PremiosPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchRecompensas();
-  }, []);
+  }, [fetchRecompensas]);
+
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleCloseModal();
+      }
+    };
+
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isOpen]);
 
   const handleOpenModal = (recompensa = null) => {
     if (recompensa) {
@@ -147,31 +158,44 @@ function PremiosPage() {
           </tr>
         </thead>
         <tbody>
-          {recompensas.map(rec => (
-            <tr key={rec.id}>
-              <td>{rec.nome}</td>
-              <td>{rec.descricao}</td>
-              <td>{rec.custo_pontos}</td>
-              <td>
-                <div className={styles.actions}>
-                  <button className={styles.editButton} onClick={() => handleOpenModal(rec)}>Editar</button>
-                  <button className={styles.deleteButton} onClick={() => handleDelete(rec.id)}>Excluir</button>
-                </div>
-              </td>
+          {recompensas.length === 0 ? (
+            <tr>
+              <td colSpan="4" className={styles.emptyTable}>Nenhum premio cadastrado ainda.</td>
             </tr>
-          ))}
+          ) : (
+            recompensas.map(rec => (
+              <tr key={rec.id}>
+                <td>{rec.nome}</td>
+                <td>{rec.descricao || '-'}</td>
+                <td>{rec.custo_pontos}</td>
+                <td>
+                  <div className={styles.actions}>
+                    <button className={styles.editButton} onClick={() => handleOpenModal(rec)} aria-label={`Editar premio ${rec.nome}`}>Editar</button>
+                    <button className={styles.deleteButton} onClick={() => handleDelete(rec.id)} aria-label={`Desativar premio ${rec.nome}`}>Desativar</button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
       
       {/* Modal para Adicionar/Editar */}
       {isOpen && (
-        <div className={styles.modalBackdrop}>
-          <div className={styles.modalContent}>
-            <h2>{isEditing ? 'Editar Prêmio' : 'Adicionar Novo Prêmio'}</h2>
+        <div className={styles.modalBackdrop} onClick={handleCloseModal}>
+          <div
+            className={styles.modalContent}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-premio-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="modal-premio-title">{isEditing ? 'Editar Premio' : 'Adicionar Novo Premio'}</h2>
             <form onSubmit={handleSubmit}>
               <div className={styles.formGroup}>
-                <label>Nome do Prêmio</label>
+                <label htmlFor="premio-nome">Nome do Premio</label>
                 <input 
+                  id="premio-nome"
                   type="text" 
                   name="nome" 
                   value={currentRecompensa.nome} 
@@ -180,8 +204,9 @@ function PremiosPage() {
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>Descrição (Opcional)</label>
+                <label htmlFor="premio-descricao">Descricao (Opcional)</label>
                 <input 
+                  id="premio-descricao"
                   type="text" 
                   name="descricao" 
                   value={currentRecompensa.descricao} 
@@ -189,13 +214,15 @@ function PremiosPage() {
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>Custo em Pontos</label>
+                <label htmlFor="premio-custo">Custo em Pontos</label>
                 <input 
+                  id="premio-custo"
                   type="number" 
                   name="custo_pontos" 
                   value={currentRecompensa.custo_pontos} 
                   onChange={handleChange} 
                   required 
+                  min="1"
                 />
               </div>
               <div className={styles.modalActions}>

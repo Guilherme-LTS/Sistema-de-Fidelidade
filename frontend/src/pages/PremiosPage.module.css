@@ -12,31 +12,34 @@
 }
 
 .header h1 {
-  font-size: 2.25rem;
-  font-weight: bold;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: #11253b;
 }
 
 .addButton {
-  background-color: #3182ce;
+  background-color: #0f766e;
   color: white;
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 6px;
-  font-weight: bold;
+  border-radius: 10px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-base), transform var(--transition-base);
 }
 
 .addButton:hover {
-  background-color: #2b6cb0;
+  background-color: #0b5f58;
+  transform: translateY(-1px);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   background-color: white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   overflow: hidden;
 }
 
@@ -47,9 +50,9 @@
 }
 
 .table th {
-  background-color: #f7fafc;
+  background-color: #f3f8fb;
   font-weight: 600;
-  color: #4a5568;
+  color: #3c5568;
 }
 
 .actions {
@@ -60,26 +63,28 @@
 .editButton, .deleteButton {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-base), transform var(--transition-base);
 }
 
 .editButton {
-  background-color: #ecc94b;
+  background-color: #f3c74a;
   color: #1a202c;
 }
 .editButton:hover {
-  background-color: #d69e2e;
+  background-color: #dbb13e;
+  transform: translateY(-1px);
 }
 
 .deleteButton {
-  background-color: #e53e3e;
+  background-color: #c62828;
   color: white;
 }
 .deleteButton:hover {
-  background-color: #c53030;
+  background-color: #ab2121;
+  transform: translateY(-1px);
 }
 
 /* Estilos do Modal */
@@ -89,7 +94,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(3, 10, 22, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -98,9 +103,10 @@
 .modalContent {
   background-color: white;
   padding: 2rem;
-  border-radius: 8px;
+  border-radius: 14px;
   width: 90%;
   max-width: 500px;
+  box-shadow: var(--shadow-lg);
 }
 
 .modalContent h2 {
@@ -122,8 +128,8 @@
 .formGroup input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 6px;
+  border: 1px solid #c9d4e0;
+  border-radius: 8px;
 }
 
 .modalActions {
@@ -135,8 +141,8 @@
 
 .cancelButton, .saveButton {
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-weight: bold;
+  border-radius: 8px;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -147,9 +153,20 @@
 }
 
 .saveButton {
-  background-color: #3182ce;
+  background-color: #0f766e;
   border: none;
   color: white;
+}
+
+.saveButton:hover {
+  background: #0b5f58;
+}
+
+.emptyTable {
+  text-align: center;
+  color: #5f7588;
+  padding: 1.2rem !important;
+  font-weight: 500;
 }
 
 .spinnerContainer {
@@ -157,4 +174,17 @@
   justify-content: center;
   align-items: center;
   padding: 4rem;
+}
+
+@media (max-width: 760px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+
+  .table {
+    display: block;
+    overflow-x: auto;
+  }
 }

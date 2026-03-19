@@ -40,6 +40,11 @@ function LandingPage() {
     setSaldoCliente(saldo);
   };
 
+  const handleVoltar = () => {
+    setSaldoCliente(null);
+    setView('escolha');
+  };
+
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
@@ -66,10 +71,12 @@ function LandingPage() {
             </div>
             
             {/* Seção de recompensas, agora dentro da visão de consulta */}
-            <div className={styles.recompensasSection}>
+            <section className={styles.recompensasSection} aria-live="polite">
               <h2>Nossos Prêmios</h2>
               {loadingRecompensas ? (
-                <p>Carregando prêmios...</p>
+                <p className={styles.infoText}>Carregando premios disponiveis...</p>
+              ) : recompensas.length === 0 ? (
+                <p className={styles.infoText}>No momento nao ha premios ativos. Consulte novamente em breve.</p>
               ) : (
                 <ul className={styles.recompensasList}>
                   {recompensas.map((rec, index) => {
@@ -84,9 +91,9 @@ function LandingPage() {
                   })}
                 </ul>
               )}
-            </div>
+            </section>
 
-            <button onClick={() => setView('escolha')} className={styles.backLink}>
+            <button onClick={handleVoltar} className={styles.backLink}>
               &larr; Voltar
             </button>
           </div>
