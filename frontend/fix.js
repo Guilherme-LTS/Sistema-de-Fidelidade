@@ -1,0 +1,3 @@
+const fs = require('fs');
+let content = fs.readFileSync('src/features/AuditoriaPage.tsx', 'utf8');
+content = content.replace(//g, 'c'); // just replacing the bad characters roughly, wait no...

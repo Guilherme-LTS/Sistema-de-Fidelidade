@@ -1,0 +1,162 @@
+/* frontend/src/components/ConsultaSaldo.module.css */
+.formContainer {
+  width: 100%;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #2d3748;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-align: left;
+  color: #4a5568;
+}
+
+.input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.button {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background-color: #2d3748;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button:hover {
+  background-color: #1a202c;
+}
+
+.button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* --- NOVOS ESTILOS PARA A ÁREA DE RESULTADO --- */
+.resultadoContainer {
+  margin-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.welcomeMessage {
+  font-size: 1.125rem;
+  text-align: center;
+  color: #4a5568;
+  margin-bottom: 1rem;
+}
+
+.pointsDisplay {
+  background-color: #2d3748;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.pointsLabel {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.pointsValue {
+  display: block;
+  font-size: 3rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.infoMessage {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #718096;
+  background-color: #edf2f7;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.warningMessage {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #9b2c2c; /* Vermelho escuro */
+  background-color: #fed7d7; /* Fundo vermelho claro */
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+
+.extratoContainer {
+  margin-top: 1.5rem;
+}
+
+.extratoTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #4a5568;
+  text-align: left;
+}
+
+.extratoTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.extratoTable td {
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid #edf2f7;
+  font-size: 0.875rem;
+}
+
+.extratoTable tr:last-child td {
+  border-bottom: none;
+}
+
+.extratoTable td:nth-child(2) {
+  width: 60%; /* Coluna da descrição com mais espaço */
+  color: #4a5568;
+}
+
+.credito {
+  color: #38a169; /* Verde */
+  font-weight: bold;
+  text-align: right;
+}
+
+.debito {
+  color: #e53e3e; /* Vermelho */
+  font-weight: bold;
+  text-align: right;
+}

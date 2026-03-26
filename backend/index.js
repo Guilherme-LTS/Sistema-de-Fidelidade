@@ -512,9 +512,13 @@ app.post('/usuarios/login', async (req, res) => {
 });
 
 // ROTA DO DASHBOARD (CORRIGIDA)
-app.get('/dashboard/stats', verificaToken, async (req, res) => {
+app.get('/admin/dashboard/stats', verificaToken, async (req, res) => {
   try {
-    const metricasQuery = `SELECT (SELECT COUNT(*) FROM clientes) as total_clientes, (SELECT COALESCE(SUM(pontos_ganhos), 0) FROM transacoes) as total_pontos_distribuidos;`;
+    const metricasQuery = `SELECT 
+      (SELECT COUNT(*) FROM clientes) as total_clientes, 
+      (SELECT COALESCE(SUM(pontos_ganhos), 0) FROM transacoes) as total_pontos_distribuidos,
+      (SELECT COUNT(*) FROM resgates) as total_resgates,
+      ((SELECT COALESCE(SUM(pontos_ganhos), 0) FROM transacoes WHERE data_liberacao <= NOW() AND data_vencimento > NOW()) - (SELECT COALESCE(SUM(pontos_gastos), 0) FROM resgates)) as pontos_ativos;`;
     const resMetricas = await db.query(metricasQuery);
 
     const topClientesQuery = `
@@ -522,22 +526,42 @@ app.get('/dashboard/stats', verificaToken, async (req, res) => {
         c.nome,
         c.cpf,
         (SELECT COALESCE(SUM(t.pontos_ganhos), 0) FROM transacoes t WHERE t.cliente_id = c.id AND t.data_liberacao <= NOW() AND t.data_vencimento > NOW()) - 
-        (SELECT COALESCE(SUM(r.pontos_gastos), 0) FROM resgates r WHERE r.cliente_id = c.id) as pontos_disponiveis
+        (SELECT COALESCE(SUM(r.pontos_gastos), 0) FROM resgates r WHERE r.cliente_id = c.id) as saldo_pontos
       FROM
         clientes c
       ORDER BY
-        pontos_disponiveis DESC
+        saldo_pontos DESC
       LIMIT 5;
     `;
     const resTopClientes = await db.query(topClientesQuery);
 
-    const recompensasQuery = `SELECT r.nome, COUNT(res.id) as total_resgates FROM resgates res JOIN recompensas r ON res.recompensa_id = r.id GROUP BY r.nome ORDER BY total_resgates DESC LIMIT 5;`;
-    const resRecompensas = await db.query(recompensasQuery);
+    // Gerar gráfico dos últimos 7 dias dinamicamente
+    const dataGrafico = [];
+    const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    for(let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const startOfDay = new Date(d.setHours(0,0,0,0)).toISOString();
+      const endOfDay = new Date(d.setHours(23,59,59,999)).toISOString();
+      
+      const resPontosDia = await db.query(`SELECT COALESCE(SUM(pontos_ganhos), 0) as total FROM transacoes WHERE data_transacao >= $1 AND data_transacao <= $2`, [startOfDay, endOfDay]);
+      const resResgatesDia = await db.query(`SELECT COALESCE(SUM(pontos_gastos), 0) as total FROM resgates WHERE data_resgate >= $1 AND data_resgate <= $2`, [startOfDay, endOfDay]);
+      
+      dataGrafico.push({
+        name: diasSemana[d.getDay()],
+        pontos: parseInt(resPontosDia.rows[0].total),
+        resgates: parseInt(resResgatesDia.rows[0].total)
+      });
+    }
 
+    const row = resMetricas.rows[0];
     const stats = {
-      metricas: resMetricas.rows[0],
-      topClientes: resTopClientes.rows,
-      recompensasPopulares: resRecompensas.rows,
+      totalClientes: parseInt(row.total_clientes || 0),
+      totalPontosEmitidos: parseInt(row.total_pontos_distribuidos || 0),
+      totalResgates: parseInt(row.total_resgates || 0),
+      pontosAtivos: parseInt(row.pontos_ativos || 0),
+      recentes: resTopClientes.rows,
+      chartData: dataGrafico
     };
     res.status(200).json(stats);
   } catch (error) {
