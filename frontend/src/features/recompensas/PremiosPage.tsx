@@ -26,7 +26,7 @@ interface Recompensa {
   id: number;
   nome: string;
   descricao: string;
-  custo_pontos: string | number;
+  points_cost: string | number;
 }
 
 function PremiosPage() {
@@ -39,7 +39,7 @@ function PremiosPage() {
     id: 0, 
     nome: '', 
     descricao: '', 
-    custo_pontos: '' 
+    points_cost: '' 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,7 +75,7 @@ function PremiosPage() {
       setCurrentRecompensa({ ...recompensa });
     } else {
       setIsEditing(false);
-      setCurrentRecompensa({ id: 0, nome: '', descricao: '', custo_pontos: '' });
+      setCurrentRecompensa({ id: 0, nome: '', descricao: '', points_cost: '' });
     }
     setIsOpen(true);
   };
@@ -182,7 +182,7 @@ function PremiosPage() {
                       <TableCell className="text-slate-500">{rec.descricao || '-'}</TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">
-                          {rec.custo_pontos} pts
+                          {rec.points_cost} pts
                         </span>
                       </TableCell>
                       <TableCell className="text-right space-x-2">
@@ -273,8 +273,8 @@ function PremiosPage() {
                 <Input 
                   id="premio-custo"
                   type="number" 
-                  name="custo_pontos" 
-                  value={currentRecompensa.custo_pontos} 
+                  name="points_cost" 
+                  value={currentRecompensa.points_cost} 
                   onChange={handleChange} 
                   required 
                   min="1"

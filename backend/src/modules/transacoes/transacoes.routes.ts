@@ -1,11 +1,12 @@
-import { Router, Request, Response } from 'express';
 import db from '../../infra/database/db';
+import { Router, Request, Response } from 'express';
+import { queryWithRLS, AuthenticatedRequest } from '../../infra/database/db-rls';
 import verificaToken from '../../shared/middlewares/autenticacao';
 import { cpf as cpfValidator } from 'cpf-cnpj-validator';
 
 const router = Router();
 
-// POST /transacoes - Lançar pontos (apenas admin)
+// POST /transactions - Lançar pontos (apenas admin)
 router.post('/', verificaToken, async (req: Request, res: Response) => {
   if ((req as any).usuario.role !== 'admin' && (req as any).usuario.role !== 'operador') {
     return res.status(403).json({ error: 'Acesso negado. Apenas administradores ou operadores podem lançar pontos.' });
@@ -13,11 +14,11 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
 
   const client = await db.connect();
   try {
-    const { cpf, valor, nome } = req.body;
-    if (!cpf || !valor || valor <= 0) {
+    const { document, valor, nome } = req.body;
+    if (!document || !valor || valor <= 0) {
       return res.status(400).json({ error: 'CPF e valor (maior que zero) são obrigatórios.' });
     }
-    const cpfLimpo = cpf.replace(/\D/g, '');
+    const cpfLimpo = document.replace(/\D/g, '');
     if (!cpfValidator.isValid(cpfLimpo)) {
       return res.status(400).json({ error: 'CPF inválido.' });
     }
@@ -27,7 +28,7 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
 
     // Buscar configurações dinamicamente do banco de dados
     const configResult = await client.query(`
-      SELECT chave, valor FROM configuracoes 
+      SELECT chave, valor FROM tenant_settings 
       WHERE chave IN ('carencia_pontos', 'expiracao_pontos')
     `);
     
@@ -51,18 +52,18 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
     const data_vencimento = new Date(data_liberacao.getTime() + (diasParaVencimento * 24 * 60 * 60 * 1000));
 
     await client.query('BEGIN');
-    let resCliente = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
+    let resCliente = await client.query('SELECT id FROM customers WHERE document = $1', [cpfLimpo]);
     let clienteId;
 
     if (!resCliente.rows[0]) {
-      const resNovoCliente = await client.query('INSERT INTO clientes (cpf, nome, lgpd_consentimento) VALUES ($1, $2, false) RETURNING id', [cpfLimpo, nome]);
+      const resNovoCliente = await client.query('INSERT INTO customers (document, nome, lgpd_consentimento) VALUES ($1, $2, false) RETURNING id', [cpfLimpo, nome]);
       clienteId = resNovoCliente.rows[0].id;
     } else {
       clienteId = resCliente.rows[0].id;
     }
 
     await client.query(
-      `INSERT INTO transacoes (cliente_id, valor_gasto, pontos_ganhos, pontos_restantes, data_liberacao, data_vencimento, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      `INSERT INTO transactions (cliente_id, valor_gasto, pontos_ganhos, pontos_restantes, data_liberacao, data_vencimento, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [clienteId, valor, pontosGanhos, pontosGanhos, data_liberacao, data_vencimento, operadorId]
     );
 

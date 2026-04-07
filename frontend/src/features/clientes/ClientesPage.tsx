@@ -34,7 +34,7 @@ const formatarData = (dataISO: string) => {
 interface Cliente {
   id: number;
   nome: string;
-  cpf: string;
+  document: string;
   pontosDisponiveis?: number;
   pontosPendentes?: number;
 }
@@ -88,7 +88,7 @@ function ClientesPage() {
     setLoadingExtrato(true);
     setClienteSelecionado(cliente);
     setExtrato([]);
-    const cpfLimpo = cliente.cpf.replace(/\D/g, '');
+    const cpfLimpo = cliente.document.replace(/\D/g, '');
 
     try {
       const [resCliente, resExtrato] = await Promise.all([
@@ -162,7 +162,7 @@ function ClientesPage() {
                           <div className={cn("font-medium", clienteSelecionado?.id === cliente.id ? "text-blue-700" : "text-slate-900")}>
                             {cliente.nome || 'Nome não cadastrado'}
                           </div>
-                          <div className="text-sm text-slate-500">{cliente.cpf}</div>
+                          <div className="text-sm text-slate-500">{cliente.document}</div>
                         </div>
                         <ChevronRight className={cn(
                           "h-5 w-5 text-slate-300 group-hover:text-blue-500 transition-colors",
@@ -194,7 +194,7 @@ function ClientesPage() {
             clienteSelecionado ? (
               <div className="flex flex-col h-full">
                 <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-6">
-                  <CardTitle className="text-2xl">{clienteSelecionado.nome || `CPF ${clienteSelecionado.cpf}`}</CardTitle>
+                  <CardTitle className="text-2xl">{clienteSelecionado.nome || `CPF ${clienteSelecionado.document}`}</CardTitle>
                   <CardDescription>Visualizando extrato consolidado do cliente</CardDescription>
                   
                   <div className="grid grid-cols-2 gap-4 mt-6">

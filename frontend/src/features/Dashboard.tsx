@@ -220,7 +220,7 @@ const Dashboard = () => {
                         <span className="text-sm font-medium text-slate-900">
                           {cliente.nome || 'Cliente Anônimo'}
                         </span>
-                        <span className="text-xs text-slate-500">{cliente.cpf}</span>
+                        <span className="text-xs text-slate-500">{cliente.document}</span>
                       </div>
                     </div>
                     <div className="text-right">

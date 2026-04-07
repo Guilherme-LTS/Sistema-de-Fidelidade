@@ -7,9 +7,9 @@ import pool from './db';
  */
 export interface AuthenticatedRequest extends Request {
   user?: {
-    id: string;           -- auth.users.id
-    tenant_id: string;    -- O ID do restaurante atrelado ao usuário
-    role: string;         -- Operador ou Admin
+    id: string;           // auth.users.id
+    tenant_id: string;    // O ID do restaurante atrelado ao usuário
+    role: string;         // Operador ou Admin
   };
 }
 

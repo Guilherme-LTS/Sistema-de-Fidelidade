@@ -73,7 +73,7 @@ function TransacaoForm() {
     setCarregando(true);
     try {
       const response = await api.post('/transacoes', { 
-        cpf: cpf.replace(/\D/g, ''), 
+        document: cpf.replace(/\D/g, ''), 
         valor: parseFloat(valor), 
         nome 
       });

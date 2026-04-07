@@ -76,12 +76,12 @@ function ResgateRecompensa() {
     setCarregando(true);
     try {
       const response = await api.post(`/resgates`, {  
-        cpf: cpf.replace(/\D/g, ''), 
-        recompensa_id: selectedRecompensa  
+        document: cpf.replace(/\D/g, ''), 
+        reward_id: selectedRecompensa  
       });
       const data = response.data;
       
-      toast.success(`Resgate realizado! Pontos restantes: ${data.pontos_restantes}`);
+      toast.success(`Resgate realizado! Pontos restantes: ${data.remaining_points}`);
       setCpf('');
       setSelectedRecompensa('');
       setClienteInfo(null);
@@ -95,7 +95,7 @@ function ResgateRecompensa() {
   // Encontra a recompensa selecionada para validar se o cliente tem pontos
   const recompensaSelecionadaObj = recompensas.find(r => r.id.toString() === selectedRecompensa);
   const saldoInsuficiente = clienteInfo && !clienteInfo.error && recompensaSelecionadaObj && 
-                            clienteInfo.pontosDisponiveis < recompensaSelecionadaObj.custo_pontos;
+                            clienteInfo.pontosDisponiveis < recompensaSelecionadaObj.points_cost;
 
   return (
     <Card className="h-full border-blue-100 shadow-sm flex flex-col">
@@ -167,7 +167,7 @@ function ResgateRecompensa() {
               <option value="" disabled>-- Escolha uma recompensa --</option>
               {recompensas.map(rec => (
                 <option key={rec.id} value={rec.id}>
-                  {rec.nome} ({rec.custo_pontos} pontos)
+                  {rec.nome} ({rec.points_cost} pontos)
                 </option>
               ))}
             </select>

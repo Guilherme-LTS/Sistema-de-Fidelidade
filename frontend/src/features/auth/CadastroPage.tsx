@@ -75,7 +75,7 @@ function CadastroPage() {
     }
     setCarregando(true);
     try {
-      await api.post("/clientes/cadastro", { nome, cpf: cpf.replace(/\D/g, ""), lgpd_consentimento: consentimento });
+      await api.post("/clientes/cadastro", { nome, document: cpf.replace(/\D/g, ""), lgpd_consent: consentimento });
       toast.success("Cadastro realizado com sucesso! Bem-vindo(a) ao clube!");
       navigate("/");
     } catch (error: any) {

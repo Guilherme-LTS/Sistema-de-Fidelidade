@@ -123,7 +123,7 @@ const AuditoriaPage = () => {
                         {formatarData(entry.data_hora)}
                       </TableCell>
                       <TableCell className="font-medium text-slate-900">
-                        {entry.usuario_id || <span className="text-slate-400 italic">Sistema</span>}
+                        {entry.operator_id || <span className="text-slate-400 italic">Sistema</span>}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={`font-medium uppercase tracking-wider text-[10px] sm:text-xs ${getAcaoColor(entry.acao)}`}>

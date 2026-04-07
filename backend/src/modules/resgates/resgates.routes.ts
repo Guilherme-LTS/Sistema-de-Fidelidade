@@ -1,33 +1,34 @@
-import { Router, Request, Response } from 'express';
 import db from '../../infra/database/db';
+import { Router, Request, Response } from 'express';
+import { queryWithRLS, AuthenticatedRequest } from '../../infra/database/db-rls';
 import verificaToken from '../../shared/middlewares/autenticacao';
 
 const router = Router();
 
-// POST /resgates - Resgatar recompensa
+// POST /redemptions - Resgatar recompensa
 router.post('/', verificaToken, async (req: Request, res: Response) => {
   const client = await db.connect();
   try {
-    const { cpf, recompensa_id } = req.body;
+    const { document, recompensa_id } = req.body;
     const operadorId = (req as any).usuario.id;
-    const cpfLimpo = cpf.replace(/\D/g, '');
+    const cpfLimpo = document.replace(/\D/g, '');
 
     if (!cpfLimpo || !recompensa_id) {
       return res.status(400).json({ error: 'CPF e ID da recompensa são obrigatórios.' });
     }
 
     await client.query('BEGIN');
-    const clienteResult = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
+    const clienteResult = await client.query('SELECT id FROM customers WHERE document = $1', [cpfLimpo]);
     const cliente = clienteResult.rows[0];
     if (!cliente) throw new Error('Cliente não encontrado.');
 
-    const recompensaResult = await client.query('SELECT custo_pontos FROM recompensas WHERE id = $1', [recompensa_id]);
+    const recompensaResult = await client.query('SELECT custo_pontos FROM rewards WHERE id = $1', [recompensa_id]);
     const recompensa = recompensaResult.rows[0];
     if (!recompensa) throw new Error('Recompensa não encontrada.');
 
     // 1. Busca transações válidas via FIFO
     const transacoesValidas = await client.query(
-      `SELECT id, pontos_restantes FROM transacoes 
+      `SELECT id, pontos_restantes FROM transactions 
        WHERE cliente_id = $1 AND pontos_restantes > 0 
        AND data_liberacao <= NOW() AND data_vencimento > NOW()
        ORDER BY data_vencimento ASC, data_transacao ASC`,
@@ -49,14 +50,14 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
       pontosNecessarios -= descontar;
       
       await client.query(
-        'UPDATE transacoes SET pontos_restantes = pontos_restantes - $1 WHERE id = $2',
+        'UPDATE transactions SET pontos_restantes = pontos_restantes - $1 WHERE id = $2',
         [descontar, t.id]
       );
     }
 
     // 3. Registra histórico do resgate
     await client.query(
-      'INSERT INTO resgates (cliente_id, recompensa_id, pontos_gastos, usuario_id) VALUES ($1, $2, $3, $4)',
+      'INSERT INTO redemptions (cliente_id, recompensa_id, pontos_gastos, usuario_id) VALUES ($1, $2, $3, $4)',
       [cliente.id, recompensa_id, recompensa.custo_pontos, operadorId]
     );
 

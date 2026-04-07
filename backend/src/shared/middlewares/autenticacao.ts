@@ -25,19 +25,28 @@ const verificaToken = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const { rows } = await db.query(
-      'SELECT id, nome, role FROM funcionarios WHERE user_id = $1',
+      'SELECT id, name, role, tenant_id FROM tenant_users WHERE user_id = $1 LIMIT 1',
       [user.id]
     );
 
     if (rows.length === 0) {
-      return res.status(403).json({ error: 'Usuário sem perfil de funcionário.' });
+      return res.status(403).json({ error: 'Usuário sem perfil de funcionário associado a um Tenant.' });
     }
 
+    // Compatibilidade com o código legado (req.usuario)
     (req as any).usuario = {
-      id: rows[0].id,
-      user_id: user.id,
-      nome: rows[0].nome,
+      id: rows[0].id,         // UUID do tenant_users
+      user_id: user.id,       // UUID do Supabase Auth
+      nome: rows[0].name,
       email: user.email,
+      role: rows[0].role,
+      tenant_id: rows[0].tenant_id
+    };
+
+    // Nova assinatura (req.user) oficial usada pelo db-rls.ts 
+    (req as any).user = {
+      id: user.id,
+      tenant_id: rows[0].tenant_id,
       role: rows[0].role
     };
 

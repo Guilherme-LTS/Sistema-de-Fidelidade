@@ -80,12 +80,12 @@ function LandingPage() {
               ) : (
                 <ul className={styles.recompensasList}>
                   {recompensas.map((rec, index) => {
-                    const podeResgatar = saldoCliente !== null && saldoCliente >= rec.custo_pontos;
+                    const podeResgatar = saldoCliente !== null && saldoCliente >= rec.points_cost;
                     const itemClass = `${styles.recompensaItem} ${podeResgatar ? styles.resgatavel : ''}`;
                     return (
                       <li key={index} className={itemClass}>
                         <span className={styles.recompensaNome}>{rec.nome}</span>
-                        <span className={styles.recompensaPontos}>{rec.custo_pontos} pts</span>
+                        <span className={styles.recompensaPontos}>{rec.points_cost} pts</span>
                       </li>
                     );
                   })}

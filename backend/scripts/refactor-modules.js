@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const srcDir = path.join(__dirname, 'src', 'modules');
+const srcDir = path.join(__dirname, '..', 'src', 'modules');
 
 const dbRLSImport = `import { queryWithRLS, AuthenticatedRequest } from '../../infra/database/db-rls';`;
 
