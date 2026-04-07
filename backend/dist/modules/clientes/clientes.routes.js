@@ -67,18 +67,20 @@ router.get('/:cpf', async (req, res) => {
         const pontosPendentes = parseInt(pontosPendentesResult.rows[0].total);
         const proximoVencimentoResult = await db_1.default.query(`SELECT MIN(data_vencimento) as proximo_vencimento FROM transacoes WHERE cliente_id = $1 AND data_vencimento > NOW() AND data_liberacao <= NOW() AND pontos_restantes > 0`, [clienteId]);
         const proximoVencimento = proximoVencimentoResult.rows[0].proximo_vencimento;
-        const lotesExpiracaoResult = await db_1.default.query(`SELECT data_vencimento, SUM(pontos_restantes) as pontos FROM transacoes WHERE cliente_id = $1 AND data_liberacao <= NOW() AND data_vencimento > NOW() AND pontos_restantes > 0 GROUP BY data_vencimento ORDER BY data_vencimento ASC`, [clienteId]);
-        const lotesExpiracao = lotesExpiracaoResult.rows;
-        const lotesPendentesResult = await db_1.default.query(`SELECT data_liberacao, SUM(pontos_restantes) as pontos FROM transacoes WHERE cliente_id = $1 AND data_liberacao > NOW() AND pontos_restantes > 0 GROUP BY data_liberacao ORDER BY data_liberacao ASC`, [clienteId]);
-        const lotesPendentes = lotesPendentesResult.rows;
+        const expiracaoUrgenteResult = await db_1.default.query(`SELECT COALESCE(SUM(pontos_restantes), 0) as pontos_expirando, MIN(data_vencimento) as data_proxima_expiracao FROM transacoes WHERE cliente_id = $1 AND data_liberacao <= NOW() AND data_vencimento > NOW() AND data_vencimento <= NOW() + INTERVAL '7 days' AND pontos_restantes > 0`, [clienteId]);
+        const pontosExpirando = parseInt(expiracaoUrgenteResult.rows[0].pontos_expirando, 10) || 0;
+        const dataProximaExpiracao = expiracaoUrgenteResult.rows[0].data_proxima_expiracao;
+        const liberacaoUrgenteResult = await db_1.default.query(`SELECT MIN(data_liberacao) as data_proxima_liberacao FROM transacoes WHERE cliente_id = $1 AND data_liberacao > NOW() AND pontos_restantes > 0`, [clienteId]);
+        const dataProximaLiberacao = liberacaoUrgenteResult.rows[0].data_proxima_liberacao;
         res.status(200).json({
             nome: cliente.nome,
             cpf: cliente.cpf,
             pontosDisponiveis,
             pontosPendentes,
             proximoVencimento,
-            lotesExpiracao,
-            lotesPendentes,
+            pontosExpirando,
+            dataProximaExpiracao,
+            dataProximaLiberacao,
         });
     }
     catch (error) {

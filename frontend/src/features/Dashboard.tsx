@@ -4,15 +4,13 @@ import { Link } from "react-router-dom";
 import { 
   Users, 
   Gift, 
-  ArrowRightLeft, 
   CreditCard,
   TrendingUp,
   Activity,
   Award,
   ChevronRight
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
   AreaChart,
   Area,
@@ -20,9 +18,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar
+  ResponsiveContainer
 } from 'recharts';
 
 interface StatsProps {
@@ -44,17 +40,30 @@ const Dashboard = () => {
     chartData: []
   });
 
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const response = await api.get('/dashboard/stats');
-        setStats(response.data);
+        const payload = response.data || {};
+        const normalizedChartData = Array.isArray(payload.chartData)
+          ? payload.chartData.map((item: any) => ({
+              name: item.name,
+              pendentes: Number(item.pendentes ?? 0),
+              lancados: Number(item.lancados ?? item.disponiveis ?? item.pontos ?? 0),
+              resgates: Number(item.resgates ?? 0),
+            }))
+          : [];
+
+        setStats({
+          totalClientes: Number(payload.totalClientes ?? 0),
+          pontosPendentes: Number(payload.pontosPendentes ?? 0),
+          pontosDisponiveis: Number(payload.pontosDisponiveis ?? payload.pontosAtivos ?? 0),
+          pontosResgatados: Number(payload.pontosResgatados ?? payload.totalResgates ?? 0),
+          recentes: Array.isArray(payload.recentes) ? payload.recentes : [],
+          chartData: normalizedChartData,
+        });
       } catch (err: any) {
         console.error("Erro ao carregar os dados:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -147,14 +156,18 @@ const Dashboard = () => {
         {/* Gráfico */}
         <Card className="col-span-1 lg:col-span-4 border-slate-200 shadow-sm flex flex-col min-h-0">
           <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4 shrink-0">
-            <CardTitle className="text-base font-semibold text-slate-800">Fluxo de Pontos (Últimos 7 dias)</CardTitle>
+            <CardTitle className="text-base font-semibold text-slate-800">Movimentação de Estados (Últimos 7 dias)</CardTitle>
           </CardHeader>
           <CardContent className="pt-6 flex-1 min-h-0">
             <div className="h-full w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorPontos" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="colorPendentes" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorLancados" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
                     </linearGradient>
@@ -164,12 +177,19 @@ const Dashboard = () => {
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 1000}k`} />
+                  <YAxis
+                    stroke="#94a3b8"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${value}`)}
+                  />
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Area type="monotone" dataKey="pontos" name="Pontos Gerados" stroke="#4f46e5" strokeWidth={2} fillOpacity={1} fill="url(#colorPontos)" />
+                  <Area type="monotone" dataKey="pendentes" name="Pontos Pendentes" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorPendentes)" />
+                  <Area type="monotone" dataKey="lancados" name="Pontos Lançados" stroke="#4f46e5" strokeWidth={2} fillOpacity={1} fill="url(#colorLancados)" />
                   <Area type="monotone" dataKey="resgates" name="Pontos Resgatados" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorResgates)" />
                 </AreaChart>
               </ResponsiveContainer>

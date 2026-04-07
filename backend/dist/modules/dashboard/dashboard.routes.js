@@ -12,8 +12,8 @@ router.get('/stats', autenticacao_1.default, async (req, res) => {
     try {
         const metricasQuery = `SELECT 
       (SELECT COUNT(*) FROM clientes) as total_clientes, 
-      (SELECT COALESCE(SUM(pontos_restantes), 0) FROM transacoes WHERE data_liberacao > NOW()) as pontos_pendentes,
-      (SELECT COALESCE(SUM(pontos_restantes), 0) FROM transacoes WHERE data_liberacao <= NOW() AND data_vencimento > NOW()) as pontos_disponiveis,
+      (SELECT COALESCE(SUM(pontos_restantes), 0) FROM transacoes WHERE pontos_restantes > 0 AND data_liberacao > NOW()) as pontos_pendentes,
+      (SELECT COALESCE(SUM(pontos_restantes), 0) FROM transacoes WHERE pontos_restantes > 0 AND data_liberacao <= NOW() AND data_vencimento > NOW()) as pontos_disponiveis,
       (SELECT COALESCE(SUM(pontos_gastos), 0) FROM resgates) as pontos_resgatados;`;
         const resMetricas = await db_1.default.query(metricasQuery);
         const topClientesQuery = `
@@ -30,22 +30,69 @@ router.get('/stats', autenticacao_1.default, async (req, res) => {
       LIMIT 5;
     `;
         const resTopClientes = await db_1.default.query(topClientesQuery);
-        // Gerar gráfico dos últimos 7 dias dinamicamente
-        const dataGrafico = [];
+        const chartQuery = `
+      WITH params AS (
+        SELECT 'America/Sao_Paulo'::text AS tz
+      ),
+      days AS (
+        SELECT generate_series(
+          date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day',
+          date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)),
+          interval '1 day'
+        )::timestamp AS day_local
+      ),
+      pendentes_agg AS (
+        SELECT
+          date_trunc('day', data_transacao AT TIME ZONE (SELECT tz FROM params)) AS day_local,
+          COALESCE(SUM(pontos_ganhos), 0)::int AS pendentes
+        FROM transacoes
+        WHERE data_liberacao > data_transacao
+          AND data_transacao >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
+          AND data_transacao < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
+        GROUP BY 1
+      ),
+      disponibilizados_agg AS (
+        SELECT
+          date_trunc('day', data_liberacao AT TIME ZONE (SELECT tz FROM params)) AS day_local,
+          COALESCE(SUM(pontos_ganhos), 0)::int AS lancados
+        FROM transacoes
+        WHERE data_liberacao >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
+          AND data_liberacao < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
+        GROUP BY 1
+      ),
+      resgates_agg AS (
+        SELECT
+          date_trunc('day', data_resgate AT TIME ZONE (SELECT tz FROM params)) AS day_local,
+          COALESCE(SUM(pontos_gastos), 0)::int AS resgates
+        FROM resgates
+        WHERE data_resgate >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
+          AND data_resgate < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
+        GROUP BY 1
+      )
+      SELECT
+        days.day_local::date AS dia,
+        COALESCE(pendentes_agg.pendentes, 0) AS pendentes,
+        COALESCE(disponibilizados_agg.lancados, 0) AS lancados,
+        COALESCE(resgates_agg.resgates, 0) AS resgates
+      FROM days
+      LEFT JOIN pendentes_agg ON pendentes_agg.day_local = days.day_local
+      LEFT JOIN disponibilizados_agg ON disponibilizados_agg.day_local = days.day_local
+      LEFT JOIN resgates_agg ON resgates_agg.day_local = days.day_local
+      ORDER BY days.day_local ASC;
+    `;
+        const resChart = await db_1.default.query(chartQuery);
         const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const startOfDay = new Date(d.setHours(0, 0, 0, 0)).toISOString();
-            const endOfDay = new Date(d.setHours(23, 59, 59, 999)).toISOString();
-            const resPontosDia = await db_1.default.query(`SELECT COALESCE(SUM(pontos_ganhos), 0) as total FROM transacoes WHERE data_transacao >= $1 AND data_transacao <= $2`, [startOfDay, endOfDay]);
-            const resResgatesDia = await db_1.default.query(`SELECT COALESCE(SUM(pontos_gastos), 0) as total FROM resgates WHERE data_resgate >= $1 AND data_resgate <= $2`, [startOfDay, endOfDay]);
-            dataGrafico.push({
-                name: diasSemana[d.getDay()],
-                pontos: parseInt(resPontosDia.rows[0].total),
-                resgates: parseInt(resResgatesDia.rows[0].total)
-            });
-        }
+        const dataGrafico = resChart.rows.map((row) => {
+            const data = new Date(row.dia);
+            return {
+                name: diasSemana[data.getDay()],
+                pendentes: parseInt(row.pendentes, 10) || 0,
+                lancados: parseInt(row.lancados, 10) || 0,
+                // Compatibilidade temporária com consumidores antigos
+                disponiveis: parseInt(row.lancados, 10) || 0,
+                resgates: parseInt(row.resgates, 10) || 0,
+            };
+        });
         const row = resMetricas.rows[0];
         const stats = {
             totalClientes: parseInt(row.total_clientes || 0),

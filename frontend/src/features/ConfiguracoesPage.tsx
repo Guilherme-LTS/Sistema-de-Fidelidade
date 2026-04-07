@@ -78,6 +78,29 @@ const ConfiguracoesPage = () => {
       </div>
 
       <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">
+          <CardTitle className="text-lg font-semibold text-slate-800">Estados de Pontos</CardTitle>
+          <CardDescription>
+            O dashboard considera três estados: pendentes, disponíveis e resgatados.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm font-semibold text-amber-900">Pontos Pendentes</p>
+            <p className="text-xs text-amber-800 mt-1">Lançados e ainda em carência, sem uso permitido.</p>
+          </div>
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+            <p className="text-sm font-semibold text-indigo-900">Pontos Disponíveis</p>
+            <p className="text-xs text-indigo-800 mt-1">Já liberados para resgate e dentro da validade.</p>
+          </div>
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <p className="text-sm font-semibold text-emerald-900">Pontos Resgatados</p>
+            <p className="text-xs text-emerald-800 mt-1">Consumidos em recompensas e registrados no histórico.</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-200 shadow-sm">
         <form onSubmit={handleSalvar}>
           <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">
             <CardTitle className="text-lg font-semibold text-slate-800">
@@ -138,6 +161,9 @@ const ConfiguracoesPage = () => {
                   </div>
                   <p className="text-sm text-slate-500 max-w-2xl">
                     Dias que o cliente tem para utilizar os pontos <span className="font-medium text-slate-700">após a liberação (carência)</span>. Quando este prazo for atingido, o saldo da transação será irreversivelmente expirado.
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Escopo atual: regras globais do sistema. Estrutura preparada para evolução futura por restaurante sem alterar o comportamento atual.
                   </p>
                 </div>
               </>
