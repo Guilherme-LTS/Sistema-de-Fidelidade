@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "../services/api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Users, 
   Gift, 
@@ -8,7 +8,8 @@ import {
   TrendingUp,
   Activity,
   Award,
-  ChevronRight
+  ChevronRight,
+  User
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
@@ -17,8 +18,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
+  Tooltip
 } from 'recharts';
 
 interface StatsProps {
@@ -31,6 +31,9 @@ interface StatsProps {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
   const [stats, setStats] = useState<StatsProps>({
     totalClientes: 0,
     pontosPendentes: 0,
@@ -59,7 +62,13 @@ const Dashboard = () => {
           pontosPendentes: Number(payload.pontosPendentes ?? 0),
           pontosDisponiveis: Number(payload.pontosDisponiveis ?? payload.pontosAtivos ?? 0),
           pontosResgatados: Number(payload.pontosResgatados ?? payload.totalResgates ?? 0),
-          recentes: Array.isArray(payload.recentes) ? payload.recentes : [],
+          recentes: Array.isArray(payload.recentes)
+            ? payload.recentes.map((cliente: any) => ({
+                nome: cliente?.nome ?? cliente?.name ?? '',
+                document: cliente?.document ?? '',
+                saldo_pontos: Number(cliente?.saldo_pontos ?? 0),
+              }))
+            : [],
           chartData: normalizedChartData,
         });
       } catch (err: any) {
@@ -70,14 +79,47 @@ const Dashboard = () => {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    const container = chartContainerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const rect = container.getBoundingClientRect();
+      setChartSize({
+        width: Math.max(0, Math.floor(rect.width)),
+        height: Math.max(280, Math.floor(rect.height)),
+      });
+    };
+
+    updateSize();
+
+    const observer = new ResizeObserver(() => {
+      updateSize();
+    });
+
+    observer.observe(container);
+    window.addEventListener('resize', updateSize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
   // Dados vindos da API
   const chartData = stats.chartData || [];
+
+  const handleOpenCliente = (document: string) => {
+    const cleanedDocument = (document || "").replace(/\D/g, "");
+    if (!cleanedDocument) return;
+    navigate(`/admin/clientes?document=${encodeURIComponent(cleanedDocument)}`);
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto h-full flex flex-col pb-4 overflow-hidden">
       <div className="shrink-0">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-          <Activity className="h-8 w-8 text-indigo-600" />
+          <Activity className="h-8 w-8 text-green-600" />
           Visão Geral
         </h2>
         <p className="text-slate-500 mt-1">
@@ -90,8 +132,8 @@ const Dashboard = () => {
         <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-slate-600">Total de Clientes</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
-              <Users className="h-4 w-4 text-blue-600" />
+            <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center">
+              <Users className="h-4 w-4 text-green-600" />
             </div>
           </CardHeader>
           <CardContent className="bg-white">
@@ -107,8 +149,8 @@ const Dashboard = () => {
         <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-slate-600">Pontos Pendentes</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center">
-              <Award className="h-4 w-4 text-orange-600" />
+            <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
+              <Award className="h-4 w-4 text-slate-600" />
             </div>
           </CardHeader>
           <CardContent className="bg-white">
@@ -139,8 +181,8 @@ const Dashboard = () => {
         <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-slate-600">Pontos Resgatados</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-purple-50 flex items-center justify-center">
-              <Gift className="h-4 w-4 text-purple-600" />
+            <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center">
+              <Gift className="h-4 w-4 text-green-600" />
             </div>
           </CardHeader>
           <CardContent className="bg-white">
@@ -152,28 +194,28 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 flex-1 min-h-0 min-w-0">
         {/* Gráfico */}
         <Card className="col-span-1 lg:col-span-4 border-slate-200 shadow-sm flex flex-col min-h-0">
           <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4 shrink-0">
             <CardTitle className="text-base font-semibold text-slate-800">Movimentação de Estados (Últimos 7 dias)</CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 flex-1 min-h-0">
-            <div className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <CardContent className="pt-6 flex-1 min-h-[280px]">
+            <div ref={chartContainerRef} className="w-full h-[300px] lg:h-full lg:min-h-[280px] min-w-0">
+              {chartSize.width > 0 && chartSize.height > 0 ? (
+                <AreaChart width={chartSize.width} height={chartSize.height} data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorPendentes" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#16a34a" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorLancados" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#15803d" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#15803d" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorResgates" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#166534" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#166534" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
@@ -188,11 +230,11 @@ const Dashboard = () => {
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Area type="monotone" dataKey="pendentes" name="Pontos Pendentes" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorPendentes)" />
-                  <Area type="monotone" dataKey="lancados" name="Pontos Lançados" stroke="#4f46e5" strokeWidth={2} fillOpacity={1} fill="url(#colorLancados)" />
-                  <Area type="monotone" dataKey="resgates" name="Pontos Resgatados" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorResgates)" />
+                  <Area type="monotone" dataKey="pendentes" name="Pontos Pendentes" stroke="#16a34a" strokeWidth={2} fillOpacity={1} fill="url(#colorPendentes)" />
+                  <Area type="monotone" dataKey="lancados" name="Pontos Lançados" stroke="#15803d" strokeWidth={2} fillOpacity={1} fill="url(#colorLancados)" />
+                  <Area type="monotone" dataKey="resgates" name="Pontos Resgatados" stroke="#166534" strokeWidth={2} fillOpacity={1} fill="url(#colorResgates)" />
                 </AreaChart>
-              </ResponsiveContainer>
+              ) : null}
             </div>
           </CardContent>
         </Card>
@@ -202,7 +244,7 @@ const Dashboard = () => {
           <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4 shrink-0">
             <CardTitle className="text-base font-semibold text-slate-800 flex justify-between items-center">
               Top Clientes
-              <Link to="/admin/clientes" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex items-center">
+              <Link to="/admin/clientes" className="text-xs font-medium text-green-600 hover:text-green-700 flex items-center">
                 Ver todos <ChevronRight className="h-3 w-3 ml-1" />
               </Link>
             </CardTitle>
@@ -211,10 +253,16 @@ const Dashboard = () => {
             <div className="divide-y divide-slate-100">
               {stats.recentes && stats.recentes.length > 0 ? (
                 stats.recentes.map((cliente: any, idx: number) => (
-                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleOpenCliente(cliente.document)}
+                    className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors text-left"
+                    title="Abrir detalhes do cliente"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-semibold text-slate-600">
-                        {cliente.nome ? cliente.nome.charAt(0).toUpperCase() : '?'}
+                        <User className="h-5 w-5 text-slate-500" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-900">
@@ -228,7 +276,7 @@ const Dashboard = () => {
                         {cliente.saldo_pontos || 0} pts
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))
               ) : (
                 [1,2,3,4,5].map((i) => (

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import useDebounce from '../../hooks/useDebounce';
 import Spinner from '../../shared/components/Spinner';
@@ -13,7 +14,6 @@ import {
   CardTitle,
 } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
 import {
   Table,
   TableBody,
@@ -34,9 +34,13 @@ const formatarData = (dataISO: string) => {
 interface Cliente {
   id: number;
   nome: string;
+  name?: string;
   document: string;
   pontosDisponiveis?: number;
   pontosPendentes?: number;
+  pontosExpirando?: number;
+  dataProximaExpiracao?: string | null;
+  dataProximaLiberacao?: string | null;
 }
 
 interface ExtratoItem {
@@ -47,6 +51,8 @@ interface ExtratoItem {
 }
 
 function ClientesPage() {
+  const [searchParams] = useSearchParams();
+  const [selecionadoDoDashboardDoc, setSelecionadoDoDashboardDoc] = useState<string | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -60,6 +66,31 @@ function ClientesPage() {
   const [extrato, setExtrato] = useState<ExtratoItem[]>([]);
   const [loadingExtrato, setLoadingExtrato] = useState(false);
 
+  const normalizeCliente = (cliente: any): Cliente => ({
+    ...cliente,
+    nome: cliente?.nome ?? cliente?.name ?? '',
+  });
+
+  const carregarDetalhesCliente = useCallback(async (document: string) => {
+    setLoadingExtrato(true);
+    setExtrato([]);
+    const cpfLimpo = document.replace(/\D/g, '');
+
+    try {
+      const [resCliente, resExtrato] = await Promise.all([
+        api.get(`/clientes/${cpfLimpo}`),
+        api.get(`/clientes/${cpfLimpo}/extrato`)
+      ]);
+
+      setClienteSelecionado(normalizeCliente(resCliente.data));
+      setExtrato(resExtrato.data);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoadingExtrato(false);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchClientes = async () => {
       setLoading(true);
@@ -68,7 +99,7 @@ function ClientesPage() {
         const basePath = process.env.REACT_APP_API_URL || 'http://localhost:3001';
         const response = await api.get(url.replace(basePath, ''));
         const data = response.data;
-        setClientes(data.clientes || []); 
+        setClientes((data.customers || []).map(normalizeCliente)); 
         setTotalPaginas(data.totalPaginas || 1);
 
       } catch (error: any) {
@@ -85,26 +116,33 @@ function ClientesPage() {
   }, [debouncedBusca]);
 
   const handleSelecionarCliente = async (cliente: Cliente) => {
-    setLoadingExtrato(true);
-    setClienteSelecionado(cliente);
-    setExtrato([]);
-    const cpfLimpo = cliente.document.replace(/\D/g, '');
-
-    try {
-      const [resCliente, resExtrato] = await Promise.all([
-        api.get(`/clientes/${cpfLimpo}`),
-        api.get(`/clientes/${cpfLimpo}/extrato`)
-      ]);
-
-      setClienteSelecionado(resCliente.data);
-      setExtrato(resExtrato.data);
-
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoadingExtrato(false);
+    const docSelecionado = cliente.document.replace(/\D/g, '');
+    if (selecionadoDoDashboardDoc && selecionadoDoDashboardDoc !== docSelecionado) {
+      setSelecionadoDoDashboardDoc(null);
     }
+    setClienteSelecionado(cliente);
+    await carregarDetalhesCliente(cliente.document);
   };
+
+  const clientesExibidos = useMemo(() => {
+    if (!clienteSelecionado) return clientes;
+
+    const jaExisteNaPagina = clientes.some((cliente) =>
+      cliente.id === clienteSelecionado.id || cliente.document === clienteSelecionado.document
+    );
+
+    if (jaExisteNaPagina) return clientes;
+    return [clienteSelecionado, ...clientes];
+  }, [clientes, clienteSelecionado]);
+
+  useEffect(() => {
+    const documentFromQuery = (searchParams.get('document') || '').replace(/\D/g, '');
+    if (documentFromQuery.length !== 11) return;
+
+    setSelecionadoDoDashboardDoc(documentFromQuery);
+    setTermoBusca(documentFromQuery);
+    carregarDetalhesCliente(documentFromQuery);
+  }, [searchParams, carregarDetalhesCliente]);
 
   return (
     <div className="space-y-6">
@@ -142,13 +180,13 @@ function ClientesPage() {
               </div>
             ) : (
               <>
-                {clientes.length === 0 ? (
+                {clientesExibidos.length === 0 ? (
                   <div className="p-6 text-center text-slate-500">
                     Nenhum cliente encontrado para essa busca.
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-100">
-                    {clientes.map(cliente => (
+                    {clientesExibidos.map(cliente => (
                       <button
                         key={cliente.id}
                         type="button"
@@ -159,8 +197,13 @@ function ClientesPage() {
                         )}
                       >
                         <div>
-                          <div className={cn("font-medium", clienteSelecionado?.id === cliente.id ? "text-blue-700" : "text-slate-900")}>
+                          <div className={cn("font-medium flex items-center gap-2", clienteSelecionado?.id === cliente.id ? "text-blue-700" : "text-slate-900")}>
                             {cliente.nome || 'Nome não cadastrado'}
+                            {clienteSelecionado?.id === cliente.id && selecionadoDoDashboardDoc === cliente.document.replace(/\D/g, '') && (
+                              <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-inset ring-indigo-200">
+                                Selecionado do Dashboard
+                              </span>
+                            )}
                           </div>
                           <div className="text-sm text-slate-500">{cliente.document}</div>
                         </div>
@@ -194,10 +237,10 @@ function ClientesPage() {
             clienteSelecionado ? (
               <div className="flex flex-col h-full">
                 <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-6">
-                  <CardTitle className="text-2xl">{clienteSelecionado.nome || `CPF ${clienteSelecionado.document}`}</CardTitle>
+                  <CardTitle className="text-2xl">{clienteSelecionado.nome || clienteSelecionado.name || `CPF ${clienteSelecionado.document}`}</CardTitle>
                   <CardDescription>Visualizando extrato consolidado do cliente</CardDescription>
                   
-                  <div className="grid grid-cols-2 gap-4 mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                     <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
                       <span className="text-sm text-slate-500 font-medium">Pontos Disponíveis</span>
                       <span className="text-3xl font-bold text-emerald-600">
@@ -209,6 +252,22 @@ function ClientesPage() {
                       <span className="text-3xl font-bold text-amber-500">
                         {clienteSelecionado.pontosPendentes ?? 0}
                       </span>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
+                      <span className="text-sm text-slate-500 font-medium">Pontos Expirando</span>
+                      <span className="text-3xl font-bold text-rose-500">
+                        {clienteSelecionado.pontosExpirando ?? 0}
+                      </span>
+                      {clienteSelecionado.dataProximaExpiracao && (
+                        <span className="text-xs text-slate-500 mt-1">
+                          Próxima expiração: {formatarData(clienteSelecionado.dataProximaExpiracao)}
+                        </span>
+                      )}
+                      {clienteSelecionado.dataProximaLiberacao && (
+                        <span className="text-xs text-slate-500 mt-1">
+                          Próxima liberação: {formatarData(clienteSelecionado.dataProximaLiberacao)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

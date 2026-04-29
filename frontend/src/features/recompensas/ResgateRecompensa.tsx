@@ -55,7 +55,11 @@ function ResgateRecompensa() {
     const fetchRecompensas = async () => {
       try {
         const response = await api.get(`/recompensas`);
-        setRecompensas(response.data);
+        setRecompensas((response.data || []).map((recompensa: any) => ({
+          ...recompensa,
+          nome: recompensa?.nome ?? recompensa?.name ?? '',
+          points_cost: recompensa?.points_cost ?? recompensa?.custo_pontos ?? 0,
+        })));
       } catch (error: any) {
         toast.error(error.message || 'Erro ao carregar recompensas');
       }
@@ -75,13 +79,20 @@ function ResgateRecompensa() {
     }
     setCarregando(true);
     try {
+      const document = cpf.replace(/\D/g, '');
+      const rewardId = Number(selectedRecompensa);
       const response = await api.post(`/resgates`, {  
-        document: cpf.replace(/\D/g, ''), 
-        reward_id: selectedRecompensa  
+        // Compatibilidade: backend novo usa `document`/`recompensa_id` e legado
+        // pode esperar `cpf`/`reward_id`.
+        document,
+        cpf: document,
+        recompensa_id: rewardId,
+        reward_id: rewardId,
       });
       const data = response.data;
       
-      toast.success(`Resgate realizado! Pontos restantes: ${data.remaining_points}`);
+      const pontosRestantes = data?.pontos_restantes ?? data?.remaining_points ?? 0;
+      toast.success(`Resgate realizado! Pontos restantes: ${pontosRestantes}`);
       setCpf('');
       setSelectedRecompensa('');
       setClienteInfo(null);
@@ -98,10 +109,10 @@ function ResgateRecompensa() {
                             clienteInfo.pontosDisponiveis < recompensaSelecionadaObj.points_cost;
 
   return (
-    <Card className="h-full border-blue-100 shadow-sm flex flex-col">
-      <CardHeader className="bg-purple-50/50 border-b border-purple-100 pb-4">
-        <CardTitle className="text-xl flex items-center gap-2 text-purple-800">
-          <Gift className="h-5 w-5 text-purple-600" />
+    <Card className="h-full border-green-100 shadow-sm flex flex-col">
+      <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
+        <CardTitle className="text-xl flex items-center gap-2 text-green-800">
+          <Gift className="h-5 w-5 text-green-600" />
           Resgatar Recompensa
         </CardTitle>
         <CardDescription>
@@ -167,7 +178,7 @@ function ResgateRecompensa() {
               <option value="" disabled>-- Escolha uma recompensa --</option>
               {recompensas.map(rec => (
                 <option key={rec.id} value={rec.id}>
-                  {rec.nome} ({rec.points_cost} pontos)
+                  {rec.nome || rec.name} ({rec.points_cost} pontos)
                 </option>
               ))}
             </select>
@@ -180,7 +191,7 @@ function ResgateRecompensa() {
         <CardFooter className="pt-2 pb-6 px-6 mt-auto">
           <Button 
             type="submit" 
-            className="w-full h-12 text-base font-semibold bg-purple-600 hover:bg-purple-700" 
+            className="w-full h-12 text-base font-semibold bg-green-600 hover:bg-green-700" 
             disabled={
               carregando || 
               (clienteInfo && clienteInfo.error) || 

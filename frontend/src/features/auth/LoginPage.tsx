@@ -54,12 +54,12 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md shadow-lg border-slate-200">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <Card className="w-full max-w-md shadow-lg border-slate-200 bg-white">
         <CardHeader className="space-y-1 text-center mb-4">
           <div className="flex justify-center mb-2">
-            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <LogIn className="h-6 w-6 text-blue-600" />
+            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+              <LogIn className="h-6 w-6 text-green-600" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
@@ -100,7 +100,7 @@ function LoginPage() {
             </div>
             <Button
               type="submit"
-              className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
+              className="w-full mt-6 bg-green-600 hover:bg-green-700"
               disabled={carregando}
             >
               {carregando ? "Entrando..." : "Entrar"}
@@ -110,7 +110,7 @@ function LoginPage() {
         <CardFooter className="flex justify-center border-t border-slate-100 pt-4 mt-2">
           <Link 
             to="/" 
-            className="flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+            className="flex items-center text-sm font-medium text-slate-600 hover:text-green-600 transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar para a página inicial

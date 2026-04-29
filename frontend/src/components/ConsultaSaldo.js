@@ -9,7 +9,7 @@ const formatarData = (dataISO) => {
   return new Date(data.getTime() + data.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-function ConsultaSaldo({ onConsulta, onNotFound }) {
+function ConsultaSaldo({ onConsulta, onNotFound, tenantId, tenantSlug }) {
   const [cpf, setCpf] = useState('');
   const [cliente, setCliente] = useState(null);
   const [carregando, setCarregando] = useState(false);
@@ -29,9 +29,20 @@ function ConsultaSaldo({ onConsulta, onNotFound }) {
     if (onConsulta) onConsulta(null);
 
     const cpfLimpo = cpf.replace(/\D/g, '');
+    const publicTenantId = tenantId || process.env.REACT_APP_PUBLIC_TENANT_ID;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/clientes/${cpfLimpo}`);
+      let endpoint = `${process.env.REACT_APP_API_URL}/public/pontos/${cpfLimpo}`;
+      const queryParams = new URLSearchParams();
+      if (publicTenantId) {
+        queryParams.set('tenant_id', publicTenantId);
+      } else if (tenantSlug) {
+        queryParams.set('tenant_slug', tenantSlug);
+      }
+      const query = queryParams.toString();
+      if (query) endpoint = `${endpoint}?${query}`;
+
+      const response = await fetch(endpoint);
       
       if (response.status === 404) {
         if (onNotFound) {
@@ -46,9 +57,23 @@ function ConsultaSaldo({ onConsulta, onNotFound }) {
         throw new Error(data.error);
       }
 
-      setCliente(data);
+      const saldo = Array.isArray(data.saldos) && data.saldos.length > 0 ? data.saldos[0] : null;
+      if (!saldo) {
+        throw new Error('Nenhum saldo encontrado para este documento.');
+      }
+
+      const clienteNormalizado = {
+        nome: saldo.customer_name,
+        pontosDisponiveis: saldo.pontos_disponiveis || 0,
+        pontosPendentes: saldo.pontos_pendentes || 0,
+        dataProximaLiberacao: saldo.data_proxima_liberacao || null,
+        pontosExpirando: saldo.pontos_expirando || 0,
+        dataProximaExpiracao: saldo.data_proxima_expiracao || null,
+      };
+
+      setCliente(clienteNormalizado);
       if (onConsulta) {
-        onConsulta(data.pontosDisponiveis);
+        onConsulta(clienteNormalizado.pontosDisponiveis);
       }
     } catch (error) {
       setCliente(null);
@@ -96,14 +121,14 @@ function ConsultaSaldo({ onConsulta, onNotFound }) {
           )}
 
           {cliente.pontosExpirando > 0 && (
-            <div className="bg-rose-50 border border-rose-300 p-3 rounded-lg flex items-start gap-3 mt-4 text-left">
-              <CalendarClock className="h-5 w-5 text-rose-600 shrink-0 mt-0.5 animate-pulse" />
+            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-start gap-3 mt-4 text-left">
+              <CalendarClock className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5 animate-pulse" />
               <div>
-                <p className="text-sm text-rose-900 font-bold">
+                <p className="text-sm text-emerald-900 font-bold">
                   Atenção: {cliente.pontosExpirando} pontos expiram em breve!
                 </p>
                 {cliente.dataProximaExpiracao && (
-                  <p className="text-xs text-rose-800 mt-1">
+                  <p className="text-xs text-emerald-800 mt-1">
                     Data mais urgente: {formatarData(cliente.dataProximaExpiracao)}
                   </p>
                 )}

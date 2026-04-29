@@ -17,6 +17,7 @@ Um sistema de fidelidade full-stack desenvolvido para digitalizar e automatizar 
 * [Sobre o Projeto](#-sobre-o-projeto)
 * [✨ Funcionalidades](#-funcionalidades)
 * [🛠️ Stack de Tecnologias](#-stack-de-tecnologias)
+* [🎨 Design System](#-design-system)
 * [🚀 Começando (Setup Local)](#-começando-setup-local)
 * [📄 Endpoints da API](#-endpoints-da-api)
 * [☁️ Arquitetura de Deploy](#-arquitetura-de-deploy)
@@ -64,6 +65,73 @@ As seguintes ferramentas e tecnologias foram utilizadas na construção do proje
 | `Render` | Plataforma de deploy para o backend. |
 | `Supabase` | Plataforma que hospeda o banco de dados PostgreSQL. |
 | `Git & GitHub`| Para versionamento de código e CI/CD. |
+
+---
+
+## 🎨 Design System
+
+O **Sistema de Fidelidade** implementa um Design System completo e moderno com paleta de cores padronizada, tipografia consistente e componentes reutilizáveis.
+
+### 📚 Documentação
+
+- **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** — Especificação técnica completa (1000+ linhas)
+  - Paleta de cores com hex values
+  - Tipografia (Sora/Manrope)
+  - Componentes (Button, Card, Input, Badge, Table, Modal)
+  - Valores de espaçamento, shadows, transitions
+  - Guidelines de acessibilidade (WCAG AA)
+  
+- **[DESIGN_SYSTEM_VISUAL.md](./DESIGN_SYSTEM_VISUAL.md)** — Referência visual rápida
+  - Amostras de cores (visuais)
+  - Exemplos de componentes
+  - Checklist de implementação
+
+### 🎨 Cores Principais
+
+| Cor | Hex | Uso |
+|-----|-----|-----|
+| **Primary (Teal)** | `#0F766E` | Botões, headers, CTAs |
+| **Secondary (Gold)** | `#F4C542` | Badges, rewards, emphasis |
+| **Success** | `#1F8A52` | Confirmações, pontos |
+| **Danger** | `#DC2626` | Erros, deletions |
+| **Background** | `#F8F9FB` | Layout geral |
+
+### 🔧 Estrutura de Tokens
+
+```
+frontend/
+├── src/
+│   ├── styles/
+│   │   └── design-tokens.css    (80+ CSS variables)
+│   └── components/
+│       └── ui/
+│           ├── button.tsx       (Design System aligned)
+│           ├── card.tsx
+│           ├── input.tsx
+│           ├── badge.tsx
+│           └── table.tsx
+└── tailwind.config.js           (Extended with system colors)
+```
+
+### 📖 Para Desenvolvedores
+
+Ao adicionar novos componentes ou páginas:
+
+1. Use `var(--color-*)` em vez de cores hardcoded
+2. Use `var(--space-*)` para padding/margins
+3. Siga a tipografia (Heading: Sora | Body: Manrope)
+4. Sempre testes focus states (acessibilidade)
+5. Valide contraste (4.5:1 mínimo)
+
+**Exemplo:**
+```css
+.button {
+  background-color: var(--color-primary);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+}
+```
 
 ---
 

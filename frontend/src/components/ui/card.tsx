@@ -8,7 +8,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border border-slate-200 bg-white text-slate-950 shadow-sm",
+      "rounded-lg border border-stone-300 bg-stone-50 text-stone-950 shadow-md",
       className
     )}
     {...props}
@@ -30,14 +30,11 @@ CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
+  React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <h3
+  <p
     ref={ref}
-    className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
-      className
-    )}
+    className={cn("text-2xl font-semibold leading-none tracking-tight", className)}
     {...props}
   />
 ))
@@ -49,7 +46,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-slate-500", className)}
+    className={cn("text-sm text-stone-500", className)}
     {...props}
   />
 ))

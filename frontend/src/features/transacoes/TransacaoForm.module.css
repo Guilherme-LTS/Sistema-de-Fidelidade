@@ -1,143 +1,172 @@
-/* frontend/src/components/TransacaoForm.module.css */
+/* frontend/src/features/transacoes/TransacaoForm.module.css */
+/* Refatorado para usar Design System Tokens */
 
 .formContainer {
-    width: 100%;
-    padding: 1.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background-color: #ffffff;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  width: 100%;
+  padding: var(--space-xl); /* 1.5rem */
+  border: 1px solid var(--color-border-light); /* #E5E7EB */
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface); /* white */
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-xl);
+  text-align: center;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg); /* 1rem */
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-sm);
+  text-align: left;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  font-size: 1rem;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  transition: all var(--transition-base);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.input:disabled {
+  background-color: var(--color-surface-alt);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.button {
+  width: 100%;
+  padding: var(--space-lg);
+  background-color: var(--color-primary); /* #0F766E */
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  font-family: var(--font-body);
+  box-shadow: var(--shadow-sm);
+}
+
+.button:hover {
+  background-color: var(--color-primary-dark); /* #0B5F58 */
+  box-shadow: var(--shadow-md);
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  background-color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .formContainer {
+    padding: var(--space-lg);
   }
-  
+
   .heading {
-    font-size: 1.5rem; /* 24px */
-    font-weight: 600;
-    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    margin-bottom: var(--space-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .formContainer {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 400px;
+    margin: var(--space-xl) auto;
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-light);
+    background: var(--color-surface);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .heading {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-lg);
+    color: var(--color-text);
     text-align: center;
   }
-  
-  .stack {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem; /* Espaço entre os elementos */
-  }
-  
-  .formGroup {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    text-align: left;
-  }
-  
+
   .input {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    font-size: 1rem;
+    padding: var(--space-md);
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border-light);
     box-sizing: border-box;
-    font-size: 1rem;
-  }
-  
-  .button {
     width: 100%;
-    padding: 1rem;
-    background-color: #3182ce; /* Azul */
-    color: white;
-    border: none;
-    border-radius: 4px;
+    margin: 0;
+  }
+
+  .button {
     font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .button:hover {
-    background-color: #2b6cb0; /* Azul mais escuro */
-  }
-  
-  .button:disabled {
-    background-color: #a0aec0; /* Cinza */
-    cursor: not-allowed;
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    background: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    width: 100%;
+    margin: 0;
   }
 
-  @media (max-width: 768px) {
-    .formContainer {
-      padding: 1rem;
-    }
-  
-    .heading {
-      font-size: 1.25rem;
-    }
+  .stack {
+    gap: var(--space-lg);
   }
-
-  @media (max-width: 480px) {
-    .formContainer {
-      box-sizing: border-box;
-      width: 100%;
-      max-width: 400px;
-      margin: 1.2rem auto;
-      padding: 1.2rem 1rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
-      border: 1px solid #e2e8f0;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .heading {
-      font-size: 1.1rem;
-      margin-bottom: 1.1rem;
-      color: #2d3748;
-      text-align: center;
-    }
-    .input {
-      font-size: 1rem;
-      padding: 0.7rem;
-      background: #f9fafb;
-      border: 1px solid #cbd5e1;
-      box-sizing: border-box;
-      width: 100%;
-      margin: 0;
-    }
-    .button {
-      font-size: 1rem;
-      padding: 0.9rem;
-      border-radius: 6px;
-      background: linear-gradient(90deg, #3182ce 60%, #63b3ed 100%);
-      box-shadow: 0 1px 4px 0 rgba(49,130,206,0.08);
-      width: 100%;
-      margin: 0;
-    }
-    .stack {
-      gap: 0.9rem;
-    }
-  }
-
-.formContainer {
-  transition: box-shadow 0.2s, border 0.2s;
-}
-.button {
-  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .feedbackArea {
-  min-height: 24px; 
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
+  min-height: 24px;
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-sm);
   text-align: left;
 }
 
 .clienteInfo {
-  color: #2f855a; /* Verde */
-  font-weight: 500;
+  color: var(--color-success); /* #1F8A52 */
+  font-weight: var(--font-weight-semibold);
 }
 
 .clienteErro {
-  color: #c53030; /* Vermelho */
-  font-weight: 500;
+  color: var(--color-danger); /* #DC2626 */
+  font-weight: var(--font-weight-semibold);
 }

@@ -6,8 +6,8 @@ import { toast } from "react-toastify";
 import api from "../services/api";
 
 const ConfiguracoesPage = () => {
-  const [carencia, setCarencia] = useState<number>(0);
-  const [expiracao, setExpiracao] = useState<number>(180);
+  const [carenciaInput, setCarenciaInput] = useState<string>('0');
+  const [expiracaoInput, setExpiracaoInput] = useState<string>('180');
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -19,17 +19,15 @@ const ConfiguracoesPage = () => {
   const carregarConfiguracoes = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/admin/configuracoes');
+      const res = await api.get('/admin/tenant_settings');
       const data = res.data;
       if (data.configs?.carencia_pontos) {
-        setCarencia(data.configs.carencia_pontos.valor);
+        setCarenciaInput(String(data.configs.carencia_pontos.valor));
       }
       if (data.configs?.expiracao_pontos) {
-        setExpiracao(data.configs.expiracao_pontos.valor);
+        setExpiracaoInput(String(data.configs.expiracao_pontos.valor));
       }
-      if (data.lastUpdate) {
-        setLastUpdate(new Date(data.lastUpdate).toLocaleString('pt-BR'));
-      }
+      setLastUpdate(data.lastUpdate ? new Date(data.lastUpdate).toLocaleString('pt-BR') : null);
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
       toast.error('Erro ao carregar configurações do sistema.');
@@ -40,6 +38,17 @@ const ConfiguracoesPage = () => {
 
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
+    const carencia = Number(carenciaInput);
+    const expiracao = Number(expiracaoInput);
+
+    if (carenciaInput.trim() === '' || expiracaoInput.trim() === '') {
+      toast.warning('Preencha os dois campos antes de salvar.');
+      return;
+    }
+    if (!Number.isInteger(carencia) || !Number.isInteger(expiracao)) {
+      toast.warning('Informe apenas valores inteiros em dias.');
+      return;
+    }
     if (carencia < 0) {
       toast.warning('O prazo de carência não pode ser negativo.');
       return;
@@ -51,7 +60,7 @@ const ConfiguracoesPage = () => {
 
     try {
       setSaving(true);
-      await api.put('/admin/configuracoes', {
+      await api.put('/admin/tenant_settings', {
         carencia_pontos: carencia,
         expiracao_pontos: expiracao
       });
@@ -131,8 +140,9 @@ const ConfiguracoesPage = () => {
                         type="number"
                         min="0"
                         className="pl-10 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={carencia}
-                        onChange={(e) => setCarencia(parseInt(e.target.value) || 0)}
+                        value={carenciaInput}
+                        onChange={(e) => setCarenciaInput(e.target.value)}
+                        disabled={saving}
                       />
                     </div>
                   </div>
@@ -154,8 +164,9 @@ const ConfiguracoesPage = () => {
                         type="number"
                         min="1"
                         className="pl-10 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={expiracao}
-                        onChange={(e) => setExpiracao(parseInt(e.target.value) || 1)}
+                        value={expiracaoInput}
+                        onChange={(e) => setExpiracaoInput(e.target.value)}
+                        disabled={saving}
                       />
                     </div>
                   </div>

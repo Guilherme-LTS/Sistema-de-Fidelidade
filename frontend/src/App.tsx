@@ -24,9 +24,15 @@ function App() {
     <BrowserRouter>
       
       <Routes>
-        {/* Rotas PÃºblicas */}
-        <Route path="/" element={<OriginalCustomerPage />} />
-        <Route path="/landing-page" element={<MarketingLandingPage />} />
+        {/* Rotas Públicas */}
+        {/* Nova Home: Marketing Landing Page foca no B2B */}
+        <Route path="/" element={<MarketingLandingPage />} />
+        
+        {/* Portal do Cliente: Para consultar saldo */}
+        <Route path="/meus-pontos" element={<OriginalCustomerPage />} />
+        <Route path="/p/:tenantSlug" element={<OriginalCustomerPage />} />
+
+        {/* Auth do Lojista */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<CadastroPage />} />
         <Route path="/regulamento" element={<RegulamentoPage />} />

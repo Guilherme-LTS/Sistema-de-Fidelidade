@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { PoolClient } from 'pg';
 import pool from './db';
 
 /**
@@ -11,7 +12,59 @@ export interface AuthenticatedRequest extends Request {
     tenant_id: string;    // O ID do restaurante atrelado ao usuário
     role: string;         // Operador ou Admin
   };
+  // Compatibilidade com código legado
+  usuario?: {
+    id: string;           // UUID do tenant_users
+    user_id: string;      // UUID do Supabase Auth
+    nome: string;
+    email: string;
+    role: string;         // Operador ou Admin
+    tenant_id: string;    // O ID do tenant atrelado ao usuário
+  };
 }
+
+/**
+ * Sanitiza string JSON para uso seguro em SET LOCAL (evita SQL injection)
+ */
+function sanitizeJsonForSQL(jsonStr: string): string {
+  // Escapa aspas simples (método padrão PostgreSQL)
+  return jsonStr.replace(/'/g, "''");
+}
+
+export const setRlsClaims = async (client: PoolClient, req: AuthenticatedRequest) => {
+  const tenantId = req.user?.tenant_id || req.usuario?.tenant_id || null;
+  const userId = req.user?.id || req.usuario?.id || null;
+  const role = req.user?.role || req.usuario?.role || 'authenticated';
+
+  const jwtClaims = JSON.stringify({
+    sub: userId,
+    tenant_id: tenantId,
+    role: role,
+    // Adicionamos campos extras que o Supabase costuma esperar
+    email: req.usuario?.email || '',
+    app_metadata: { provider: 'email' },
+    user_metadata: { name: req.usuario?.nome || '' }
+  });
+
+  const sanitizedClaims = sanitizeJsonForSQL(jwtClaims);
+  
+  try {
+    // 1. Configuramos as claims do JWT
+    await client.query(`SET LOCAL request.jwt.claims = '${sanitizedClaims}'`);
+    
+    // 3. Configuramos especificamente o tenant_id em uma variável separada se necessário por alguma policy customizada
+    if (tenantId) {
+      await client.query(`SET LOCAL app.current_tenant = '${tenantId}'`);
+    }
+  } catch (err: any) {
+    console.error('Erro ao configurar claims de RLS:', err.message);
+    throw err;
+  }
+};
+
+export const resetRlsClaims = async (client: PoolClient) => {
+  await client.query('RESET request.jwt.claims');
+};
 
 /**
  * Wrapper de Transação para o PostgreSQL via node-pg.
@@ -40,7 +93,9 @@ export const queryWithRLS = async (req: AuthenticatedRequest, queryStr: string, 
     });
 
     // 3. Forçar as claims na sessão atual da conexão. Configura RLS!
-    await client.query(`SET LOCAL request.jwt.claims = '${jwtClaims}'`);
+    // SEGURO: Escapamos a string JSON para evitar SQL injection via aspas
+    const sanitizedClaims = sanitizeJsonForSQL(jwtClaims);
+    await client.query(`SET LOCAL request.jwt.claims = '${sanitizedClaims}'`);
 
     // 4. Executar a query verdadeira e limpa (ex: "SELECT * FROM customers")
     const result = await client.query(queryStr, params);

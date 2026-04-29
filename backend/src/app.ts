@@ -15,10 +15,13 @@ import usuariosRoutes from './modules/usuarios/usuarios.routes';
 import adminRoutes from './modules/admin/admin.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import resgatesRoutes from './modules/resgates/resgates.routes';
+import authRoutes from './modules/auth/auth.routes';
+import publicRoutes from './modules/public/public.routes';
 
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middlewares de Seguranca, Performance e Monitoramento
 app.use(helmet());
@@ -53,6 +56,8 @@ app.use(cors({
 app.use(express.json());
 
 // Registro de rotas
+app.use('/auth', authRoutes);
+app.use('/public', publicRoutes);
 app.use('/clientes', clientesRoutes);
 app.use('/transacoes', transacoesRoutes); 
 app.use('/recompensas', recompensasRoutes);

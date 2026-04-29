@@ -7,27 +7,36 @@ const router = Router();
 // GET /dashboard/stats - Estatísticas do dashboard
 router.get('/stats', verificaToken, async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
+    const tenantId = authReq.usuario?.tenant_id;
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+    }
+
     const metricasQuery = `SELECT 
-      (SELECT COUNT(*) FROM customers) as total_clientes, 
-      (SELECT COALESCE(SUM(pontos_restantes), 0) FROM transactions WHERE pontos_restantes > 0 AND data_liberacao > NOW()) as pontos_pendentes,
-      (SELECT COALESCE(SUM(pontos_restantes), 0) FROM transactions WHERE pontos_restantes > 0 AND data_liberacao <= NOW() AND data_vencimento > NOW()) as pontos_disponiveis,
-      (SELECT COALESCE(SUM(pontos_gastos), 0) FROM redemptions) as pontos_resgatados;`;
-    const resMetricas = await queryWithRLS(req as AuthenticatedRequest, metricasQuery);
+      (SELECT COUNT(*) FROM customers WHERE tenant_id = $1 AND deleted_at IS NULL) as total_clientes, 
+      (SELECT COALESCE(SUM(remaining_points), 0) FROM transactions WHERE tenant_id = $1 AND remaining_points > 0 AND available_at > NOW()) as pontos_pendentes,
+      (SELECT COALESCE(SUM(remaining_points), 0) FROM transactions WHERE tenant_id = $1 AND remaining_points > 0 AND available_at <= NOW() AND expires_at > NOW()) as pontos_disponiveis,
+      (SELECT COALESCE(SUM(points_spent), 0) FROM redemptions WHERE tenant_id = $1) as pontos_resgatados;`;
+    const resMetricas = await queryWithRLS(authReq, metricasQuery, [tenantId]);
 
     const topClientesQuery = `
       SELECT
-        c.nome,
-        c.document,
-        (SELECT COALESCE(SUM(t.pontos_restantes), 0) FROM transactions t WHERE t.cliente_id = c.id AND t.data_liberacao <= NOW() AND t.data_vencimento > NOW()) as saldo_pontos
+        COALESCE(c.name, cp.name) AS nome,
+        cp.document,
+        (SELECT COALESCE(SUM(t.remaining_points), 0) FROM transactions t WHERE t.customer_id = c.id AND t.tenant_id = $1 AND t.available_at <= NOW() AND t.expires_at > NOW()) as saldo_pontos
       FROM
         customers c
+      LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id
       WHERE
-        (SELECT COALESCE(SUM(t.pontos_restantes), 0) FROM transactions t WHERE t.cliente_id = c.id AND t.data_liberacao <= NOW() AND t.data_vencimento > NOW()) > 0
+        c.tenant_id = $1
+        AND c.deleted_at IS NULL
+        AND (SELECT COALESCE(SUM(t.remaining_points), 0) FROM transactions t WHERE t.customer_id = c.id AND t.tenant_id = $1 AND t.available_at <= NOW() AND t.expires_at > NOW()) > 0
       ORDER BY
         saldo_pontos DESC
       LIMIT 5;
     `;
-    const resTopClientes = await queryWithRLS(req as AuthenticatedRequest, topClientesQuery);
+    const resTopClientes = await queryWithRLS(authReq, topClientesQuery, [tenantId]);
 
     const chartQuery = `
       WITH params AS (
@@ -42,30 +51,33 @@ router.get('/stats', verificaToken, async (req: Request, res: Response) => {
       ),
       pendentes_agg AS (
         SELECT
-          date_trunc('day', data_transacao AT TIME ZONE (SELECT tz FROM params)) AS day_local,
-          COALESCE(SUM(pontos_ganhos), 0)::int AS pendentes
+          date_trunc('day', created_at AT TIME ZONE (SELECT tz FROM params)) AS day_local,
+          COALESCE(SUM(remaining_points), 0)::int AS pendentes
         FROM transactions
-        WHERE data_liberacao > data_transacao
-          AND data_transacao >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
-          AND data_transacao < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
+        WHERE tenant_id = $1
+          AND available_at > created_at
+          AND created_at >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
+          AND created_at < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
         GROUP BY 1
       ),
       disponibilizados_agg AS (
         SELECT
-          date_trunc('day', data_liberacao AT TIME ZONE (SELECT tz FROM params)) AS day_local,
-          COALESCE(SUM(pontos_ganhos), 0)::int AS lancados
+          date_trunc('day', available_at AT TIME ZONE (SELECT tz FROM params)) AS day_local,
+          COALESCE(SUM(points_earned), 0)::int AS lancados
         FROM transactions
-        WHERE data_liberacao >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
-          AND data_liberacao < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
+        WHERE tenant_id = $1
+          AND available_at >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
+          AND available_at < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
         GROUP BY 1
       ),
       resgates_agg AS (
         SELECT
-          date_trunc('day', data_resgate AT TIME ZONE (SELECT tz FROM params)) AS day_local,
-          COALESCE(SUM(pontos_gastos), 0)::int AS redemptions
+          date_trunc('day', created_at AT TIME ZONE (SELECT tz FROM params)) AS day_local,
+          COALESCE(SUM(points_spent), 0)::int AS redemptions
         FROM redemptions
-        WHERE data_resgate >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
-          AND data_resgate < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
+        WHERE tenant_id = $1
+          AND created_at >= ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) - interval '6 day') AT TIME ZONE (SELECT tz FROM params))
+          AND created_at < ((date_trunc('day', now() AT TIME ZONE (SELECT tz FROM params)) + interval '1 day') AT TIME ZONE (SELECT tz FROM params))
         GROUP BY 1
       )
       SELECT
@@ -79,7 +91,7 @@ router.get('/stats', verificaToken, async (req: Request, res: Response) => {
       LEFT JOIN resgates_agg ON resgates_agg.day_local = days.day_local
       ORDER BY days.day_local ASC;
     `;
-    const resChart = await queryWithRLS(req as AuthenticatedRequest, chartQuery);
+    const resChart = await queryWithRLS(authReq, chartQuery, [tenantId]);
     const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const dataGrafico = resChart.rows.map((row: any) => {
       const data = new Date(row.dia);

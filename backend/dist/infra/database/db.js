@@ -8,21 +8,27 @@ const pg_1 = require("pg");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const isProduction = process.env.NODE_ENV === 'production';
+const hasAppDatabaseUrl = Boolean(process.env.APP_DATABASE_URL && process.env.APP_DATABASE_URL.trim());
 const hasDatabaseUrl = Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim());
-const shouldUseSsl = hasDatabaseUrl || isProduction;
-const connectionConfig = hasDatabaseUrl
+const shouldUseSsl = hasAppDatabaseUrl || hasDatabaseUrl || isProduction;
+const connectionConfig = hasAppDatabaseUrl
     ? {
-        connectionString: process.env.DATABASE_URL,
+        connectionString: process.env.APP_DATABASE_URL,
         ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
     }
-    : {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
-    };
+    : hasDatabaseUrl
+        ? {
+            connectionString: process.env.DATABASE_URL,
+            ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
+        }
+        : {
+            host: process.env.DB_HOST,
+            port: process.env.DB_PORT,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+            ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
+        };
 const pool = new pg_1.Pool(connectionConfig);
 pool.on('error', (err) => {
     console.error('Erro inesperado no pool PostgreSQL:', err.message);

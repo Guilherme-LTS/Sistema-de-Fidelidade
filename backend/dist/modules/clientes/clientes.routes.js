@@ -3,78 +3,125 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
 const db_1 = __importDefault(require("../../infra/database/db"));
+const express_1 = require("express");
+const db_rls_1 = require("../../infra/database/db-rls");
 const autenticacao_1 = __importDefault(require("../../shared/middlewares/autenticacao"));
-const cpf_cnpj_validator_1 = require("cpf-cnpj-validator");
+const cpf_1 = require("../../shared/validators/cpf");
+const customer_identity_1 = require("../../shared/customers/customer-identity");
 const router = (0, express_1.Router)();
-// GET /clientes - Listar clientes com busca e paginação
+// GET /customers - Listar customers com busca e paginação
 router.get('/', autenticacao_1.default, async (req, res) => {
-    const { busca, page = 1, limit = 15 } = req.query;
+    const { busca, page = '1', limit = '15' } = req.query;
+    const authReq = req;
+    const tenantId = authReq.usuario?.tenant_id;
+    if (!tenantId) {
+        return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+    }
     try {
-        const offset = (page - 1) * limit;
+        const pageNum = parseInt(page, 10);
+        const limitNum = parseInt(limit, 10);
+        const offset = (pageNum - 1) * limitNum;
         let totalClientes;
-        let clientes;
+        let customers;
         if (busca && busca.trim() !== '') {
             const termoBuscaNome = `%${busca}%`;
             const cpfBusca = busca.replace(/\D/g, '');
-            let whereClause = 'WHERE nome ILIKE $1';
-            let params = [termoBuscaNome];
+            let whereClause = 'WHERE c.tenant_id = $1 AND c.deleted_at IS NULL AND (COALESCE(c.name, cp.name) ILIKE $2';
+            const params = [tenantId, termoBuscaNome];
             if (cpfBusca) {
-                whereClause += ' OR cpf LIKE $2';
+                whereClause += ' OR COALESCE(cp.document, c.document) LIKE $3';
                 params.push(`%${cpfBusca}%`);
             }
-            const countResult = await db_1.default.query(`SELECT COUNT(*) FROM clientes ${whereClause}`, params);
+            whereClause += ')';
+            const countResult = await (0, db_rls_1.queryWithRLS)(authReq, `SELECT COUNT(*) FROM customers c LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id ${whereClause}`, params);
             totalClientes = parseInt(countResult.rows[0].count, 10);
             const limitOffsetPlaceholders = `LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-            const dataResult = await db_1.default.query(`SELECT id, nome, cpf FROM clientes ${whereClause} ORDER BY nome ASC ${limitOffsetPlaceholders}`, [...params, limit, offset]);
-            clientes = dataResult.rows;
+            const dataResult = await (0, db_rls_1.queryWithRLS)(authReq, `
+          SELECT
+            c.id,
+            COALESCE(c.name, cp.name) AS name,
+            COALESCE(cp.document, c.document) AS document
+          FROM customers c
+          LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id
+          ${whereClause}
+          ORDER BY COALESCE(c.name, cp.name) ASC
+          ${limitOffsetPlaceholders}
+        `, [...params, limitNum, offset]);
+            customers = dataResult.rows;
         }
         else {
-            const countResult = await db_1.default.query('SELECT COUNT(*) FROM clientes');
+            const countResult = await (0, db_rls_1.queryWithRLS)(authReq, 'SELECT COUNT(*) FROM customers WHERE tenant_id = $1 AND deleted_at IS NULL', [tenantId]);
             totalClientes = parseInt(countResult.rows[0].count, 10);
-            const dataResult = await db_1.default.query('SELECT id, nome, cpf FROM clientes ORDER BY nome ASC LIMIT $1 OFFSET $2', [limit, offset]);
-            clientes = dataResult.rows;
+            const dataResult = await (0, db_rls_1.queryWithRLS)(authReq, `
+          SELECT
+            c.id,
+            COALESCE(c.name, cp.name) AS name,
+            COALESCE(cp.document, c.document) AS document
+          FROM customers c
+          LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id
+          WHERE c.tenant_id = $1
+            AND c.deleted_at IS NULL
+          ORDER BY COALESCE(c.name, cp.name) ASC
+          LIMIT $2 OFFSET $3
+        `, [tenantId, limitNum, offset]);
+            customers = dataResult.rows;
         }
         res.status(200).json({
-            clientes,
+            customers,
             total: totalClientes,
-            paginaAtual: parseInt(page, 10),
-            totalPaginas: Math.ceil(totalClientes / limit),
+            paginaAtual: pageNum,
+            totalPaginas: Math.ceil(totalClientes / limitNum),
         });
     }
     catch (error) {
-        console.error('Erro ao listar clientes:', error);
+        console.error('Erro ao listar customers:', error);
         res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
     }
 });
-// GET /clientes/:cpf - Consultar saldo de pontos
-router.get('/:cpf', async (req, res) => {
+// GET /customers/:document - Consultar saldo de pontos
+router.get('/:document', autenticacao_1.default, async (req, res) => {
     try {
-        const cpfParam = req.params.cpf.replace(/\D/g, '');
+        const authReq = req;
+        const tenantId = authReq.usuario?.tenant_id;
+        const cpfParam = req.params.document.replace(/\D/g, '');
+        if (!tenantId) {
+            return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+        }
         if (!cpfParam || cpfParam.length !== 11) {
             return res.status(400).json({ error: 'Formato de CPF inválido.' });
         }
-        const clienteResult = await db_1.default.query('SELECT id, nome, cpf FROM clientes WHERE cpf = $1', [cpfParam]);
+        const clienteResult = await (0, db_rls_1.queryWithRLS)(authReq, `
+        SELECT
+          c.id,
+          COALESCE(c.name, cp.name) AS name,
+          COALESCE(cp.document, c.document) AS document
+        FROM customers c
+        LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id
+        WHERE COALESCE(cp.document, c.document) = $1
+          AND c.tenant_id = $2
+          AND c.deleted_at IS NULL
+        LIMIT 1
+      `, [cpfParam, tenantId]);
         const cliente = clienteResult.rows[0];
         if (!cliente) {
             return res.status(404).json({ error: 'Cliente não encontrado.' });
         }
         const clienteId = cliente.id;
-        const creditosResult = await db_1.default.query(`SELECT COALESCE(SUM(pontos_restantes), 0) as total FROM transacoes WHERE cliente_id = $1 AND data_liberacao <= NOW() AND data_vencimento > NOW()`, [clienteId]);
-        const pontosDisponiveis = parseInt(creditosResult.rows[0].total);
-        const pontosPendentesResult = await db_1.default.query(`SELECT COALESCE(SUM(pontos_restantes), 0) as total FROM transacoes WHERE cliente_id = $1 AND data_liberacao > NOW()`, [clienteId]);
-        const pontosPendentes = parseInt(pontosPendentesResult.rows[0].total);
-        const proximoVencimentoResult = await db_1.default.query(`SELECT MIN(data_vencimento) as proximo_vencimento FROM transacoes WHERE cliente_id = $1 AND data_vencimento > NOW() AND data_liberacao <= NOW() AND pontos_restantes > 0`, [clienteId]);
+        const creditosResult = await (0, db_rls_1.queryWithRLS)(authReq, `SELECT COALESCE(SUM(remaining_points), 0) as total FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at <= NOW() AND expires_at > NOW()`, [clienteId, tenantId]);
+        const pontosDisponiveis = parseInt(creditosResult.rows[0].total, 10) || 0;
+        const pontosPendentesResult = await (0, db_rls_1.queryWithRLS)(authReq, `SELECT COALESCE(SUM(remaining_points), 0) as total FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at > NOW()`, [clienteId, tenantId]);
+        const pontosPendentes = parseInt(pontosPendentesResult.rows[0].total, 10) || 0;
+        const proximoVencimentoResult = await (0, db_rls_1.queryWithRLS)(authReq, `SELECT MIN(expires_at) as proximo_vencimento FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND expires_at > NOW() AND available_at <= NOW() AND remaining_points > 0`, [clienteId, tenantId]);
         const proximoVencimento = proximoVencimentoResult.rows[0].proximo_vencimento;
-        const expiracaoUrgenteResult = await db_1.default.query(`SELECT COALESCE(SUM(pontos_restantes), 0) as pontos_expirando, MIN(data_vencimento) as data_proxima_expiracao FROM transacoes WHERE cliente_id = $1 AND data_liberacao <= NOW() AND data_vencimento > NOW() AND data_vencimento <= NOW() + INTERVAL '7 days' AND pontos_restantes > 0`, [clienteId]);
+        const expiracaoUrgenteResult = await (0, db_rls_1.queryWithRLS)(authReq, `SELECT COALESCE(SUM(remaining_points), 0) as pontos_expirando, MIN(expires_at) as data_proxima_expiracao FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at <= NOW() AND expires_at > NOW() AND expires_at <= NOW() + INTERVAL '7 days' AND remaining_points > 0`, [clienteId, tenantId]);
         const pontosExpirando = parseInt(expiracaoUrgenteResult.rows[0].pontos_expirando, 10) || 0;
         const dataProximaExpiracao = expiracaoUrgenteResult.rows[0].data_proxima_expiracao;
-        const liberacaoUrgenteResult = await db_1.default.query(`SELECT MIN(data_liberacao) as data_proxima_liberacao FROM transacoes WHERE cliente_id = $1 AND data_liberacao > NOW() AND pontos_restantes > 0`, [clienteId]);
+        const liberacaoUrgenteResult = await (0, db_rls_1.queryWithRLS)(authReq, `SELECT MIN(available_at) as data_proxima_liberacao FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at > NOW() AND remaining_points > 0`, [clienteId, tenantId]);
         const dataProximaLiberacao = liberacaoUrgenteResult.rows[0].data_proxima_liberacao;
         res.status(200).json({
-            nome: cliente.nome,
-            cpf: cliente.cpf,
+            nome: cliente.name,
+            document: cliente.document,
             pontosDisponiveis,
             pontosPendentes,
             proximoVencimento,
@@ -88,14 +135,27 @@ router.get('/:cpf', async (req, res) => {
         res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
     }
 });
-// GET /clientes/:cpf/extrato - Extrato de transações
-router.get('/:cpf/extrato', async (req, res) => {
+// GET /customers/:document/extrato - Extrato de transações
+router.get('/:document/extrato', autenticacao_1.default, async (req, res) => {
     try {
-        const cpfParam = req.params.cpf.replace(/\D/g, '');
+        const authReq = req;
+        const tenantId = authReq.usuario?.tenant_id;
+        const cpfParam = req.params.document.replace(/\D/g, '');
+        if (!tenantId) {
+            return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+        }
         if (!cpfParam || cpfParam.length !== 11) {
             return res.status(400).json({ error: 'Formato de CPF inválido.' });
         }
-        const clienteResult = await db_1.default.query('SELECT id FROM clientes WHERE cpf = $1', [cpfParam]);
+        const clienteResult = await (0, db_rls_1.queryWithRLS)(authReq, `
+        SELECT c.id
+        FROM customers c
+        LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id
+        WHERE COALESCE(cp.document, c.document) = $1
+          AND c.tenant_id = $2
+          AND c.deleted_at IS NULL
+        LIMIT 1
+      `, [cpfParam, tenantId]);
         const cliente = clienteResult.rows[0];
         if (!cliente) {
             return res.status(404).json({ error: 'Cliente não encontrado.' });
@@ -104,16 +164,16 @@ router.get('/:cpf/extrato', async (req, res) => {
         const limit = parseInt(req.query.limit || '100', 10);
         const combinedQuery = `
       SELECT * FROM (
-        SELECT 'credito' as tipo, pontos_ganhos as pontos, data_transacao as data, 'Pontos por compra' as descricao 
-        FROM transacoes WHERE cliente_id = $1
+        SELECT 'credito' as tipo, points_earned as pontos, created_at as data, 'Pontos por compra' as descricao 
+        FROM transactions WHERE customer_id = $1 AND tenant_id = $2
         UNION ALL
-        SELECT 'debito' as tipo, res.pontos_gastos as pontos, res.data_resgate as data, rec.nome as descricao 
-        FROM resgates res JOIN recompensas rec ON res.recompensa_id = rec.id WHERE res.cliente_id = $1
+        SELECT 'debito' as tipo, res.points_spent as pontos, res.created_at as data, rec.name as descricao 
+        FROM redemptions res JOIN rewards rec ON res.reward_id = rec.id AND rec.tenant_id = $2 WHERE res.customer_id = $1 AND res.tenant_id = $2
       ) as extrato_unificado
       ORDER BY data DESC
-      LIMIT $2
+      LIMIT $3
     `;
-        const extratoResult = await db_1.default.query(combinedQuery, [clienteId, limit]);
+        const extratoResult = await (0, db_rls_1.queryWithRLS)(authReq, combinedQuery, [clienteId, tenantId, limit]);
         res.status(200).json(extratoResult.rows);
     }
     catch (error) {
@@ -121,44 +181,35 @@ router.get('/:cpf/extrato', async (req, res) => {
         res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
     }
 });
-// POST /clientes/cadastro - Cadastrar novo cliente
-router.post('/cadastro', async (req, res) => {
-    const { nome, cpf, lgpd_consentimento } = req.body;
-    if (!nome || !cpf) {
+// POST /customers/cadastro - Cadastrar novo cliente (agora protegido)
+router.post('/cadastro', autenticacao_1.default, async (req, res) => {
+    const authReq = req;
+    const { nome, document, lgpd_consentimento } = req.body;
+    const tenantId = authReq.usuario?.tenant_id;
+    if (!nome || !document) {
         return res.status(400).json({ error: 'Nome e CPF são obrigatórios.' });
     }
     if (lgpd_consentimento !== true) {
         return res.status(400).json({ error: 'É necessário aceitar os termos de uso e a política de privacidade.' });
     }
-    const cpfLimpo = cpf.replace(/\D/g, '');
-    if (!cpf_cnpj_validator_1.cpf.isValid(cpfLimpo)) {
-        return res.status(400).json({ error: 'O CPF informado é inválido.' });
+    if (!tenantId) {
+        return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
     }
+    const cpfValidation = (0, cpf_1.validateAndCleanCPF)(document);
+    if (!cpfValidation.isValid) {
+        return res.status(400).json({ error: cpfValidation.error });
+    }
+    const cpfLimpo = cpfValidation.cleaned;
     const client = await db_1.default.connect();
     try {
         await client.query('BEGIN');
-        const existingClientResult = await client.query('SELECT * FROM clientes WHERE cpf = $1', [cpfLimpo]);
-        const existingClient = existingClientResult.rows[0];
-        let finalClient;
-        if (existingClient) {
-            if (existingClient.nome) {
-                await client.query('ROLLBACK');
-                return res.status(409).json({ error: 'Este CPF já está cadastrado em nosso sistema.' });
-            }
-            else {
-                const updatedClientResult = await client.query(`UPDATE clientes 
-           SET nome = $1, lgpd_consentimento = $2, data_consentimento = $3 
-           WHERE cpf = $4 
-           RETURNING id, nome, cpf`, [nome, lgpd_consentimento, new Date(), cpfLimpo]);
-                finalClient = updatedClientResult.rows[0];
-            }
-        }
-        else {
-            const newClientResult = await client.query(`INSERT INTO clientes (nome, cpf, lgpd_consentimento, data_consentimento) 
-         VALUES ($1, $2, $3, $4) 
-         RETURNING id, nome, cpf`, [nome, cpfLimpo, lgpd_consentimento, new Date()]);
-            finalClient = newClientResult.rows[0];
-        }
+        const finalClient = await (0, customer_identity_1.upsertTenantCustomerByDocument)(client, {
+            tenantId,
+            document: cpfLimpo,
+            name: nome,
+            lgpdConsent: lgpd_consentimento,
+            consentDate: new Date(),
+        });
         await client.query('COMMIT');
         res.status(201).json({
             message: 'Cadastro realizado com sucesso!',
@@ -166,13 +217,12 @@ router.post('/cadastro', async (req, res) => {
         });
     }
     catch (error) {
-        await client.query('ROLLBACK');
+        await client.query('ROLLBACK').catch(() => { });
         console.error('Erro ao cadastrar cliente:', error);
         res.status(500).json({ error: 'Ocorreu um erro no servidor ao realizar o cadastro.' });
     }
     finally {
-        if (client)
-            client.release();
+        client.release();
     }
 });
 exports.default = router;

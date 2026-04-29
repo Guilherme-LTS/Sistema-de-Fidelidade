@@ -20,11 +20,12 @@ import {
 } from '../../components/ui/table';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Gift, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Gift, Plus, Pencil, Trash2, X, AlertTriangle } from 'lucide-react';
 
 interface Recompensa {
   id: number;
   nome: string;
+  name?: string;
   descricao: string;
   points_cost: string | number;
 }
@@ -34,6 +35,8 @@ function PremiosPage() {
   const [loading, setLoading] = useState(true);
   
   const [isOpen, setIsOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [recompensaParaExcluir, setRecompensaParaExcluir] = useState<Recompensa | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentRecompensa, setCurrentRecompensa] = useState<Recompensa>({ 
     id: 0, 
@@ -42,11 +45,19 @@ function PremiosPage() {
     points_cost: '' 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const normalizeRecompensa = (recompensa: any): Recompensa => ({
+    ...recompensa,
+    nome: recompensa?.nome ?? recompensa?.name ?? '',
+    descricao: recompensa?.descricao ?? recompensa?.description ?? '',
+    points_cost: recompensa?.points_cost ?? recompensa?.custo_pontos ?? '',
+  });
 
   const fetchRecompensas = useCallback(async () => {
     try {
       const { data } = await api.get('/recompensas'); 
-      setRecompensas(data);
+      setRecompensas((data || []).map(normalizeRecompensa));
     } catch (error: any) {
       toast.error(error.message || 'Erro ao carregar recompensas');
     } finally {
@@ -60,19 +71,20 @@ function PremiosPage() {
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        handleCloseModal();
+      if (event.key === 'Escape') {
+        if (isOpen) handleCloseModal();
+        if (isDeleteModalOpen) handleCloseDeleteModal();
       }
     };
 
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [isOpen]);
+  }, [isOpen, isDeleteModalOpen]);
 
   const handleOpenModal = (recompensa: Recompensa | null = null) => {
     if (recompensa) {
       setIsEditing(true);
-      setCurrentRecompensa({ ...recompensa });
+      setCurrentRecompensa(normalizeRecompensa(recompensa));
     } else {
       setIsEditing(false);
       setCurrentRecompensa({ id: 0, nome: '', descricao: '', points_cost: '' });
@@ -84,6 +96,16 @@ function PremiosPage() {
     setIsOpen(false);
   };
 
+  const handleOpenDeleteModal = (recompensa: Recompensa) => {
+    setRecompensaParaExcluir(recompensa);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setRecompensaParaExcluir(null);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCurrentRecompensa(prev => ({ ...prev, [name]: value }));
@@ -93,10 +115,16 @@ function PremiosPage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    const dadosParaEnviar: any = { ...currentRecompensa };
+    const dadosParaEnviar: any = {
+      nome: currentRecompensa.nome,
+      descricao: currentRecompensa.descricao,
+      custo_pontos: Number(currentRecompensa.points_cost),
+    };
 
     if (!isEditing) {
       delete dadosParaEnviar.id;
+    } else {
+      dadosParaEnviar.id = currentRecompensa.id;
     }
 
     try {
@@ -116,15 +144,20 @@ function PremiosPage() {
     }
   };
   
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Tem certeza que deseja excluir esta recompensa?')) {
-      try {
-        await api.delete(`/recompensas/${id}`);
-        toast.success('Recompensa excluída com sucesso!');
-        fetchRecompensas();
-      } catch (error: any) {
-        toast.error(error.response?.data?.error || error.message || 'Erro ao excluir recompensa');
-      }
+  const handleDelete = async () => {
+    if (!recompensaParaExcluir || isDeleting) return;
+
+    setIsDeleting(true);
+
+    try {
+      await api.delete(`/recompensas/${recompensaParaExcluir.id}`);
+      toast.success('Recompensa excluída com sucesso!');
+      fetchRecompensas();
+      handleCloseDeleteModal();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || error.message || 'Erro ao excluir recompensa');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -141,12 +174,12 @@ function PremiosPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            <Gift className="h-8 w-8 text-blue-600" />
+            <Gift className="h-8 w-8 text-green-600" />
             Catálogo de Recompensas
           </h1>
           <p className="text-slate-500 mt-1">Configure os prêmios disponíveis para resgate</p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => handleOpenModal()} className="bg-green-600 hover:bg-green-700">
           <Plus className="mr-2 h-4 w-4" />
           Novo Prêmio
         </Button>
@@ -178,10 +211,10 @@ function PremiosPage() {
                 ) : (
                   recompensas.map(rec => (
                     <TableRow key={rec.id} className="hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="font-medium">{rec.nome}</TableCell>
+                      <TableCell className="font-medium">{rec.nome || rec.name}</TableCell>
                       <TableCell className="text-slate-500">{rec.descricao || '-'}</TableCell>
                       <TableCell>
-                        <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">
+                        <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
                           {rec.points_cost} pts
                         </span>
                       </TableCell>
@@ -197,7 +230,7 @@ function PremiosPage() {
                         <Button 
                           variant="outline" 
                           size="icon" 
-                          onClick={() => handleDelete(rec.id)} 
+                          onClick={() => handleOpenDeleteModal(rec)} 
                           title="Excluir" 
                           className="hover:bg-red-50 hover:text-red-600 border-slate-200"
                         >
@@ -292,6 +325,46 @@ function PremiosPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isDeleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={handleCloseDeleteModal}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="px-6 py-4 border-b border-slate-100 bg-red-50/50">
+              <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                Confirmar Exclusão
+              </h2>
+            </div>
+
+            <div className="p-6 space-y-3">
+              <p className="text-slate-700">
+                Deseja realmente excluir o prêmio{' '}
+                <strong>{recompensaParaExcluir?.nome || recompensaParaExcluir?.name}</strong>?
+              </p>
+              <p className="text-sm text-slate-500">
+                Esta ação irá desativar o prêmio e ele não ficará mais disponível para resgate.
+              </p>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
+                <Button type="button" variant="outline" onClick={handleCloseDeleteModal} disabled={isDeleting}>
+                  Cancelar
+                </Button>
+                <Button type="button" className="bg-red-600 hover:bg-red-700" onClick={handleDelete} disabled={isDeleting}>
+                  {isDeleting ? 'Excluindo...' : 'Excluir Prêmio'}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

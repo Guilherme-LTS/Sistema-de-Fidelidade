@@ -1,190 +1,276 @@
-/* frontend/src/pages/PremiosPage.module.css */
+/* frontend/src/features/recompensas/PremiosPage.module.css */
+/* Refatorado para usar Design System Tokens */
 
 .container {
-  padding: 1rem;
+  padding: var(--space-lg);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-2xl);
+  flex-wrap: wrap;
+  gap: var(--space-lg);
 }
 
 .header h1 {
   font-size: clamp(1.35rem, 2.5vw, 2rem);
   font-weight: 700;
-  color: #11253b;
+  color: var(--color-text);
+  font-family: var(--font-heading);
 }
 
 .addButton {
-  background-color: #0f766e;
+  background-color: var(--color-primary);
   color: white;
-  padding: 0.75rem 1.5rem;
+  padding: var(--space-md) var(--space-lg);
   border: none;
-  border-radius: 10px;
-  font-weight: 700;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: background-color var(--transition-base), transform var(--transition-base);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-body);
 }
 
 .addButton:hover {
-  background-color: #0b5f58;
-  transform: translateY(-1px);
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.addButton:active {
+  transform: translateY(0);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
+  background-color: var(--color-surface);
   box-shadow: var(--shadow-sm);
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
   overflow: hidden;
 }
 
-.table th, .table td {
-  padding: 1rem;
+.table th,
+.table td {
+  padding: var(--space-lg);
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border-light);
+  font-family: var(--font-body);
 }
 
 .table th {
-  background-color: #f3f8fb;
-  font-weight: 600;
-  color: #3c5568;
+  background-color: var(--color-surface-alt);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: capitalize;
+}
+
+.table td {
+  color: var(--color-text);
 }
 
 .actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
-.editButton, .deleteButton {
-  padding: 0.5rem 1rem;
+.editButton,
+.deleteButton {
+  padding: var(--space-sm) var(--space-lg);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color var(--transition-base), transform var(--transition-base);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-base);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-body);
 }
 
 .editButton {
-  background-color: #f3c74a;
-  color: #1a202c;
+  background-color: var(--color-secondary); /* #F4C542 */
+  color: #1a202c; /* dark text on yellow */
+  border: none;
 }
+
 .editButton:hover {
-  background-color: #dbb13e;
-  transform: translateY(-1px);
+  background-color: #dbb13e; /* darker yellow */
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 .deleteButton {
-  background-color: #c62828;
+  background-color: var(--color-danger);
   color: white;
-}
-.deleteButton:hover {
-  background-color: #ab2121;
-  transform: translateY(-1px);
+  border: none;
 }
 
-/* Estilos do Modal */
+.deleteButton:hover {
+  background-color: #b91c1c; /* darker red */
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Modal */
 .modalBackdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(3, 10, 22, 0.55);
+  background-color: var(--color-overlay);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: var(--z-modal-overlay);
 }
 
 .modalContent {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 14px;
+  background-color: var(--color-surface);
+  padding: var(--space-2xl);
+  border-radius: var(--radius-lg);
   width: 90%;
   max-width: 500px;
   box-shadow: var(--shadow-lg);
+  z-index: var(--z-modal);
+  border: 1px solid var(--color-border-light);
+  animation: slideUp 0.3s ease-out;
 }
 
 .modalContent h2 {
   font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-xl);
+  color: var(--color-text);
+  font-family: var(--font-heading);
 }
 
 .formGroup {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-lg);
 }
 
 .formGroup label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  margin-bottom: var(--space-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
 }
 
 .formGroup input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #c9d4e0;
-  border-radius: 8px;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  transition: all var(--transition-base);
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
 .modalActions {
-  margin-top: 2rem;
+  margin-top: var(--space-2xl);
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: var(--space-lg);
 }
 
-.cancelButton, .saveButton {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 700;
+.cancelButton,
+.saveButton {
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
+  transition: all var(--transition-base);
+  font-family: var(--font-body);
 }
 
 .cancelButton {
-  background-color: #e2e8f0;
-  border: 1px solid #cbd5e0;
-  color: #2d3748;
+  background-color: var(--color-surface-alt);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text);
+}
+
+.cancelButton:hover {
+  background-color: var(--color-border-light);
 }
 
 .saveButton {
-  background-color: #0f766e;
+  background-color: var(--color-primary);
   border: none;
   color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .saveButton:hover {
-  background: #0b5f58;
+  background-color: var(--color-primary-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .emptyTable {
   text-align: center;
-  color: #5f7588;
+  color: var(--color-text-secondary);
   padding: 1.2rem !important;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-body);
 }
 
 .spinnerContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4rem;
+  padding: var(--space-3xl);
+  color: var(--color-text-secondary);
 }
 
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* MEDIA QUERIES */
 @media (max-width: 760px) {
   .header {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.8rem;
+    gap: var(--space-lg);
+  }
+
+  .addButton {
+    width: 100%;
   }
 
   .table {
     display: block;
     overflow-x: auto;
+  }
+
+  .table th,
+  .table td {
+    padding: var(--space-lg);
+    font-size: 0.9rem;
+  }
+
+  .modalContent {
+    width: 95%;
+    padding: var(--space-xl);
   }
 }

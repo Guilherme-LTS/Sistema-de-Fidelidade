@@ -7,17 +7,28 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-blue-600 text-white hover:bg-blue-700",
-        destructive: "bg-red-500 text-white hover:bg-red-600",
-        outline: "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900",
-        secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
-        ghost: "hover:bg-slate-100 hover:text-slate-900",
-        link: "text-blue-600 underline-offset-4 hover:underline",
+        /* Primary: Teal — Ação principal (CTA) */
+        default: "bg-teal-500 text-white hover:bg-teal-700 shadow-sm hover:shadow-md",
+        
+        /* Destructive: Red — Deletar, rejeitar */
+        destructive: "bg-danger-500 text-white hover:bg-danger-600 shadow-sm hover:shadow-md",
+        
+        /* Outline: White with teal border — Ação secundária */
+        outline: "border border-stone-300 bg-stone-50 text-teal-500 hover:bg-stone-100 hover:text-teal-700",
+        
+        /* Secondary: Soft teal background — Ação terciária */
+        secondary: "bg-teal-50 text-teal-700 hover:bg-teal-100 shadow-xs hover:shadow-sm",
+        
+        /* Ghost: Transparent — Links dentro de contexto */
+        ghost: "hover:bg-stone-100 hover:text-stone-900 text-stone-700",
+        
+        /* Link: Text with underline — Links simples */
+        link: "text-teal-500 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
+        sm: "h-9 rounded-md px-3 text-xs",
+        lg: "h-12 rounded-md px-8 text-base",
         icon: "h-10 w-10",
       },
     },

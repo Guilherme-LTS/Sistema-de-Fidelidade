@@ -17,8 +17,11 @@ const usuarios_routes_1 = __importDefault(require("./modules/usuarios/usuarios.r
 const admin_routes_1 = __importDefault(require("./modules/admin/admin.routes"));
 const dashboard_routes_1 = __importDefault(require("./modules/dashboard/dashboard.routes"));
 const resgates_routes_1 = __importDefault(require("./modules/resgates/resgates.routes"));
+const auth_routes_1 = __importDefault(require("./modules/auth/auth.routes"));
+const public_routes_1 = __importDefault(require("./modules/public/public.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+app.set('trust proxy', 1);
 // Middlewares de Seguranca, Performance e Monitoramento
 app.use((0, helmet_1.default)());
 app.use((0, compression_1.default)());
@@ -48,6 +51,8 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json());
 // Registro de rotas
+app.use('/auth', auth_routes_1.default);
+app.use('/public', public_routes_1.default);
 app.use('/clientes', clientes_routes_1.default);
 app.use('/transacoes', transacoes_routes_1.default);
 app.use('/recompensas', recompensas_routes_1.default);

@@ -3,51 +3,84 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
 const db_1 = __importDefault(require("../../infra/database/db"));
+const express_1 = require("express");
 const autenticacao_1 = __importDefault(require("../../shared/middlewares/autenticacao"));
+const audit_1 = require("../../shared/auditoria/audit");
+const customer_identity_1 = require("../../shared/customers/customer-identity");
 const router = (0, express_1.Router)();
-// POST /resgates - Resgatar recompensa
+// POST /redemptions - Resgatar recompensa
 router.post('/', autenticacao_1.default, async (req, res) => {
     const client = await db_1.default.connect();
     try {
-        const { cpf, recompensa_id } = req.body;
-        const operadorId = req.usuario.id;
-        const cpfLimpo = cpf.replace(/\D/g, '');
+        const { document, recompensa_id } = req.body;
+        const authReq = req;
+        const operadorId = authReq.usuario?.id;
+        const tenantId = authReq.usuario?.tenant_id;
+        const cpfLimpo = (document || '').replace(/\D/g, '');
         if (!cpfLimpo || !recompensa_id) {
             return res.status(400).json({ error: 'CPF e ID da recompensa são obrigatórios.' });
         }
+        if (!tenantId) {
+            return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+        }
         await client.query('BEGIN');
-        const clienteResult = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
-        const cliente = clienteResult.rows[0];
+        const cliente = await (0, customer_identity_1.resolveTenantCustomerByDocument)(client, tenantId, cpfLimpo);
         if (!cliente)
             throw new Error('Cliente não encontrado.');
-        const recompensaResult = await client.query('SELECT custo_pontos FROM recompensas WHERE id = $1', [recompensa_id]);
+        const recompensaResult = await client.query('SELECT points_cost, name FROM rewards WHERE id = $1 AND tenant_id = $2 AND is_active = true', [recompensa_id, tenantId]);
         const recompensa = recompensaResult.rows[0];
         if (!recompensa)
             throw new Error('Recompensa não encontrada.');
-        // 1. Busca transações válidas via FIFO
-        const transacoesValidas = await client.query(`SELECT id, pontos_restantes FROM transacoes 
-       WHERE cliente_id = $1 AND pontos_restantes > 0 
-       AND data_liberacao <= NOW() AND data_vencimento > NOW()
-       ORDER BY data_vencimento ASC, data_transacao ASC`, [cliente.id]);
-        const pontosDisponiveis = transacoesValidas.rows.reduce((acc, t) => acc + t.pontos_restantes, 0);
-        if (pontosDisponiveis < recompensa.custo_pontos) {
+        // 1. Busca transações válidas via FIFO (com lock para evitar race condition)
+        const transacoesValidas = await client.query(`SELECT id, remaining_points FROM transactions 
+       WHERE customer_id = $1 AND tenant_id = $2 AND remaining_points > 0 
+       AND available_at <= NOW() AND expires_at > NOW()
+       ORDER BY expires_at ASC, created_at ASC
+       FOR UPDATE`, [cliente.id, tenantId]);
+        const pontosDisponiveis = transacoesValidas.rows.reduce((acc, t) => acc + t.remaining_points, 0);
+        if (pontosDisponiveis < recompensa.points_cost) {
             throw new Error('Pontos disponíveis insuficientes.');
         }
-        // 2. Aplica débito abatendo FIFO das transações
-        let pontosNecessarios = recompensa.custo_pontos;
+        // 2. Aplica débito abatendo FIFO das transações (otimizado: batch UPDATE com CASE)
+        // Calcula quanto descontar de cada transação em FIFO order
+        let pontosNecessarios = recompensa.points_cost;
+        const updates = [];
         for (const t of transacoesValidas.rows) {
             if (pontosNecessarios <= 0)
                 break;
-            const descontar = Math.min(t.pontos_restantes, pontosNecessarios);
+            const descontar = Math.min(t.remaining_points, pontosNecessarios);
+            updates.push({ id: t.id, descontar });
             pontosNecessarios -= descontar;
-            await client.query('UPDATE transacoes SET pontos_restantes = pontos_restantes - $1 WHERE id = $2', [descontar, t.id]);
+        }
+        // Executa um único UPDATE com CASE statement em vez de N queries
+        if (updates.length > 0) {
+            let caseClause = 'CASE id\n';
+            const ids = [];
+            updates.forEach(u => {
+                caseClause += `WHEN ${u.id} THEN remaining_points - ${u.descontar}\n`;
+                ids.push(u.id);
+            });
+            caseClause += 'ELSE remaining_points\nEND';
+            await client.query(`UPDATE transactions SET remaining_points = ${caseClause} WHERE id = ANY($1) AND tenant_id = $2`, [ids, tenantId]);
         }
         // 3. Registra histórico do resgate
-        await client.query('INSERT INTO resgates (cliente_id, recompensa_id, pontos_gastos, usuario_id) VALUES ($1, $2, $3, $4)', [cliente.id, recompensa_id, recompensa.custo_pontos, operadorId]);
+        const redemptionResult = await client.query('INSERT INTO redemptions (customer_id, reward_id, points_spent, operator_id, tenant_id) VALUES ($1, $2, $3, $4, $5) RETURNING id', [cliente.id, recompensa_id, recompensa.points_cost, operadorId, tenantId]);
+        await (0, audit_1.logAuditEvent)({
+            req,
+            client,
+            tenantId,
+            operatorId: operadorId || null,
+            action: 'RESGATE_RECOMPENSA',
+            details: `Resgate de recompensa ${recompensa.name || recompensa_id} para CPF ${cpfLimpo}, consumindo ${recompensa.points_cost} pontos.`,
+            targetLabel: recompensa.name || `Recompensa #${recompensa_id}`,
+            impactLabel: `-${recompensa.points_cost} pts`,
+            status: 'SUCESSO',
+            entityType: 'redemption',
+            entityId: redemptionResult.rows[0]?.id
+        });
         await client.query('COMMIT');
-        const pontosRestantes = pontosDisponiveis - recompensa.custo_pontos;
+        const pontosRestantes = pontosDisponiveis - recompensa.points_cost;
         res.status(200).json({ message: 'Recompensa resgatada com sucesso!', pontos_restantes: pontosRestantes });
     }
     catch (error) {

@@ -5,10 +5,16 @@ dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const hasAppDatabaseUrl = Boolean(process.env.APP_DATABASE_URL && process.env.APP_DATABASE_URL.trim());
 const hasDatabaseUrl = Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim());
-const shouldUseSsl = hasDatabaseUrl || isProduction;
+const shouldUseSsl = hasAppDatabaseUrl || hasDatabaseUrl || isProduction;
 
-const connectionConfig = hasDatabaseUrl
+const connectionConfig = hasAppDatabaseUrl
+  ? {
+      connectionString: process.env.APP_DATABASE_URL,
+      ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
+    }
+  : hasDatabaseUrl
   ? {
       connectionString: process.env.DATABASE_URL,
       ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
@@ -24,14 +30,25 @@ const connectionConfig = hasDatabaseUrl
 
 const pool = new Pool(connectionConfig);
 
+const adminPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
+});
+
 pool.on('error', (err) => {
-  console.error('Erro inesperado no pool PostgreSQL:', err.message);
+  console.error('Erro inesperado no pool PostgreSQL (App User):', err.message);
+});
+
+adminPool.on('error', (err) => {
+  console.error('Erro inesperado no pool PostgreSQL (Admin User):', err.message);
 });
 
 async function testConnection() {
   try {
     await pool.query('SELECT 1');
-    console.log('Conectado com sucesso ao PostgreSQL!');
+    console.log('Conectado com sucesso ao PostgreSQL (App User)!');
+    await adminPool.query('SELECT 1');
+    console.log('Conectado com sucesso ao PostgreSQL (Admin User)!');
   } catch (err) {
     console.error('Falha ao conectar no PostgreSQL. Revise seu backend/.env.');
     console.error(`Detalhe: ${err.message}`);
@@ -41,4 +58,5 @@ async function testConnection() {
 
 testConnection();
 
+export { adminPool };
 export default pool;

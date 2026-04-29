@@ -16,7 +16,7 @@ const RegulamentoPage = () => {
                         </Button>
                     </Link>
                     <div className="flex-1 flex justify-center items-center gap-2">
-                        <FileText className="h-6 w-6 text-purple-600" />
+                        <FileText className="h-6 w-6 text-green-600" />
                         <h1 className="text-xl font-bold tracking-tight text-slate-800">
                             Regulamento Fidelidade
                         </h1>
@@ -40,7 +40,7 @@ const RegulamentoPage = () => {
                             
                             <section>
                                 <h3 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
-                                    <CheckSquare className="h-5 w-5 text-purple-600" />
+                                    <CheckSquare className="h-5 w-5 text-green-600" />
                                     1. Participação e Cadastro
                                 </h3>
                                 <div className="space-y-4 text-justify">
@@ -59,7 +59,7 @@ const RegulamentoPage = () => {
 
                             <section>
                                 <h3 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
-                                    <ShieldCheck className="h-5 w-5 text-purple-600" />
+                                    <ShieldCheck className="h-5 w-5 text-green-600" />
                                     2. Acúmulo de Pontos e Privacidade
                                 </h3>
                                 <div className="space-y-4 text-justify pl-4 border-l-2 border-slate-100">
@@ -84,7 +84,7 @@ const RegulamentoPage = () => {
 
                             <section>
                                 <h3 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-purple-600" />
+                                    <Clock className="h-5 w-5 text-green-600" />
                                     3. Resgate e Validade dos Pontos
                                 </h3>
                                 <div className="space-y-4 text-justify">
@@ -125,7 +125,7 @@ const RegulamentoPage = () => {
 
                     <div className="flex justify-center pb-8 pt-4">
                         <Link to="/cadastro">
-                            <Button size="lg" className="bg-purple-600 hover:bg-purple-700 font-bold px-8 shadow-md">
+                            <Button size="lg" className="bg-green-600 hover:bg-green-700 font-bold px-8 shadow-md">
                                 Li e aceito: Fazer meu cadastro
                             </Button>
                         </Link>

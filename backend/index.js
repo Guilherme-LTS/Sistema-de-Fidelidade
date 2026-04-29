@@ -48,6 +48,7 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     
     // 1. Pegamos o ID do operador que está logado, vindo do token
     const operadorId = req.usuario.id;
+    const tenantId = req.usuario.tenant_id;
     
     const pontosGanhos = Math.floor(valor);
     const diasParaLiberacao = 0; 
@@ -58,20 +59,19 @@ app.post('/transacoes', verificaToken, async (req, res) => {
     const data_vencimento = new Date(new Date(agora).setDate(agora.getDate() + diasParaVencimento));
     
     await client.query('BEGIN');
-    let resCliente = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
-    let clienteId;
+    let resCustomer = await client.query('SELECT id FROM customers WHERE document = $1', [cpfLimpo]);
+    let customerId;
 
-    if (!resCliente.rows[0]) {
-      const resNovoCliente = await client.query('INSERT INTO clientes (cpf, nome) VALUES ($1, $2) RETURNING id', [cpfLimpo, nome]);
-      clienteId = resNovoCliente.rows[0].id;
+    if (!resCustomer.rows[0]) {
+      const resNewCustomer = await client.query('INSERT INTO customers (document, name, tenant_id) VALUES ($1, $2, $3) RETURNING id', [cpfLimpo, nome, tenantId]);
+      customerId = resNewCustomer.rows[0].id;
     } else {
-      clienteId = resCliente.rows[0].id;
+      customerId = resCustomer.rows[0].id;
     }
 
-    
     await client.query(
-      `INSERT INTO transacoes (cliente_id, valor_gasto, pontos_ganhos, data_liberacao, data_vencimento, usuario_id) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [clienteId, valor, pontosGanhos, data_liberacao, data_vencimento, operadorId]
+      `INSERT INTO transactions (customer_id, amount_spent, points_earned, available_at, expires_at, operator_id, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [customerId, valor, pontosGanhos, data_liberacao, data_vencimento, operadorId, tenantId]
     );
     
     await client.query('COMMIT');
@@ -256,33 +256,75 @@ app.post('/resgates', verificaToken, async (req, res) => {
   const client = await db.connect();
   try {
     const { cpf, recompensa_id } = req.body;
-    // 1. Pegamos o ID do operador logado
-    const operadorId = req.usuario.id; 
-    const cpfLimpo = cpf.replace(/\D/g, '');
-    
+    const operadorId = req.usuario.id;
+    const tenantId = req.usuario.tenant_id;
+    const cpfLimpo = (cpf || '').replace(/\D/g, '');
+
     if (!cpfLimpo || !recompensa_id) { return res.status(400).json({ error: 'CPF e ID da recompensa são obrigatórios.' }); }
+    if (!tenantId) { return res.status(400).json({ error: 'Tenant do usuário não identificado.' }); }
+
     await client.query('BEGIN');
-    const clienteResult = await client.query('SELECT id FROM clientes WHERE cpf = $1', [cpfLimpo]);
+
+    const clienteResult = await client.query(
+      `SELECT c.id
+       FROM customers c
+       LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id
+       WHERE c.tenant_id = $1
+         AND c.deleted_at IS NULL
+         AND COALESCE(cp.document, c.document) = $2
+       LIMIT 1`,
+      [tenantId, cpfLimpo]
+    );
     const cliente = clienteResult.rows[0];
     if (!cliente) throw new Error('Cliente não encontrado.');
-    const recompensaResult = await client.query('SELECT custo_pontos FROM recompensas WHERE id = $1', [recompensa_id]);
+
+    const recompensaResult = await client.query(
+      'SELECT points_cost, name FROM rewards WHERE id = $1 AND tenant_id = $2 AND is_active = true',
+      [recompensa_id, tenantId]
+    );
     const recompensa = recompensaResult.rows[0];
     if (!recompensa) throw new Error('Recompensa não encontrada.');
 
-    const creditosResult = await client.query(`SELECT COALESCE(SUM(pontos_ganhos), 0) as total FROM transacoes WHERE cliente_id = $1 AND data_liberacao <= NOW() AND data_vencimento > NOW()`, [cliente.id]);
-    const debitosResult = await client.query(`SELECT COALESCE(SUM(pontos_gastos), 0) as total FROM resgates WHERE cliente_id = $1`, [cliente.id]);
-    const pontosDisponiveis = parseInt(creditosResult.rows[0].total) - parseInt(debitosResult.rows[0].total);
-    if (pontosDisponiveis < recompensa.custo_pontos) { throw new Error('Pontos disponíveis insuficientes.'); }
-
-    // 2. Na hora de inserir o resgate, salvamos também o ID do operador
-    await client.query(
-      'INSERT INTO resgates (cliente_id, recompensa_id, pontos_gastos, usuario_id) VALUES ($1, $2, $3, $4)',
-      [cliente.id, recompensa_id, recompensa.custo_pontos, operadorId] // Adicionado operadorId
+    const transacoesValidas = await client.query(
+      `SELECT id, remaining_points FROM transactions
+       WHERE customer_id = $1 AND tenant_id = $2 AND remaining_points > 0
+       AND available_at <= NOW() AND expires_at > NOW()
+       ORDER BY expires_at ASC, created_at ASC
+       FOR UPDATE`,
+      [cliente.id, tenantId]
     );
-    
+
+    const pontosDisponiveis = transacoesValidas.rows.reduce((acc, transacao) => acc + transacao.remaining_points, 0);
+
+    if (pontosDisponiveis < recompensa.points_cost) {
+      throw new Error('Pontos disponíveis insuficientes.');
+    }
+
+    let pontosNecessarios = recompensa.points_cost;
+    const updates = [];
+
+    for (const transacao of transacoesValidas.rows) {
+      if (pontosNecessarios <= 0) break;
+      const descontar = Math.min(transacao.remaining_points, pontosNecessarios);
+      updates.push({ id: transacao.id, descontar });
+      pontosNecessarios -= descontar;
+    }
+
+    for (const update of updates) {
+      await client.query(
+        'UPDATE transactions SET remaining_points = remaining_points - $1 WHERE id = $2 AND tenant_id = $3',
+        [update.descontar, update.id, tenantId]
+      );
+    }
+
+    await client.query(
+      'INSERT INTO redemptions (customer_id, reward_id, points_spent, operator_id, tenant_id) VALUES ($1, $2, $3, $4, $5)',
+      [cliente.id, recompensa_id, recompensa.points_cost, operadorId, tenantId]
+    );
+
     await client.query('COMMIT');
 
-    const pontosRestantes = pontosDisponiveis - recompensa.custo_pontos;
+    const pontosRestantes = pontosDisponiveis - recompensa.points_cost;
     res.status(200).json({ message: 'Recompensa resgatada com sucesso!', pontos_restantes: pontosRestantes });
 
   } catch (error) {
@@ -298,7 +340,8 @@ app.post('/resgates', verificaToken, async (req, res) => {
 // ROTA PARA BUSCAR RECOMPENSAS
 app.get('/recompensas', verificaToken, async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM recompensas WHERE ativo = true ORDER BY custo_pontos ASC');
+    const tenantId = req.usuario.tenant_id;
+    const result = await db.query('SELECT * FROM rewards WHERE tenant_id = $1 AND is_active = true ORDER BY points_cost ASC', [tenantId]);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar recompensas:', error);
@@ -309,7 +352,7 @@ app.get('/recompensas', verificaToken, async (req, res) => {
 // NOVA ROTA PÚBLICA PARA BUSCAR RECOMPENSAS (usada pelo cliente)
 app.get('/recompensas/publica', async (req, res) => {
   try {
-    const result = await db.query('SELECT nome, custo_pontos FROM recompensas WHERE ativo = true ORDER BY custo_pontos ASC');
+    const result = await db.query('SELECT id, name, description, points_cost FROM rewards WHERE is_active = true ORDER BY points_cost ASC');
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar recompensas públicas:', error);

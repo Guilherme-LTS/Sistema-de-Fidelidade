@@ -5,168 +5,166 @@ import api from "../../services/api";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../components/ui/card";
-import { UserPlus, ArrowLeft } from "lucide-react";
+import { Store, User, Mail, Lock, ArrowLeft } from "lucide-react";
 
 function CadastroPage() {
-  const [nome, setNome] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [cpfError, setCpfError] = useState("");
-  const [consentimento, setConsentimento] = useState(false);
+  const [tenantName, setTenantName] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [document, setDocument] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
 
-  const validarCPF = (cpfParaValidar: string) => {
-    let limpo = cpfParaValidar.replace(/\D/g, "");
-    if (limpo.length !== 11) return false;
-    if (/^(\d)\1{10}$/.test(limpo)) return false;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    let soma = 0;
-    for (let i = 0; i < 9; i++) {
-      soma += parseInt(limpo.charAt(i)) * (10 - i);
-    }
-    let resto = 11 - (soma % 11);
-    if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(limpo.charAt(9))) return false;
-
-    soma = 0;
-    for (let i = 0; i < 10; i++) {
-      soma += parseInt(limpo.charAt(i)) * (11 - i);
-    }
-    resto = 11 - (soma % 11);
-    if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(limpo.charAt(10))) return false;
-
-    return true;
-  };
-
-  const formatarCPF = (valor: string) => {
-    return valor
-      .replace(/\D/g, "")
-      .slice(0, 11)
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-  };
-
-  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const valorFormatado = formatarCPF(e.target.value);
-    setCpf(valorFormatado);
-    if (cpfError) {
-      setCpfError("");
-    }
-  };
-
-  const handleCpfBlur = () => {
-    if (cpf.length > 0 && !validarCPF(cpf)) {
-      setCpfError("CPF inválido");
-    }
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!validarCPF(cpf)) {
-      setCpfError("CPF inválido");
-      toast.warn("Por favor, informe um CPF válido.");
+    if (!tenantName || !adminName || !email || !password) {
+      toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
-    if (!consentimento) {
-      toast.warn("Você precisa aceitar os termos para continuar.");
+
+    if (password.length < 6) {
+      toast.error("Sua senha deve ter no mínimo 6 caracteres.");
       return;
     }
+
     setCarregando(true);
+
     try {
-      await api.post("/clientes/cadastro", { nome, document: cpf.replace(/\D/g, ""), lgpd_consent: consentimento });
-      toast.success("Cadastro realizado com sucesso! Bem-vindo(a) ao clube!");
-      navigate("/");
+      // Chama nosso novo endpoint transacional B2B de provisionamento atômico
+      await api.post("/auth/register-tenant", {
+        tenant_name: tenantName,
+        admin_name: adminName,
+        email: email,
+        password: password,
+        document: document || null
+      });
+
+      toast.success("Restaurante cadastrado com sucesso! Faça login para continuar.");
+      navigate("/login");
     } catch (error: any) {
-      toast.error(error.message);
+      console.error(error);
+      toast.error(error.response?.data?.error || "Erro ao criar sua conta. Tente novamente.");
     } finally {
       setCarregando(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md shadow-lg border-slate-200">
-        <CardHeader className="space-y-1 text-center mb-2">
-          <div className="flex justify-center mb-2">
-            <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
-              <UserPlus className="h-6 w-6 text-purple-600" />
-            </div>
+    <div className="flex min-h-screen w-full items-start justify-center overflow-x-hidden bg-white px-4 py-6 sm:items-center">
+      <Card className="w-full max-w-md overflow-hidden shadow-xl border-slate-200 bg-white">
+        <CardHeader className="text-center pb-6">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 ring-4 ring-white shadow-sm">
+            <Store className="h-7 w-7 text-green-600" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
-            Faça parte do nosso Clube!
+          <CardTitle className="text-2xl font-bold text-slate-800 tracking-tight">
+            Crie seu Programa de Fidelidade
           </CardTitle>
-          <CardDescription className="text-slate-500">
-            Cadastre-se para começar a juntar pontos e resgatar prêmios.
+          <CardDescription className="text-slate-500 mt-2">
+            Preencha os dados abaixo para criar o Painel Gerencial do seu estabelecimento.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label htmlFor="nome" className="text-sm font-medium leading-none text-slate-700">
-                Nome Completo
-              </label>
-              <Input
-                type="text"
-                id="nome"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                required
-                placeholder="Ex: João da Silva"
-                className="w-full"
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
             
             <div className="space-y-2">
-              <label htmlFor="cpf" className="text-sm font-medium leading-none text-slate-700">
-                CPF
-              </label>
-              <Input
-                type="text"
-                id="cpf"
-                value={cpf}
-                onChange={handleCpfChange}
-                onBlur={handleCpfBlur}
-                placeholder="000.000.000-00"
-                maxLength={14}
-                required
-                className={`w-full ${cpfError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-              />
-              {cpfError && (
-                <p className="text-xs text-red-500 font-medium">{cpfError}</p>
-              )}
+              <label className="text-sm font-medium text-slate-700 block">Nome do Estabelecimento *</label>
+              <div className="relative">
+                <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  type="text"
+                  required
+                  placeholder="Ex: Pizzaria do Mario"
+                  className="w-full pl-10"
+                  value={tenantName}
+                  onChange={(e) => setTenantName(e.target.value)}
+                />
+              </div>
             </div>
-            
-            <div className="flex items-start space-x-3 pt-2">
-              <input
-                type="checkbox"
-                id="consentimento"
-                checked={consentimento}
-                onChange={(e) => setConsentimento(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-600"
-              />
-              <label htmlFor="consentimento" className="text-sm text-slate-600 leading-snug cursor-pointer">
-                Li e aceito o <Link to="/regulamento" target="_blank" className="font-medium text-purple-600 hover:underline">Regulamento</Link> e a Política de Privacidade.
-              </label>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 block">Seu Nome Completo (Gestor) *</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  type="text"
+                  required
+                  placeholder="Ex: Mario Silva"
+                  className="w-full pl-10"
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
+                />
+              </div>
             </div>
-            
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 block">CNPJ / CPF do Negócio (Opcional)</label>
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Apenas números"
+                  className="w-full"
+                  value={document}
+                  onChange={(e) => setDocument(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 block">E-mail Profissional *</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  type="email"
+                  required
+                  placeholder="contato@pizzaria.com"
+                  className="w-full pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 block">Crie uma Senha *</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  type="password"
+                  required
+                  minLength={6}
+                  placeholder="Mínio 6 caracteres"
+                  className="w-full pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
             <Button
               type="submit"
-              className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
-              disabled={carregando || !consentimento || !nome || cpf.length < 14}
+              className="w-full mt-6 bg-green-600 hover:bg-green-700 transition duration-300 shadow-md py-6 text-md font-semibold font-sans"
+              disabled={carregando}
             >
-              {carregando ? "Cadastrando..." : "Confirmar Cadastro"}
+              {carregando ? "Gerando Ambiente..." : "Finalizar Cadastro B2B"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center border-t border-slate-100 pt-4 mt-2">
-          <Link 
-            to="/" 
-            className="flex items-center text-sm font-medium text-slate-600 hover:text-purple-600 transition-colors"
+
+        <CardFooter className="flex flex-col items-center border-t border-slate-100 pt-5 mt-2 pb-5 text-center">
+          <p className="text-sm text-slate-600">
+            Já possui uma conta gerenciadora?{" "}
+            <Link to="/login" className="font-bold text-green-600 hover:underline">
+              Faça login
+            </Link>
+          </p>
+          <Link
+            to="/"
+            className="flex items-center text-xs font-medium mt-4 text-slate-400 hover:text-green-600 transition-colors"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar para a página inicial
+            <ArrowLeft className="mr-1 h-3 w-3" />
+            Voltar para página institucional
           </Link>
         </CardFooter>
       </Card>

@@ -1,14 +1,13 @@
 // frontend/src/shared/layouts/Layout.tsx
 import React, { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Settings2, Users, Gift, ScrollText, UserCog, LogOut, HeartHandshake, Sliders } from 'lucide-react';
+import { NavLink, Outlet } from 'react-router-dom';
+import { Menu, X, LayoutDashboard, Settings2, Users, Gift, ScrollText, UserCog, LogOut, Sliders } from 'lucide-react';
 import { getUser } from '../../features/auth/auth';
 import { Button } from '../../components/ui/button';
 import { cn } from '../../utils/utils';
 
 function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const navigate = useNavigate();
 
   const usuario = getUser() as any;
 
@@ -65,10 +64,10 @@ function Layout() {
         )}
       >
         <div className="flex items-center gap-3 px-6 h-16 border-b border-slate-100 mt-12 lg:mt-0">
-          <div className="bg-blue-600 p-2 rounded-lg text-white">
-            <HeartHandshake size={24} />
+          <div className="h-10 w-10 rounded-lg border border-teal-200 bg-teal-50 flex items-center justify-center overflow-hidden">
+            <img src="/logo192.png" alt="Logo Fidelidade" className="h-7 w-7 object-contain" />
           </div>
-          <span className="font-bold text-xl tracking-tight text-slate-900">Loyalty</span>
+          <span className="font-bold text-xl tracking-tight text-slate-900">Fidelidade<span className="text-teal-600">Pro</span></span>
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 px-4 space-y-1">
@@ -82,15 +81,19 @@ function Layout() {
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-blue-50 text-blue-700"
+                      ? "bg-teal-50 text-teal-700 shadow-sm border border-teal-100"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   )
                 }
               >
-                <item.icon size={20} />
-                {item.label}
+                {({ isActive }) => (
+                  <>
+                    <item.icon size={20} className={isActive ? "text-teal-600" : ""} />
+                    {item.label}
+                  </>
+                )}
               </NavLink>
             );
           })}
@@ -123,9 +126,9 @@ function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
-        <div className="w-full h-full p-4 lg:p-8 flex justify-center">
-            <div className="w-full max-w-6xl">
+      <main className="flex-1 min-h-0 flex flex-col overflow-y-auto">
+        <div className="w-full h-full min-h-0 p-4 lg:p-8 flex justify-center">
+            <div className="w-full max-w-6xl h-full min-h-0">
                 <Outlet />
             </div>
         </div>

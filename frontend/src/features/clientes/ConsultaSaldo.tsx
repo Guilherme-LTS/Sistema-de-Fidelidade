@@ -69,10 +69,10 @@ function ConsultaSaldo({ onConsulta, onNotFound }: ConsultaSaldoProps) {
   };
 
   return (
-    <Card className="h-full border-blue-100 shadow-sm flex flex-col">
-      <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-        <CardTitle className="text-xl flex items-center gap-2 text-slate-800">
-          <Search className="h-5 w-5 text-slate-600" />
+    <Card className="h-full border-green-100 shadow-sm flex flex-col">
+      <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
+        <CardTitle className="text-xl flex items-center gap-2 text-green-800">
+          <Search className="h-5 w-5 text-green-600" />
           Consulta de Saldo
         </CardTitle>
         <CardDescription>
@@ -100,15 +100,15 @@ function ConsultaSaldo({ onConsulta, onNotFound }: ConsultaSaldoProps) {
 
           {cliente && (
             <div className="mt-6 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex justify-between items-center">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex justify-between items-center">
                 <div>
-                  <p className="text-emerald-900 font-medium flex items-center gap-2">
+                  <p className="text-green-900 font-medium flex items-center gap-2">
                     <ShieldCheck className="h-5 w-5" />
                     {cliente.nome || 'Cliente'}
                   </p>
-                  <p className="text-sm text-emerald-800 mt-1">Pontos Disponíveis</p>
+                  <p className="text-sm text-green-800 mt-1">Pontos Disponíveis</p>
                 </div>
-                <span className="text-4xl font-bold text-emerald-600 tracking-tight">
+                <span className="text-4xl font-bold text-green-600 tracking-tight">
                   {cliente.pontosDisponiveis || 0}
                 </span>
               </div>

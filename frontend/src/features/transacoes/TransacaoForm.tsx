@@ -72,8 +72,11 @@ function TransacaoForm() {
     event.preventDefault();
     setCarregando(true);
     try {
+      const document = cpf.replace(/\D/g, '');
       const response = await api.post('/transacoes', { 
-        document: cpf.replace(/\D/g, ''), 
+        // Compatibilidade: backend novo usa `document`, legado usa `cpf`.
+        document,
+        cpf: document,
         valor: parseFloat(valor), 
         nome 
       });
