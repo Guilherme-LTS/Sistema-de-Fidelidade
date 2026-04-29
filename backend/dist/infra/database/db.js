@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.adminPool = void 0;
 // backend/db.js
 const pg_1 = require("pg");
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -30,13 +31,23 @@ const connectionConfig = hasAppDatabaseUrl
             ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
         };
 const pool = new pg_1.Pool(connectionConfig);
+const adminPool = new pg_1.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
+});
+exports.adminPool = adminPool;
 pool.on('error', (err) => {
-    console.error('Erro inesperado no pool PostgreSQL:', err.message);
+    console.error('Erro inesperado no pool PostgreSQL (App User):', err.message);
+});
+adminPool.on('error', (err) => {
+    console.error('Erro inesperado no pool PostgreSQL (Admin User):', err.message);
 });
 async function testConnection() {
     try {
         await pool.query('SELECT 1');
-        console.log('Conectado com sucesso ao PostgreSQL!');
+        console.log('Conectado com sucesso ao PostgreSQL (App User)!');
+        await adminPool.query('SELECT 1');
+        console.log('Conectado com sucesso ao PostgreSQL (Admin User)!');
     }
     catch (err) {
         console.error('Falha ao conectar no PostgreSQL. Revise seu backend/.env.');

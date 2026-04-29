@@ -21,7 +21,8 @@ router.post('/', autenticacao_1.default, async (req, res) => {
     try {
         const { document, valor, nome } = req.body;
         const tenantId = authReq.usuario?.tenant_id;
-        if (!document || !valor || valor <= 0) {
+        const valorNumerico = Number(valor);
+        if (!document || !Number.isFinite(valorNumerico) || valorNumerico <= 0) {
             return res.status(400).json({ error: 'CPF e valor (maior que zero) são obrigatórios.' });
         }
         if (!tenantId) {
@@ -32,7 +33,7 @@ router.post('/', autenticacao_1.default, async (req, res) => {
             return res.status(400).json({ error: 'CPF inválido.' });
         }
         const operadorId = authReq.usuario?.id;
-        const pontosGanhos = Math.floor(valor);
+        const pontosGanhos = Math.floor(valorNumerico);
         await client.query('BEGIN');
         await (0, db_rls_1.setRlsClaims)(client, authReq);
         // Buscar configurações dinamicamente do banco de dados
@@ -64,20 +65,28 @@ router.post('/', autenticacao_1.default, async (req, res) => {
             lgpdConsent: false,
             consentDate: null,
         });
-        const transactionResult = await client.query(`INSERT INTO transactions (customer_id, amount_spent, points_earned, remaining_points, available_at, expires_at, operator_id, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`, [cliente.id, valor, pontosGanhos, pontosGanhos, availableAt, expiresAt, operadorId, tenantId]);
-        await (0, audit_1.logAuditEvent)({
-            req,
-            client,
-            tenantId,
-            operatorId: operadorId || null,
-            action: 'LANCAMENTO_PONTOS',
-            details: `Lancamento de ${pontosGanhos} pontos para CPF ${cpfLimpo}. Valor da compra: R$ ${Number(valor).toFixed(2)}.`,
-            targetLabel: cliente.name || nome || `CPF ${cpfLimpo}`,
-            impactLabel: `+${pontosGanhos} pts`,
-            status: 'SUCESSO',
-            entityType: 'transaction',
-            entityId: transactionResult.rows[0]?.id
-        });
+        const transactionResult = await client.query(`INSERT INTO transactions (customer_id, amount_spent, points_earned, remaining_points, available_at, expires_at, operator_id, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`, [cliente.id, valorNumerico, pontosGanhos, pontosGanhos, availableAt, expiresAt, operadorId, tenantId]);
+        try {
+            await client.query('SAVEPOINT audit_log');
+            await (0, audit_1.logAuditEvent)({
+                req,
+                client,
+                tenantId,
+                operatorId: operadorId || null,
+                action: 'LANCAMENTO_PONTOS',
+                details: `Lancamento de ${pontosGanhos} pontos para CPF ${cpfLimpo}. Valor da compra: R$ ${valorNumerico.toFixed(2)}.`,
+                targetLabel: cliente.name || nome || `CPF ${cpfLimpo}`,
+                impactLabel: `+${pontosGanhos} pts`,
+                status: 'SUCESSO',
+                entityType: 'transaction',
+                entityId: transactionResult.rows[0]?.id
+            });
+            await client.query('RELEASE SAVEPOINT audit_log');
+        }
+        catch (auditError) {
+            await client.query('ROLLBACK TO SAVEPOINT audit_log').catch(() => { });
+            console.error('Falha ao registrar auditoria do lançamento de pontos:', auditError);
+        }
         await client.query('COMMIT');
         res.status(201).json({ message: 'Transação registrada! Pontos ficarão disponíveis em breve.', pontosGanhos });
     }
@@ -85,7 +94,7 @@ router.post('/', autenticacao_1.default, async (req, res) => {
         if (client)
             await client.query('ROLLBACK');
         console.error('Erro ao processar a transação:', error);
-        res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
+        res.status(500).json({ error: 'Ocorreu um erro no servidor.', details: error.message });
     }
     finally {
         if (client) {

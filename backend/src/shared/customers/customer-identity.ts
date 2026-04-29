@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { PoolClient } from 'pg';
 
 type DbExecutor = Pick<PoolClient, 'query'>;
@@ -34,6 +35,23 @@ function cleanName(name?: string | null) {
   return normalized.length > 0 ? normalized : null;
 }
 
+async function findConsumerProfileByDocument(
+  executor: DbExecutor,
+  document: string,
+): Promise<ConsumerProfileRow | null> {
+  const result = await executor.query(
+    `
+      SELECT id, document, name, lgpd_consent, consent_date
+      FROM consumer_profiles
+      WHERE document = $1
+      LIMIT 1
+    `,
+    [document],
+  );
+
+  return result.rows[0] || null;
+}
+
 export async function upsertConsumerProfile(
   executor: DbExecutor,
   input: Pick<TenantCustomerIdentityInput, 'document' | 'name' | 'lgpdConsent' | 'consentDate'>,
@@ -43,23 +61,43 @@ export async function upsertConsumerProfile(
   const lgpdConsent = input.lgpdConsent ?? false;
   const consentDate = input.consentDate ?? null;
 
-  const result = await executor.query(
+  const existingProfile = await findConsumerProfileByDocument(executor, document);
+
+  if (existingProfile?.id) {
+    const result = await executor.query(
+      `
+        UPDATE consumer_profiles
+        SET name = COALESCE(name, $1),
+            lgpd_consent = lgpd_consent OR $2,
+            consent_date = COALESCE(consent_date, $3),
+            deleted_at = NULL,
+            updated_at = NOW()
+        WHERE id = $4
+        RETURNING id, document, name, lgpd_consent, consent_date
+      `,
+      [name, lgpdConsent, consentDate, existingProfile.id],
+    );
+
+    return result.rows[0];
+  }
+
+  const generatedId = randomUUID();
+
+  await executor.query(
     `
-      INSERT INTO consumer_profiles (document, name, lgpd_consent, consent_date)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (document)
-      DO UPDATE SET
-        name = COALESCE(consumer_profiles.name, EXCLUDED.name),
-        lgpd_consent = consumer_profiles.lgpd_consent OR EXCLUDED.lgpd_consent,
-        consent_date = COALESCE(consumer_profiles.consent_date, EXCLUDED.consent_date),
-        deleted_at = NULL,
-        updated_at = NOW()
-      RETURNING id, document, name, lgpd_consent, consent_date
+      INSERT INTO consumer_profiles (id, document, name, lgpd_consent, consent_date)
+      VALUES ($1, $2, $3, $4, $5)
     `,
-    [document, name, lgpdConsent, consentDate],
+    [generatedId, document, name, lgpdConsent, consentDate],
   );
 
-  return result.rows[0];
+  return {
+    id: generatedId,
+    document,
+    name,
+    lgpd_consent: lgpdConsent,
+    consent_date: consentDate,
+  };
 }
 
 export async function resolveTenantCustomerByDocument(

@@ -1,16 +1,13 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const db_1 = __importDefault(require("../../infra/database/db")); // ATENÇÃO: Aqui usamos pool.query (SuperUser) para atravessar o RLS e exibir o saldo apenas pro Consumidor
+const db_1 = require("../../infra/database/db"); // Usamos adminPool (SuperUser) para atravessar o RLS e exibir o saldo apenas pro Consumidor
 const router = (0, express_1.Router)();
 router.get('/partners', async (req, res) => {
     const rawSearch = req.query.search || '';
     const search = rawSearch.trim();
     try {
-        const client = await db_1.default.connect();
+        const client = await db_1.adminPool.connect();
         const params = [];
         let whereClause = 'WHERE t.is_active = true';
         if (search) {
@@ -42,7 +39,7 @@ router.get('/rewards', async (req, res) => {
         return res.status(400).json({ error: 'tenant_id é obrigatório.' });
     }
     try {
-        const client = await db_1.default.connect();
+        const client = await db_1.adminPool.connect();
         const query = `
       SELECT id, name, description, points_cost
       FROM rewards
@@ -76,7 +73,7 @@ router.get('/pontos/:document', async (req, res) => {
         return res.status(400).json({ error: 'Documento inválido.' });
     }
     try {
-        const client = await db_1.default.connect();
+        const client = await db_1.adminPool.connect();
         let rows;
         if (tenantId || tenantSlug || tenantSlugNormalized) {
             const queryStr = `
@@ -189,7 +186,7 @@ router.get('/extrato/:document', async (req, res) => {
         return res.status(400).json({ error: 'tenant_id é obrigatório para extrato.' });
     }
     try {
-        const client = await db_1.default.connect();
+        const client = await db_1.adminPool.connect();
         const customerResult = await client.query(`
         SELECT c.id, COALESCE(c.name, cp.name) AS name
         FROM customers c
@@ -253,7 +250,7 @@ router.get('/tenants/:slug', async (req, res) => {
         return res.status(400).json({ error: 'Slug do tenant é obrigatório.' });
     }
     try {
-        const client = await db_1.default.connect();
+        const client = await db_1.adminPool.connect();
         const query = `
       SELECT id::text as tenant_id, name as tenant_name
       FROM tenants

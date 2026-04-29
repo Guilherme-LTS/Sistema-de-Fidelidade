@@ -7,6 +7,15 @@ import { resolveTenantCustomerByDocument } from '../../shared/customers/customer
 
 const router = Router();
 
+class HttpError extends Error {
+  statusCode: number;
+
+  constructor(statusCode: number, message: string) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
 // POST /redemptions - Resgatar recompensa
 router.post('/', verificaToken, async (req: Request, res: Response) => {
   const client = await db.connect();
@@ -30,14 +39,14 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
     await setRlsClaims(client, authReq);
 
     const cliente = await resolveTenantCustomerByDocument(client, tenantId, cpfLimpo);
-    if (!cliente) throw new Error('Cliente não encontrado.');
+    if (!cliente) throw new HttpError(404, 'Cliente não encontrado.');
 
     const recompensaResult = await client.query(
       'SELECT points_cost, name FROM rewards WHERE id = $1 AND tenant_id = $2 AND is_active = true',
       [recompensa_id, tenantId]
     );
     const recompensa = recompensaResult.rows[0];
-    if (!recompensa) throw new Error('Recompensa não encontrada.');
+    if (!recompensa) throw new HttpError(404, 'Recompensa não encontrada.');
 
     // 1. Busca transações válidas via FIFO (com lock para evitar race condition)
     const transacoesValidas = await client.query(
@@ -52,7 +61,7 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
     const pontosDisponiveis = transacoesValidas.rows.reduce((acc, t) => acc + t.remaining_points, 0);
 
     if (pontosDisponiveis < recompensa.points_cost) {
-      throw new Error('Pontos disponíveis insuficientes.');
+      throw new HttpError(409, 'Pontos disponíveis insuficientes.');
     }
 
     // 2. Aplica débito abatendo FIFO das transações (otimizado: batch UPDATE com CASE)
@@ -110,6 +119,9 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
   } catch (error: any) {
     if (client) await client.query('ROLLBACK');
     console.error('Erro no resgate:', error);
+    if (error instanceof HttpError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
     res.status(500).json({ error: error.message || 'Ocorreu um erro no servidor.' });
   } finally {
     if (client) {

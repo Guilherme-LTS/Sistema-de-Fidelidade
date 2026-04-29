@@ -13,13 +13,31 @@ function sanitizeJsonForSQL(jsonStr) {
     return jsonStr.replace(/'/g, "''");
 }
 const setRlsClaims = async (client, req) => {
+    const tenantId = req.user?.tenant_id || req.usuario?.tenant_id || null;
+    const userId = req.user?.id || req.usuario?.id || null;
+    const role = req.user?.role || req.usuario?.role || 'authenticated';
     const jwtClaims = JSON.stringify({
-        sub: req.user?.id || null,
-        tenant_id: req.user?.tenant_id || null,
-        role: req.user?.role || 'anon',
+        sub: userId,
+        tenant_id: tenantId,
+        role: role,
+        // Adicionamos campos extras que o Supabase costuma esperar
+        email: req.usuario?.email || '',
+        app_metadata: { provider: 'email' },
+        user_metadata: { name: req.usuario?.nome || '' }
     });
     const sanitizedClaims = sanitizeJsonForSQL(jwtClaims);
-    await client.query(`SET LOCAL request.jwt.claims = '${sanitizedClaims}'`);
+    try {
+        // 1. Configuramos as claims do JWT
+        await client.query(`SET LOCAL request.jwt.claims = '${sanitizedClaims}'`);
+        // 3. Configuramos especificamente o tenant_id em uma variável separada se necessário por alguma policy customizada
+        if (tenantId) {
+            await client.query(`SET LOCAL app.current_tenant = '${tenantId}'`);
+        }
+    }
+    catch (err) {
+        console.error('Erro ao configurar claims de RLS:', err.message);
+        throw err;
+    }
 };
 exports.setRlsClaims = setRlsClaims;
 const resetRlsClaims = async (client) => {

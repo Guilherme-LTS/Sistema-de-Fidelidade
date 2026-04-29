@@ -6,12 +6,16 @@
   --text: var(--color-text);
   --muted: var(--color-text-secondary);
   --surface: var(--color-surface);
+  --surface-alt: var(--color-surface-alt);
   --danger: var(--color-danger);
-  
+  --success: var(--color-success);
+
   min-height: 100vh;
-  background: var(--color-bg);
   color: var(--text);
-  background-attachment: fixed;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 30%),
+    radial-gradient(circle at top right, rgba(244, 197, 66, 0.10), transparent 26%),
+    var(--color-bg);
 }
 
 .topBar {
@@ -21,80 +25,147 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   padding: 1rem 1.5rem;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(215, 222, 234, 0.8);
+}
+
+.brandBlock,
+.topActions,
+.partnerIdentity {
+  display: flex;
+  align-items: center;
 }
 
 .brandBlock {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+  gap: 0.65rem;
 }
 
 .brandLogo {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 14px;
   background: var(--primary-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   box-shadow: var(--shadow-sm);
 }
 
 .brandName {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  color: var(--color-text);
   letter-spacing: -0.03em;
 }
 
 .brandAccent {
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--primary);
 }
 
+.topActions {
+  gap: 0.75rem;
+}
+
+.operatorLink,
+.logoutButton,
+.secondaryButton,
+.backButton,
+.redeemButton,
+.primaryButton {
+  border: 0;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.operatorLink,
+.logoutButton,
+.secondaryButton,
+.backButton {
+  padding: 0.8rem 1rem;
+  background: var(--surface);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.logoutButton {
+  color: var(--danger);
+}
+
+.mainContent {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 0 3rem;
+}
+
 .authPanel {
-  min-height: calc(100vh - 120px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
+  min-height: calc(100vh - 170px);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 0;
+}
+
+.authBox,
+.detailHero,
+.feedbackBox,
+.metricCard,
+.statementPanel,
+.redeemPanel,
+.restaurantCard,
+.loadingCard {
+  background: var(--surface);
+  border: 1px solid rgba(215, 222, 234, 0.85);
+  box-shadow: var(--shadow-md);
 }
 
 .authBox {
-  width: 100%;
-  max-width: 440px;
-  background: var(--surface);
-  border-radius: 24px;
+  width: min(100%, 460px);
+  border-radius: 28px;
   padding: 2.5rem;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  animation: slideUp 0.4s var(--timing-function-ease-out);
+  animation: slideUp 0.45s ease-out both;
+}
+
+.authBox h1,
+.detailHero h1,
+.titleBlock h1 {
+  margin: 0;
+  letter-spacing: -0.04em;
 }
 
 .authBox h1 {
-  font-size: 2.25rem;
-  margin-bottom: 0.5rem;
+  font-size: clamp(2rem, 4vw, 2.6rem);
+}
+
+.authBox p,
+.titleBlock p,
+.feedbackBox p,
+.metricCard span,
+.statementItem small,
+.rewardItem p,
+.redeemPanel p,
+.emptyText,
+.helperText,
+.infoText,
+.errorText,
+.footer {
+  color: var(--muted);
 }
 
 .authTabs {
   display: flex;
   gap: 0.5rem;
-  background: var(--color-surface-alt);
+  background: var(--surface-alt);
   padding: 0.4rem;
-  border-radius: 14px;
+  border-radius: 16px;
   margin: 1.5rem 0;
 }
 
 .authTab {
   flex: 1;
-  padding: 0.75rem;
-  border-radius: 10px;
-  font-weight: 600;
-  transition: all var(--transition-fast);
-  border: none;
+  padding: 0.8rem 1rem;
   background: transparent;
   color: var(--muted);
 }
@@ -105,15 +176,20 @@
   box-shadow: var(--shadow-sm);
 }
 
+.authForm,
+.searchWrap {
+  display: grid;
+  gap: 0.85rem;
+}
+
 .input {
   width: 100%;
-  height: 52px;
+  min-height: 52px;
   padding: 0 1rem;
-  background: var(--color-surface-alt);
+  background: var(--surface-alt);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 1rem;
-  transition: all var(--transition-fast);
 }
 
 .input:focus {
@@ -124,75 +200,317 @@
 }
 
 .primaryButton {
-  height: 52px;
-  background: var(--primary);
-  color: white;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 1rem;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
-  transition: all var(--transition-base);
-  margin-top: 1rem;
+  min-height: 52px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.18);
 }
 
-.primaryButton:hover:not(:disabled) {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.35);
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.redeemButton:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+  transform: none;
 }
 
-/* Card Improvements */
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled),
+.logoutButton:hover,
+.backButton:hover,
+.operatorLink:hover {
+  transform: translateY(-1px);
+}
+
+.listScreen,
+.detailScreen {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.titleBlock {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.titleBlock h1 {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
+
+.titleBlock h1 span {
+  color: var(--primary);
+}
+
+.infoText {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+}
+
+.errorText {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(198, 40, 40, 0.08);
+  border: 1px solid rgba(198, 40, 40, 0.18);
+  color: var(--danger);
+}
+
+.cardList,
+.metricsGrid,
+.detailLayout,
+.rewardsList {
+  display: grid;
+  gap: 1rem;
+}
+
+.cardList {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
 .restaurantCard {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 1.25rem;
+  width: 100%;
+  text-align: left;
+  padding: 1.15rem;
+  border-radius: 22px;
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  transition: all var(--transition-base);
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  gap: 1rem;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .restaurantCard:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary);
+  transform: translateY(-3px);
+  border-color: rgba(15, 118, 110, 0.35);
+  box-shadow: var(--shadow-lg);
+}
+
+.loadingCard {
+  min-height: 96px;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.logoSkeleton,
+.contentSkeleton span {
+  background: linear-gradient(90deg, rgba(215, 222, 234, 0.7), rgba(248, 250, 252, 0.95), rgba(215, 222, 234, 0.7));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.logoSkeleton {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  flex-shrink: 0;
+}
+
+.contentSkeleton {
+  flex: 1;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.contentSkeleton span {
+  display: block;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.contentSkeleton span:last-child {
+  width: 62%;
+}
+
+.partnerLogo,
+.partnerLogoLarge {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-weight: 800;
+  color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .partnerLogo {
   width: 64px;
   height: 64px;
-  border-radius: 16px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-size: 1.5rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  border-radius: 18px;
+  font-size: 1.25rem;
+}
+
+.partnerLogoLarge {
+  width: 78px;
+  height: 78px;
+  border-radius: 22px;
+  font-size: 1.35rem;
+}
+
+.partnerInfo {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.partnerInfo strong,
+.metricCard h2,
+.statementPanel h2,
+.redeemPanel h2,
+.feedbackBox h2,
+.rewardItem strong {
+  color: var(--text);
 }
 
 .partnerInfo strong {
-  font-size: 1.15rem;
-  color: var(--text);
-  display: block;
+  font-size: 1.05rem;
 }
 
 .partnerPoints {
   margin-left: auto;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--primary);
 }
 
-/* Animations */
+.feedbackBox {
+  padding: 1.25rem;
+  border-radius: 22px;
+}
+
+.secondaryButton {
+  min-height: 44px;
+  background: var(--surface-alt);
+}
+
+.detailHero {
+  border-radius: 28px;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.backButton {
+  width: fit-content;
+}
+
+.partnerIdentity {
+  gap: 1rem;
+}
+
+.partnerIdentity h1 {
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+}
+
+.metricsGrid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.metricCard {
+  border-radius: 22px;
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.metricCard h2,
+.statementPanel h2,
+.redeemPanel h2,
+.feedbackBox h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.metricCard strong {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  color: var(--primary);
+  letter-spacing: -0.04em;
+}
+
+.detailLayout {
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.95fr);
+}
+
+.statementPanel,
+.redeemPanel {
+  border-radius: 24px;
+  padding: 1.25rem;
+}
+
+.statementList,
+.rewardsList {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.statementList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.statementItem,
+.rewardItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 18px;
+  padding: 1rem;
+  background: var(--surface-alt);
+  border: 1px solid rgba(215, 222, 234, 0.9);
+}
+
+.statementItem strong,
+.rewardItem strong {
+  display: block;
+}
+
+.statementItem small {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.credit {
+  color: var(--success);
+  font-weight: 800;
+}
+
+.debit {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.rewardItem {
+  align-items: flex-start;
+}
+
+.rewardItem p {
+  margin: 0.35rem 0 0.25rem;
+}
+
+.redeemButton {
+  min-height: 42px;
+  padding: 0.65rem 0.95rem;
+  background: rgba(15, 118, 110, 0.10);
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.emptyText,
+.helperText {
+  margin: 0;
+}
+
+.footer {
+  padding: 2rem 1.5rem 3rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -200,33 +518,63 @@
   }
 }
 
-/* Utility details */
-.detailHero {
-  background: var(--surface);
-  border-radius: 32px;
-  padding: 2.5rem;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 
-.metricCard {
-  background: var(--color-surface-alt);
-  border-radius: 20px;
-  padding: 1.5rem;
-  border: 1px solid var(--border);
+@media (max-width: 900px) {
+  .detailLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .topBar {
+    padding: 0.9rem 1rem;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topActions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .authBox {
+    padding: 1.5rem;
+  }
 }
 
-.metricCard strong {
-  font-size: 2.5rem;
-  color: var(--primary);
-  letter-spacing: -0.04em;
-}
+@media (max-width: 640px) {
+  .mainContent {
+    width: min(100% - 1rem, 1180px);
+    padding-top: 1rem;
+  }
 
-.footer {
-  margin-top: 4rem;
-  padding: 3rem 1.5rem;
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.875rem;
-  border-top: 1px solid var(--border);
+  .authTabs {
+    flex-direction: column;
+  }
+
+  .cardList,
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .restaurantCard,
+  .statementItem,
+  .rewardItem {
+    align-items: flex-start;
+  }
+
+  .partnerPoints {
+    margin-left: 0;
+  }
+
+  .partnerIdentity {
+    align-items: flex-start;
+  }
 }
