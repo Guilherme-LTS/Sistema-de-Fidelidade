@@ -1,18 +1,18 @@
-import db from '../../infra/database/db';
 import { Router, Request, Response } from 'express';
 import { queryWithRLS, AuthenticatedRequest } from '../../infra/database/db-rls';
 import verificaToken from '../../shared/middlewares/autenticacao';
 import { logAuditEvent } from '../../shared/auditoria/audit';
+import { getTenantId, TENANT_NOT_FOUND_ERROR } from '../../shared/request-context';
 
 const router = Router();
 
 // GET /rewards - Listar todas as rewards (protegido)
 router.get('/', verificaToken, async (req: Request, res: Response) => {
   const authReq = req as AuthenticatedRequest;
-  const tenantId = authReq.usuario?.tenant_id;
+  const tenantId = getTenantId(authReq);
 
   if (!tenantId) {
-    return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+    return res.status(400).json({ error: TENANT_NOT_FOUND_ERROR });
   }
 
   try {
@@ -27,10 +27,10 @@ router.get('/', verificaToken, async (req: Request, res: Response) => {
 // GET /rewards/publica - Listar rewards públicas (protegido por JWT)
 router.get('/publica', verificaToken, async (req: Request, res: Response) => {
   const authReq = req as AuthenticatedRequest;
-  const tenantId = authReq.usuario?.tenant_id;
+  const tenantId = getTenantId(authReq);
 
   if (!tenantId) {
-    return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+    return res.status(400).json({ error: TENANT_NOT_FOUND_ERROR });
   }
 
   try {
@@ -48,7 +48,7 @@ router.get('/publica', verificaToken, async (req: Request, res: Response) => {
 // POST /rewards - Criar nova recompensa (protegido)
 router.post('/', verificaToken, async (req: Request, res: Response) => {
   const authReq = req as AuthenticatedRequest;
-  const tenantId = authReq.usuario?.tenant_id;
+  const tenantId = getTenantId(authReq);
   const nome = req.body.nome ?? req.body.name;
   const descricao = req.body.descricao ?? req.body.description;
   const custoPontos = req.body.custo_pontos ?? req.body.points_cost;
@@ -57,7 +57,7 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Nome e custo em pontos são obrigatórios.' });
   }
   if (!tenantId) {
-    return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+    return res.status(400).json({ error: TENANT_NOT_FOUND_ERROR });
   }
 
   try {
@@ -87,7 +87,7 @@ router.post('/', verificaToken, async (req: Request, res: Response) => {
 // PUT /rewards/:id - Atualizar recompensa (protegido)
 router.put('/:id', verificaToken, async (req: Request, res: Response) => {
   const authReq = req as AuthenticatedRequest;
-  const tenantId = authReq.usuario?.tenant_id;
+  const tenantId = getTenantId(authReq);
   const { id } = req.params;
   const nome = req.body.nome ?? req.body.name;
   const descricao = req.body.descricao ?? req.body.description;
@@ -97,7 +97,7 @@ router.put('/:id', verificaToken, async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Nome e custo em pontos são obrigatórios.' });
   }
   if (!tenantId) {
-    return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+    return res.status(400).json({ error: TENANT_NOT_FOUND_ERROR });
   }
 
   try {
@@ -133,11 +133,11 @@ router.put('/:id', verificaToken, async (req: Request, res: Response) => {
 // DELETE /rewards/:id - Desativar recompensa (protegido)
 router.delete('/:id', verificaToken, async (req: Request, res: Response) => {
   const authReq = req as AuthenticatedRequest;
-  const tenantId = authReq.usuario?.tenant_id;
+  const tenantId = getTenantId(authReq);
   const { id } = req.params;
 
   if (!tenantId) {
-    return res.status(400).json({ error: 'Tenant do usuário não identificado.' });
+    return res.status(400).json({ error: TENANT_NOT_FOUND_ERROR });
   }
 
   try {

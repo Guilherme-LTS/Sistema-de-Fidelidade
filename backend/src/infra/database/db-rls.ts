@@ -66,6 +66,29 @@ export const resetRlsClaims = async (client: PoolClient) => {
   await client.query('RESET request.jwt.claims');
 };
 
+export const withRlsTransaction = async <T>(
+  req: AuthenticatedRequest,
+  handler: (client: PoolClient) => Promise<T>
+): Promise<T> => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    await setRlsClaims(client, req);
+
+    const result = await handler(client);
+
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    await resetRlsClaims(client).catch(() => {});
+    client.release();
+  }
+};
+
 /**
  * Wrapper de Transação para o PostgreSQL via node-pg.
  * Ele força o Banco de Dados a assumir as características do JWT por sessão,

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.queryWithRLS = exports.resetRlsClaims = exports.setRlsClaims = void 0;
+exports.queryWithRLS = exports.withRlsTransaction = exports.resetRlsClaims = exports.setRlsClaims = void 0;
 const db_1 = __importDefault(require("./db"));
 /**
  * Sanitiza string JSON para uso seguro em SET LOCAL (evita SQL injection)
@@ -44,6 +44,25 @@ const resetRlsClaims = async (client) => {
     await client.query('RESET request.jwt.claims');
 };
 exports.resetRlsClaims = resetRlsClaims;
+const withRlsTransaction = async (req, handler) => {
+    const client = await db_1.default.connect();
+    try {
+        await client.query('BEGIN');
+        await (0, exports.setRlsClaims)(client, req);
+        const result = await handler(client);
+        await client.query('COMMIT');
+        return result;
+    }
+    catch (error) {
+        await client.query('ROLLBACK').catch(() => { });
+        throw error;
+    }
+    finally {
+        await (0, exports.resetRlsClaims)(client).catch(() => { });
+        client.release();
+    }
+};
+exports.withRlsTransaction = withRlsTransaction;
 /**
  * Wrapper de Transação para o PostgreSQL via node-pg.
  * Ele força o Banco de Dados a assumir as características do JWT por sessão,
