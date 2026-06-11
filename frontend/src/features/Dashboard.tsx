@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import api from "../services/api";
 import { Link, useNavigate } from "react-router-dom";
-import { 
+import {
   Users, 
   Gift, 
   CreditCard,
@@ -20,21 +19,13 @@ import {
   CartesianGrid,
   Tooltip
 } from 'recharts';
-
-interface StatsProps {
-  totalClientes: number;
-  pontosPendentes: number;
-  pontosDisponiveis: number;
-  pontosResgatados: number;
-  recentes: any[];
-  chartData: any[];
-}
+import { carregarDashboardStats, DashboardStats } from './dashboard/dashboard.api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
-  const [stats, setStats] = useState<StatsProps>({
+  const [stats, setStats] = useState<DashboardStats>({
     totalClientes: 0,
     pontosPendentes: 0,
     pontosDisponiveis: 0,
@@ -46,31 +37,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await api.get('/dashboard/stats');
-        const payload = response.data || {};
-        const normalizedChartData = Array.isArray(payload.chartData)
-          ? payload.chartData.map((item: any) => ({
-              name: item.name,
-              pendentes: Number(item.pendentes ?? 0),
-              lancados: Number(item.lancados ?? item.disponiveis ?? item.pontos ?? 0),
-              resgates: Number(item.resgates ?? 0),
-            }))
-          : [];
-
-        setStats({
-          totalClientes: Number(payload.totalClientes ?? 0),
-          pontosPendentes: Number(payload.pontosPendentes ?? 0),
-          pontosDisponiveis: Number(payload.pontosDisponiveis ?? payload.pontosAtivos ?? 0),
-          pontosResgatados: Number(payload.pontosResgatados ?? payload.totalResgates ?? 0),
-          recentes: Array.isArray(payload.recentes)
-            ? payload.recentes.map((cliente: any) => ({
-                nome: cliente?.nome ?? cliente?.name ?? '',
-                document: cliente?.document ?? '',
-                saldo_pontos: Number(cliente?.saldo_pontos ?? 0),
-              }))
-            : [],
-          chartData: normalizedChartData,
-        });
+        setStats(await carregarDashboardStats());
       } catch (err: any) {
         console.error("Erro ao carregar os dados:", err);
       }

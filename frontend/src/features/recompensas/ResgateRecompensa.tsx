@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import useDebounce from '../../hooks/useDebounce';
-import api from '../../services/api';
+import { consultarClientePorCpf } from '../clientes/clientes.api';
+import { listarRecompensas } from './recompensas.api';
+import { resgatarRecompensa } from './resgates.api';
+import { getErrorMessage } from '../../shared/utils/errors';
 import {
   Card,
   CardContent,
@@ -37,10 +40,9 @@ function ResgateRecompensa() {
       setBuscandoCliente(true);
       setClienteInfo(null);
       try {
-        const response = await api.get(`/clientes/${cpfLimpo}`);
-        setClienteInfo(response.data);
+        setClienteInfo(await consultarClientePorCpf(cpfLimpo));
       } catch (error: any) {
-        setClienteInfo({ error: error.response?.data?.error || 'Cliente não encontrado.' });
+        setClienteInfo({ error: getErrorMessage(error, 'Cliente nao encontrado.') });
       } finally {
         setBuscandoCliente(false);
       }
@@ -54,14 +56,9 @@ function ResgateRecompensa() {
   useEffect(() => {
     const fetchRecompensas = async () => {
       try {
-        const response = await api.get(`/recompensas`);
-        setRecompensas((response.data || []).map((recompensa: any) => ({
-          ...recompensa,
-          nome: recompensa?.nome ?? recompensa?.name ?? '',
-          points_cost: recompensa?.points_cost ?? recompensa?.custo_pontos ?? 0,
-        })));
+        setRecompensas(await listarRecompensas());
       } catch (error: any) {
-        toast.error(error.message || 'Erro ao carregar recompensas');
+        toast.error(getErrorMessage(error, 'Erro ao carregar recompensas'));
       }
     };
     fetchRecompensas();
@@ -79,17 +76,7 @@ function ResgateRecompensa() {
     }
     setCarregando(true);
     try {
-      const document = cpf.replace(/\D/g, '');
-      const rewardId = Number(selectedRecompensa);
-      const response = await api.post(`/resgates`, {  
-        // Compatibilidade: backend novo usa `document`/`recompensa_id` e legado
-        // pode esperar `cpf`/`reward_id`.
-        document,
-        cpf: document,
-        recompensa_id: rewardId,
-        reward_id: rewardId,
-      });
-      const data = response.data;
+      const data = await resgatarRecompensa({ cpf, recompensaId: selectedRecompensa });
       
       const pontosRestantes = data?.pontos_restantes ?? data?.remaining_points ?? 0;
       toast.success(`Resgate realizado! Pontos restantes: ${pontosRestantes}`);
@@ -97,7 +84,7 @@ function ResgateRecompensa() {
       setSelectedRecompensa('');
       setClienteInfo(null);
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.message);
+      toast.error(getErrorMessage(error));
     } finally {
       setCarregando(false);
     }

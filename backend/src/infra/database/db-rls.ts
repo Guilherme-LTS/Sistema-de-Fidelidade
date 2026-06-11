@@ -110,9 +110,9 @@ export const queryWithRLS = async (req: AuthenticatedRequest, queryStr: string, 
 
     // 2. Montar as claims seguras para injeção (Garante que se não houver tenant_id, não vaza dados)
     const jwtClaims = JSON.stringify({
-      sub: req.user?.id || null,     // Subject
-      tenant_id: req.user?.tenant_id || null, // O metadado Custom (Isolador Multi-tenant)
-      role: req.user?.role || 'anon' // Papel no sistema
+      sub: req.user?.id || req.usuario?.id || null,     // Subject
+      tenant_id: req.user?.tenant_id || req.usuario?.tenant_id || null, // O metadado Custom (Isolador Multi-tenant)
+      role: req.user?.role || req.usuario?.role || 'anon' // Papel no sistema
     });
 
     // 3. Forçar as claims na sessão atual da conexão. Configura RLS!

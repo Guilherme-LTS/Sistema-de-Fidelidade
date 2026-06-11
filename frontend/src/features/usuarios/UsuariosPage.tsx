@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import api from '../../services/api';
+import {
+  alterarStatusUsuario,
+  excluirUsuario,
+  listarUsuarios,
+  salvarUsuario,
+  Usuario,
+} from './usuarios.api';
 
 import {
   Card,
@@ -23,27 +29,6 @@ import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Plus, X, Pencil, Ban, CheckCircle, Trash2, Search, UserCog } from 'lucide-react';
 
-interface Usuario {
-  id: string;
-  supabase_id: string;
-  nome: string;
-  email: string;
-  role: string;
-  ativo: boolean;
-}
-
-type UsuarioApi = {
-  id: string;
-  supabase_id?: string;
-  user_id?: string;
-  nome?: string;
-  name?: string;
-  email?: string;
-  role?: string;
-  ativo?: boolean;
-  is_active?: boolean;
-};
-
 function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
@@ -64,16 +49,7 @@ function UsuariosPage() {
   const fetchUsuarios = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/admin/usuarios');
-      const normalized: Usuario[] = (response.data as UsuarioApi[]).map((row) => ({
-        id: String(row.id),
-        supabase_id: row.supabase_id || row.user_id || '',
-        nome: row.nome || row.name || '',
-        email: row.email || '',
-        role: row.role || 'operador',
-        ativo: typeof row.ativo === 'boolean' ? row.ativo : Boolean(row.is_active),
-      }));
-      setUsuarios(normalized);
+      setUsuarios(await listarUsuarios());
     } catch (error) {
       console.error(error);
       toast.error('Erro ao carregar usuários.');
@@ -114,12 +90,10 @@ function UsuariosPage() {
 
     try {
       if (editId) {
-        await api.put(`/admin/usuarios/${editId}`, { nome, email, role });
+        await salvarUsuario({ nome, email, role }, editId);
         toast.success('Usuário atualizado com sucesso!');
       } else {
-        await api.post('/admin/usuarios', {
-          nome, email, role
-        });
+        await salvarUsuario({ nome, email, role });
         toast.success('Usuário criado com sucesso!');
       }
       resetForm();
@@ -159,7 +133,7 @@ function UsuariosPage() {
     if (!selectedUser) return;
     setIsStatusSubmitting(true);
     try {
-      await api.patch(`/admin/usuarios/${selectedUser.id}/status`, { ativo: !selectedUser.ativo });
+      await alterarStatusUsuario(selectedUser.id, !selectedUser.ativo);
       toast.success(selectedUser.ativo ? 'Usuário bloqueado com sucesso!' : 'Usuário desbloqueado com sucesso!');
       fetchUsuarios();
     } catch (error: any) {
@@ -175,7 +149,7 @@ function UsuariosPage() {
     if (!selectedUser) return;
     setIsDeleteSubmitting(true);
     try {
-      await api.delete(`/admin/usuarios/${selectedUser.id}`);
+      await excluirUsuario(selectedUser.id);
       toast.success('Usuário excluído!');
       fetchUsuarios();
     } catch (error: any) {

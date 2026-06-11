@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import api from '../../services/api';
+import { consultarClientePorCpf } from './clientes.api';
+import { getErrorMessage } from '../../shared/utils/errors';
 import {
   Card,
   CardContent,
@@ -46,8 +47,7 @@ function ConsultaSaldo({ onConsulta, onNotFound }: ConsultaSaldoProps) {
     const cpfLimpo = cpf.replace(/\D/g, '');
 
     try {
-      const response = await api.get('/clientes/' + cpfLimpo);
-      const data = response.data;
+      const data = await consultarClientePorCpf(cpfLimpo);
       setCliente(data);
       if (onConsulta) {
         onConsulta(data.pontosDisponiveis);
@@ -61,7 +61,7 @@ function ConsultaSaldo({ onConsulta, onNotFound }: ConsultaSaldoProps) {
           toast.error('Cliente não encontrado.');
         }
       } else {
-        toast.error(error.response?.data?.error || error.message);
+        toast.error(getErrorMessage(error));
       }
     } finally {
       setCarregando(false);

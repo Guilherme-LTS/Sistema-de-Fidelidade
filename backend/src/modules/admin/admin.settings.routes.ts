@@ -1,6 +1,5 @@
 import { Request, Response, Router } from 'express';
-import db from '../../infra/database/db';
-import { queryWithRLS, AuthenticatedRequest } from '../../infra/database/db-rls';
+import { AuthenticatedRequest, queryWithRLS, withRlsTransaction } from '../../infra/database/db-rls';
 import verificaToken from '../../shared/middlewares/autenticacao';
 import { logAuditEvent } from '../../shared/auditoria/audit';
 import { ensureAdmin, requireTenantId } from './admin.guard';
@@ -43,12 +42,12 @@ const getTenantSettingsHandler = async (req: Request, res: Response) => {
     const result = await queryWithRLS(
       authReq,
       'SELECT setting_key, setting_value, setting_unit, updated_at FROM tenant_settings WHERE tenant_id = $1',
-      [tenantId]
+      [tenantId],
     );
     const payload = buildTenantSettingsPayload(result.rows as TenantSettingRow[]);
     return res.status(200).json(payload);
   } catch (error) {
-    console.error('Erro ao buscar configurações:', error);
+    console.error('Erro ao buscar configuracoes:', error);
     return res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
   }
 };
@@ -65,54 +64,49 @@ const updateTenantSettingsHandler = async (req: Request, res: Response) => {
   const expiracao = Number(expiracao_pontos);
 
   if (!Number.isFinite(carencia) || !Number.isFinite(expiracao) || !Number.isInteger(carencia) || !Number.isInteger(expiracao)) {
-    return res.status(400).json({ error: 'Valores inválidos. Informe números inteiros.' });
+    return res.status(400).json({ error: 'Valores invalidos. Informe numeros inteiros.' });
   }
   if (carencia < 0 || expiracao <= 0) {
-    return res.status(400).json({ error: 'Valores inválidos. Carência deve ser >= 0 e expiração > 0.' });
+    return res.status(400).json({ error: 'Valores invalidos. Carencia deve ser >= 0 e expiracao > 0.' });
   }
   if (!tenantId) {
     return;
   }
 
-  const client = await db.connect();
   try {
-    await client.query('BEGIN');
+    await withRlsTransaction(authReq, async (client) => {
+      await client.query(`
+        INSERT INTO tenant_settings (tenant_id, setting_key, setting_value, setting_unit, updated_at)
+        VALUES ($1, 'carencia_pontos', $2, 'dias', NOW())
+        ON CONFLICT (tenant_id, setting_key)
+        DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW()
+      `, [tenantId, carencia]);
 
-    await client.query(`
-      INSERT INTO tenant_settings (tenant_id, setting_key, setting_value, setting_unit, updated_at)
-      VALUES ($1, 'carencia_pontos', $2, 'dias', NOW())
-      ON CONFLICT (tenant_id, setting_key)
-      DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW()
-    `, [tenantId, carencia]);
+      await client.query(`
+        INSERT INTO tenant_settings (tenant_id, setting_key, setting_value, setting_unit, updated_at)
+        VALUES ($1, 'expiracao_pontos', $2, 'dias', NOW())
+        ON CONFLICT (tenant_id, setting_key)
+        DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW()
+      `, [tenantId, expiracao]);
 
-    await client.query(`
-      INSERT INTO tenant_settings (tenant_id, setting_key, setting_value, setting_unit, updated_at)
-      VALUES ($1, 'expiracao_pontos', $2, 'dias', NOW())
-      ON CONFLICT (tenant_id, setting_key)
-      DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW()
-    `, [tenantId, expiracao]);
-
-    await logAuditEvent({
-      req,
-      client,
-      tenantId,
-      operatorId: authReq.usuario?.id || null,
-      action: 'ALTERACAO_CONFIGURACOES',
-      details: `Configurações alteradas: carencia_pontos=${carencia}, expiracao_pontos=${expiracao}.`,
-      targetLabel: 'Regras de Pontos',
-      impactLabel: `Carência ${carencia}d / Expiração ${expiracao}d`,
-      status: 'SUCESSO',
-      entityType: 'tenant_settings'
+      await logAuditEvent({
+        req,
+        client,
+        tenantId,
+        operatorId: authReq.usuario?.id || null,
+        action: 'ALTERACAO_CONFIGURACOES',
+        details: `Configuracoes alteradas: carencia_pontos=${carencia}, expiracao_pontos=${expiracao}.`,
+        targetLabel: 'Regras de Pontos',
+        impactLabel: `Carencia ${carencia}d / Expiracao ${expiracao}d`,
+        status: 'SUCESSO',
+        entityType: 'tenant_settings',
+      });
     });
 
-    await client.query('COMMIT');
-    return res.status(200).json({ message: 'Configurações atualizadas com sucesso!' });
+    return res.status(200).json({ message: 'Configuracoes atualizadas com sucesso!' });
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Erro ao atualizar configurações:', error);
-    return res.status(500).json({ error: 'Ocorreu um erro ao salvar as configurações.' });
-  } finally {
-    client.release();
+    console.error('Erro ao atualizar configuracoes:', error);
+    return res.status(500).json({ error: 'Ocorreu um erro ao salvar as configuracoes.' });
   }
 };
 

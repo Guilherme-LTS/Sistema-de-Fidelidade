@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { supabase } from "../../services/supabase";
-import api from "../../services/api";
+import { carregarPerfilAtual } from "./auth.api";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../components/ui/card";
@@ -32,12 +32,12 @@ function LoginPage() {
         localStorage.setItem("token", data.session.access_token);
 
         try {
-          const res = await api.get("/usuarios/me");
-          if (res.data) {
+          const perfil = await carregarPerfilAtual();
+          if (perfil) {
              localStorage.setItem("userPerfil", JSON.stringify({
-                id: res.data.id,
-                nome: res.data.nome,
-                role: res.data.role
+                id: perfil.id,
+                nome: perfil.nome,
+                role: perfil.role
              }));
           }
         } catch (err) {

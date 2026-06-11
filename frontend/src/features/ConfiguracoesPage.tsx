@@ -3,7 +3,7 @@ import { Sliders, Clock, History, Check } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { toast } from "react-toastify";
-import api from "../services/api";
+import { carregarConfiguracoesTenant, salvarConfiguracoesTenant } from "./configuracoes/configuracoes.api";
 
 const ConfiguracoesPage = () => {
   const [carenciaInput, setCarenciaInput] = useState<string>('0');
@@ -19,8 +19,7 @@ const ConfiguracoesPage = () => {
   const carregarConfiguracoes = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/admin/tenant_settings');
-      const data = res.data;
+      const data = await carregarConfiguracoesTenant();
       if (data.configs?.carencia_pontos) {
         setCarenciaInput(String(data.configs.carencia_pontos.valor));
       }
@@ -60,10 +59,7 @@ const ConfiguracoesPage = () => {
 
     try {
       setSaving(true);
-      await api.put('/admin/tenant_settings', {
-        carencia_pontos: carencia,
-        expiracao_pontos: expiracao
-      });
+      await salvarConfiguracoesTenant({ carenciaPontos: carencia, expiracaoPontos: expiracao });
       toast.success('Configurações atualizadas com sucesso!');
       await carregarConfiguracoes();
     } catch (error) {

@@ -52,7 +52,7 @@ type IntegrationContext = {
   tenantId: string;
   userId: string;
   tenantUserId: string;
-  rewardId: string;
+  rewardId: string | number;
   document: string;
 };
 
@@ -60,8 +60,33 @@ const setupContext = async (): Promise<IntegrationContext> => {
   const tenantId = randomUUID();
   const userId = randomUUID();
   const tenantUserId = randomUUID();
-  const rewardId = randomUUID();
   const document = generateCpf();
+  const email = `integration-${userId}@example.com`;
+
+  await adminPool.query(
+    `
+      INSERT INTO auth.users (
+        id,
+        aud,
+        role,
+        email,
+        email_confirmed_at,
+        raw_app_meta_data,
+        raw_user_meta_data,
+        created_at,
+        updated_at,
+        is_sso_user,
+        is_anonymous
+      )
+      VALUES ($1, 'authenticated', 'authenticated', $2, NOW(), $3, $4, NOW(), NOW(), false, false)
+    `,
+    [
+      userId,
+      email,
+      JSON.stringify({ tenant_id: tenantId, role: 'admin' }),
+      JSON.stringify({ name: 'Operador Teste' }),
+    ],
+  );
 
   await adminPool.query(
     'INSERT INTO tenants (id, name, document, is_active) VALUES ($1, $2, $3, true)',
@@ -85,10 +110,11 @@ const setupContext = async (): Promise<IntegrationContext> => {
     [tenantId],
   );
 
-  await adminPool.query(
-    'INSERT INTO rewards (id, tenant_id, name, points_cost, is_active) VALUES ($1, $2, $3, $4, true)',
-    [rewardId, tenantId, 'Recompensa Teste', 50],
+  const rewardResult = await adminPool.query(
+    'INSERT INTO rewards (tenant_id, name, points_cost, is_active) VALUES ($1, $2, $3, true) RETURNING id',
+    [tenantId, 'Recompensa Teste', 50],
   );
+  const rewardId = rewardResult.rows[0].id;
 
   return { tenantId, userId, tenantUserId, rewardId, document };
 };
@@ -108,6 +134,7 @@ const cleanupContext = async (ctx: IntegrationContext, customerId?: string, cons
   await adminPool.query('DELETE FROM tenant_users WHERE tenant_id = $1', [ctx.tenantId]);
   await adminPool.query('DELETE FROM tenant_settings WHERE tenant_id = $1', [ctx.tenantId]);
   await adminPool.query('DELETE FROM tenants WHERE id = $1', [ctx.tenantId]);
+  await adminPool.query('DELETE FROM auth.users WHERE id = $1', [ctx.userId]);
 };
 
 integrationTest('integration: transacoes e resgates', async (t) => {
@@ -131,7 +158,6 @@ integrationTest('integration: transacoes e resgates', async (t) => {
         configs.carencia_pontos,
         configs.expiracao_pontos,
       );
-
       const cliente = await upsertTenantCustomerByDocument(client, {
         tenantId: ctx.tenantId,
         document: ctx.document,
@@ -236,12 +262,18 @@ integrationTest('integration: FIFO em duas transacoes', async (t) => {
   try {
     const authReq = makeAuthRequest(ctx.tenantId, ctx.userId, ctx.tenantUserId);
 
+    await adminPool.query(
+      'UPDATE rewards SET points_cost = 100 WHERE id = $1 AND tenant_id = $2',
+      [ctx.rewardId, ctx.tenantId],
+    );
+
     const transacao = await withRlsTransaction(authReq, async (client) => {
       const configs = await loadTenantPointSettings(client, ctx.tenantId);
       const { availableAt, expiresAt } = calculatePointTimelines(
         configs.carencia_pontos,
         configs.expiracao_pontos,
       );
+      const laterExpiresAt = new Date(expiresAt.getTime() + 24 * 60 * 60 * 1000);
 
       const cliente = await upsertTenantCustomerByDocument(client, {
         tenantId: ctx.tenantId,
@@ -260,7 +292,7 @@ integrationTest('integration: FIFO em duas transacoes', async (t) => {
       const tx2 = await client.query(
         `INSERT INTO transactions (customer_id, amount_spent, points_earned, remaining_points, available_at, expires_at, operator_id, tenant_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-        [cliente.id, 50, 50, 50, availableAt, expiresAt, ctx.tenantUserId, ctx.tenantId],
+        [cliente.id, 50, 50, 50, availableAt, laterExpiresAt, ctx.tenantUserId, ctx.tenantId],
       );
 
       return {

@@ -4,7 +4,11 @@ import { toast } from 'react-toastify';
 import useDebounce from '../../hooks/useDebounce';
 import Spinner from '../../shared/components/Spinner';
 import Pagination from '../../shared/components/Pagination';
-import api from '../../services/api';
+import {
+  Cliente,
+  consultarClienteComExtrato,
+  listarClientes,
+} from './clientes.api';
 
 import {
   Card,
@@ -31,18 +35,6 @@ const formatarData = (dataISO: string) => {
   return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-interface Cliente {
-  id: number;
-  nome: string;
-  name?: string;
-  document: string;
-  pontosDisponiveis?: number;
-  pontosPendentes?: number;
-  pontosExpirando?: number;
-  dataProximaExpiracao?: string | null;
-  dataProximaLiberacao?: string | null;
-}
-
 interface ExtratoItem {
   data: string;
   descricao: string;
@@ -66,24 +58,14 @@ function ClientesPage() {
   const [extrato, setExtrato] = useState<ExtratoItem[]>([]);
   const [loadingExtrato, setLoadingExtrato] = useState(false);
 
-  const normalizeCliente = (cliente: any): Cliente => ({
-    ...cliente,
-    nome: cliente?.nome ?? cliente?.name ?? '',
-  });
-
   const carregarDetalhesCliente = useCallback(async (document: string) => {
     setLoadingExtrato(true);
     setExtrato([]);
-    const cpfLimpo = document.replace(/\D/g, '');
 
     try {
-      const [resCliente, resExtrato] = await Promise.all([
-        api.get(`/clientes/${cpfLimpo}`),
-        api.get(`/clientes/${cpfLimpo}/extrato`)
-      ]);
-
-      setClienteSelecionado(normalizeCliente(resCliente.data));
-      setExtrato(resExtrato.data);
+      const { cliente, extrato } = await consultarClienteComExtrato(document);
+      setClienteSelecionado(cliente);
+      setExtrato(extrato);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -95,12 +77,9 @@ function ClientesPage() {
     const fetchClientes = async () => {
       setLoading(true);
       try {
-        const url = `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/clientes?busca=${debouncedBusca}&page=${paginaAtual}`;
-        const basePath = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-        const response = await api.get(url.replace(basePath, ''));
-        const data = response.data;
-        setClientes((data.customers || []).map(normalizeCliente)); 
-        setTotalPaginas(data.totalPaginas || 1);
+        const data = await listarClientes({ busca: debouncedBusca, page: paginaAtual });
+        setClientes(data.clientes);
+        setTotalPaginas(data.totalPaginas);
 
       } catch (error: any) {
         toast.error(error.message);

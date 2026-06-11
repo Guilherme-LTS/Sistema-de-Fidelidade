@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import api from "../services/api";
 import { toast } from "react-toastify";
+import { buscarAuditoria } from "./auditoria/auditoria.api";
 import {
   Activity,
   Search,
@@ -94,22 +94,19 @@ const AuditoriaPage = () => {
   const fetchLog = useCallback(async (page: number) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: "10"
+      const data = await buscarAuditoria({
+        page,
+        limit: 10,
+        busca,
+        periodoInicio,
+        periodoFim,
+        eventType,
+        status,
       });
-
-      if (busca.trim()) params.append("q", busca.trim());
-      if (periodoInicio) params.append("startDate", `${periodoInicio}T00:00:00`);
-      if (periodoFim) params.append("endDate", `${periodoFim}T23:59:59`);
-      if (eventType) params.append("eventType", eventType);
-      if (status) params.append("status", status);
-
-      const response = await api.get(`/admin/auditoria?${params.toString()}`);
-      if (response.data && response.data.data) {
-        setLog(response.data.data);
-        setSummary(response.data.summary || DEFAULT_SUMMARY);
-        setTotalPaginas(response.data.pagination?.totalPages || 1);
+      if (data && data.data) {
+        setLog(data.data);
+        setSummary(data.summary || DEFAULT_SUMMARY);
+        setTotalPaginas(data.pagination?.totalPages || 1);
       }
     } catch (error) {
       toast.error("Erro ao buscar logs de auditoria.");
