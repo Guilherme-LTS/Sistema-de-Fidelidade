@@ -59,12 +59,18 @@ const readCustomerSession = () => {
 function LandingPage() {
   const { tenantSlug } = useParams();
   const apiBase = process.env.REACT_APP_API_URL;
+  const publicTenantIdFromEnv = process.env.REACT_APP_PUBLIC_TENANT_ID || '';
 
   const [customerSession, setCustomerSession] = useState(() => readCustomerSession());
   const [authMode, setAuthMode] = useState('login');
   const [documentInput, setDocumentInput] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+
+  const [partners, setPartners] = useState([]);
+  const [partnersLoading, setPartnersLoading] = useState(false);
+  const [partnersError, setPartnersError] = useState('');
+  const [selectedPublicTenantId, setSelectedPublicTenantId] = useState('');
 
   const [balances, setBalances] = useState([]);
   const [loadingBalances, setLoadingBalances] = useState(false);
@@ -80,6 +86,9 @@ function LandingPage() {
   const [tenantResolving, setTenantResolving] = useState(Boolean(tenantSlug));
   const [resolvedTenantId, setResolvedTenantId] = useState('');
   const [tenantResolveError, setTenantResolveError] = useState('');
+  const requiresPartnerSelection = !tenantSlug && !publicTenantIdFromEnv;
+  const activePublicTenantId = resolvedTenantId || selectedPublicTenantId || publicTenantIdFromEnv;
+  const selectedPublicPartner = partners.find((partner) => partner.tenant_id === selectedPublicTenantId) || null;
 
   const filteredBalances = useMemo(() => {
     if (!searchTerm.trim()) return balances;
@@ -98,7 +107,7 @@ function LandingPage() {
       setLoadingBalances(true);
       setBalancesError('');
       const queryParams = new URLSearchParams();
-      const publicTenantId = preferredTenantId || process.env.REACT_APP_PUBLIC_TENANT_ID || '';
+      const publicTenantId = preferredTenantId || selectedPublicTenantId || publicTenantIdFromEnv;
 
       if (publicTenantId) {
         queryParams.set('tenant_id', publicTenantId);
@@ -109,7 +118,7 @@ function LandingPage() {
         setSelectedPartner(null);
         setStatement([]);
         setRewards([]);
-        setBalancesError('Acesse pelo link ou QR Code do restaurante para consultar seus pontos.');
+        setBalancesError('Escolha o restaurante para consultar seus pontos.');
         return;
       }
 
@@ -146,12 +155,46 @@ function LandingPage() {
     } finally {
       setLoadingBalances(false);
     }
-  }, [apiBase, tenantSlug]);
+  }, [apiBase, tenantSlug, selectedPublicTenantId, publicTenantIdFromEnv]);
 
   useEffect(() => {
     if (!customerSession) return;
-    loadBalances(customerSession, resolvedTenantId);
-  }, [customerSession, resolvedTenantId, loadBalances]);
+    loadBalances(customerSession, activePublicTenantId);
+  }, [customerSession, activePublicTenantId, loadBalances]);
+
+  useEffect(() => {
+    if (!requiresPartnerSelection) {
+      setPartners([]);
+      setPartnersError('');
+      setPartnersLoading(false);
+      return;
+    }
+
+    const loadPartners = async () => {
+      try {
+        setPartnersLoading(true);
+        setPartnersError('');
+        const response = await fetch(`${apiBase}/public/partners`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro ao carregar restaurantes.');
+        }
+        setPartners(Array.isArray(data.partners) ? data.partners : []);
+      } catch (error) {
+        setPartnersError(error.message || 'Erro ao carregar restaurantes.');
+      } finally {
+        setPartnersLoading(false);
+      }
+    };
+
+    loadPartners();
+  }, [apiBase, requiresPartnerSelection]);
+
+  useEffect(() => {
+    if (requiresPartnerSelection && !selectedPublicTenantId && partners.length === 1) {
+      setSelectedPublicTenantId(partners[0].tenant_id);
+    }
+  }, [partners, requiresPartnerSelection, selectedPublicTenantId]);
 
   useEffect(() => {
     if (!tenantSlug) {
@@ -194,6 +237,11 @@ function LandingPage() {
       return;
     }
 
+    if (requiresPartnerSelection && !selectedPublicTenantId) {
+      toast.warning('Escolha o restaurante para consultar seus pontos.');
+      return;
+    }
+
     setAuthLoading(true);
     const session = {
       document: normalizedDocument,
@@ -207,7 +255,7 @@ function LandingPage() {
       setStatement([]);
       setRewards([]);
       setSearchTerm('');
-      void loadBalances(session, resolvedTenantId);
+      void loadBalances(session, activePublicTenantId);
       if (authMode === 'cadastro') {
         toast.success('Cadastro concluído. Bem-vindo ao Fidelizi!');
       }
@@ -229,6 +277,17 @@ function LandingPage() {
     setRewards([]);
     setBalancesError('');
     setDetailError('');
+  };
+
+  const handlePartnerSelection = (tenantId) => {
+    setSelectedPublicTenantId(tenantId);
+    setSelectedPartner(null);
+    setBalances([]);
+    setStatement([]);
+    setRewards([]);
+    setBalancesError('');
+    setDetailError('');
+    setSearchTerm('');
   };
 
   const handleOpenPartner = useCallback(
@@ -347,6 +406,25 @@ function LandingPage() {
                     onChange={(event) => setNameInput(event.target.value)}
                   />
                 )}
+                {requiresPartnerSelection && (
+                  <select
+                    className={styles.input}
+                    value={selectedPublicTenantId}
+                    onChange={(event) => handlePartnerSelection(event.target.value)}
+                    disabled={partnersLoading}
+                    required
+                  >
+                    <option value="">
+                      {partnersLoading ? 'Carregando restaurantes...' : 'Escolha o restaurante'}
+                    </option>
+                    {partners.map((partner) => (
+                      <option key={partner.tenant_id} value={partner.tenant_id}>
+                        {partner.tenant_name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {partnersError && <p className={styles.errorText}>{partnersError}</p>}
                 <input
                   type="text"
                   className={styles.input}
@@ -376,6 +454,32 @@ function LandingPage() {
               {tenantResolveError && <p className={styles.errorText}>{tenantResolveError}</p>}
             </div>
 
+            {requiresPartnerSelection && (
+              <div className={styles.partnerSelectorBox}>
+                <label htmlFor="partner-selector">Restaurante</label>
+                <select
+                  id="partner-selector"
+                  className={styles.input}
+                  value={selectedPublicTenantId}
+                  onChange={(event) => handlePartnerSelection(event.target.value)}
+                  disabled={partnersLoading}
+                >
+                  <option value="">
+                    {partnersLoading ? 'Carregando restaurantes...' : 'Escolha o restaurante'}
+                  </option>
+                  {partners.map((partner) => (
+                    <option key={partner.tenant_id} value={partner.tenant_id}>
+                      {partner.tenant_name}
+                    </option>
+                  ))}
+                </select>
+                {selectedPublicPartner && (
+                  <small>Consultando pontos em {selectedPublicPartner.tenant_name}.</small>
+                )}
+                {partnersError && <p className={styles.errorText}>{partnersError}</p>}
+              </div>
+            )}
+
             <div className={styles.searchWrap}>
               <input
                 type="text"
@@ -404,7 +508,7 @@ function LandingPage() {
                 <button
                   type="button"
                   className={styles.secondaryButton}
-                  onClick={() => loadBalances(customerSession, resolvedTenantId)}
+                  onClick={() => loadBalances(customerSession, activePublicTenantId)}
                 >
                   Tentar novamente
                 </button>

@@ -269,6 +269,86 @@ test('AuthService exige campos obrigatorios no cadastro de tenant', async () => 
   );
 });
 
+test('AuthService cria tenant, admin, settings e metadata com dados normalizados', async () => {
+  const calls: string[] = [];
+  const service = new AuthService({
+    createAuthUser: async (input: any) => {
+      calls.push(`createAuthUser:${input.email}`);
+      assert.equal(input.password, 'senha123');
+      return { id: 'auth-user-1' };
+    },
+    createTenant: async (input: any) => {
+      calls.push(`createTenant:${input.tenantName}:${input.document}`);
+      assert.equal(input.tenantId, 'auth-user-1');
+    },
+    createTenantAdmin: async (input: any) => {
+      calls.push(`createTenantAdmin:${input.adminName}`);
+      assert.equal(input.userId, 'auth-user-1');
+      assert.equal(input.tenantId, 'auth-user-1');
+    },
+    seedTenantSettings: async (input: any) => {
+      calls.push(`seedTenantSettings:${input.carenciaPontos}:${input.expiracaoPontos}`);
+      assert.equal(input.tenantId, 'auth-user-1');
+    },
+    updateAuthUserMetadata: async (input: any) => {
+      calls.push(`updateAuthUserMetadata:${input.role}`);
+      assert.equal(input.userId, 'auth-user-1');
+      assert.equal(input.tenantId, 'auth-user-1');
+    },
+    deleteAuthUser: async () => {
+      calls.push('deleteAuthUser');
+    },
+  } as any);
+
+  const result = await service.registerTenant({
+    tenantName: ' Restaurante Teste ',
+    adminName: ' Admin Teste ',
+    email: 'ADMIN@EXAMPLE.COM ',
+    password: 'senha123',
+    document: '12.345.678/0001-90',
+  });
+
+  assert.equal(result.tenant_id, 'auth-user-1');
+  assert.deepEqual(calls, [
+    'createAuthUser:admin@example.com',
+    'createTenant:Restaurante Teste:12345678000190',
+    'createTenantAdmin:Admin Teste',
+    'seedTenantSettings:0:180',
+    'updateAuthUserMetadata:admin',
+  ]);
+});
+
+test('AuthService remove usuario auth quando banco falha no cadastro de tenant', async () => {
+  const calls: string[] = [];
+  const service = new AuthService({
+    createAuthUser: async () => {
+      calls.push('createAuthUser');
+      return { id: 'auth-user-1' };
+    },
+    createTenant: async () => {
+      calls.push('createTenant');
+      const error: any = new Error('duplicado');
+      error.code = '23505';
+      throw error;
+    },
+    deleteAuthUser: async (userId: string) => {
+      calls.push(`deleteAuthUser:${userId}`);
+    },
+  } as any);
+
+  await assert.rejects(
+    () =>
+      service.registerTenant({
+        tenantName: 'Restaurante Teste',
+        email: 'admin@example.com',
+        password: 'senha123',
+      }),
+    (error) => error instanceof HttpError && error.statusCode === 409,
+  );
+
+  assert.deepEqual(calls, ['createAuthUser', 'createTenant', 'deleteAuthUser:auth-user-1']);
+});
+
 test('AdminUsersService valida role ao criar usuario interno', async () => {
   const service = new AdminUsersService({} as any);
 

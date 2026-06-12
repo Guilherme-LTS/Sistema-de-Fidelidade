@@ -55,7 +55,7 @@
 .brandName {
   font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .brandAccent {
@@ -132,7 +132,7 @@
 .detailHero h1,
 .titleBlock h1 {
   margin: 0;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .authBox h1 {
@@ -180,6 +180,26 @@
 .searchWrap {
   display: grid;
   gap: 0.85rem;
+}
+
+.partnerSelectorBox {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.partnerSelectorBox label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.partnerSelectorBox small {
+  color: var(--muted);
 }
 
 .input {
@@ -423,7 +443,7 @@
 .metricCard strong {
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   color: var(--primary);
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .detailLayout {

@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { SupabaseClient } from '@supabase/supabase-js';
-import pool from '../../infra/database/db';
+import { adminPool } from '../../infra/database/db';
 import { AuthRepository } from './auth.repository';
 import { AuthService } from './auth.service';
 
 export function makeRegisterTenantController(supabaseAdmin: SupabaseClient) {
   return async function registerTenantController(req: Request, res: Response) {
     const { tenant_name, document, email, password, admin_name } = req.body;
-    const client = await pool.connect();
+    const client = await adminPool.connect();
 
     try {
       await client.query('BEGIN');

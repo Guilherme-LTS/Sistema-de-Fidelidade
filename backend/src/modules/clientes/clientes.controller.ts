@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthenticatedRequest, withRlsTransaction } from '../../infra/database/db-rls';
-import { requireTenantId } from '../../shared/request-context';
+import { requireTenantId, requireUserRole } from '../../shared/request-context';
 import { ClientesRepository } from './clientes.repository';
 import { ClientesService } from './clientes.service';
 
@@ -13,6 +13,7 @@ interface PaginationQuery {
 export async function listarClientesController(req: Request, res: Response) {
   const { busca, page = '1', limit = '15' } = req.query as PaginationQuery;
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin', 'operador'], 'Acesso negado.');
   const tenantId = requireTenantId(authReq);
   const service = new ClientesService(new ClientesRepository(authReq));
 
@@ -28,6 +29,7 @@ export async function listarClientesController(req: Request, res: Response) {
 
 export async function consultarSaldoController(req: Request, res: Response) {
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin', 'operador'], 'Acesso negado.');
   const tenantId = requireTenantId(authReq);
   const service = new ClientesService(new ClientesRepository(authReq));
 
@@ -41,6 +43,7 @@ export async function consultarSaldoController(req: Request, res: Response) {
 
 export async function consultarExtratoController(req: Request, res: Response) {
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin', 'operador'], 'Acesso negado.');
   const tenantId = requireTenantId(authReq);
   const service = new ClientesService(new ClientesRepository(authReq));
 
@@ -55,6 +58,7 @@ export async function consultarExtratoController(req: Request, res: Response) {
 
 export async function cadastrarClienteController(req: Request, res: Response) {
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin', 'operador'], 'Acesso negado.');
   const tenantId = requireTenantId(authReq);
   const { nome, document, lgpd_consentimento } = req.body;
 

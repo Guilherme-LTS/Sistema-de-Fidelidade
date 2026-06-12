@@ -3,7 +3,9 @@ import { AuthenticatedRequest } from '../../infra/database/db-rls';
 import { getTenantId, TENANT_NOT_FOUND_ERROR } from '../../shared/request-context';
 
 export function ensureAdmin(authReq: AuthenticatedRequest, res: Response, message = 'Acesso negado.'): boolean {
-  if (authReq.usuario?.role !== 'admin') {
+  const role = authReq.usuario?.role || authReq.user?.role;
+
+  if (role !== 'admin') {
     res.status(403).json({ error: message });
     return false;
   }

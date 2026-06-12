@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { adminPool } from '../../infra/database/db';
 import { AuthenticatedRequest, withRlsTransaction } from '../../infra/database/db-rls';
-import { requireTenantId } from '../../shared/request-context';
+import { requireTenantId, requireUserRole } from '../../shared/request-context';
 import { RecompensasRepository } from './recompensas.repository';
 import { RecompensasService } from './recompensas.service';
 
@@ -14,6 +14,7 @@ function makeService(authReq: AuthenticatedRequest) {
 
 export async function listarRecompensasController(req: Request, res: Response) {
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin', 'operador'], 'Acesso negado.');
   const tenantId = requireTenantId(authReq);
   const rewards = await makeService(authReq).listarAtivas(tenantId);
 
@@ -22,6 +23,7 @@ export async function listarRecompensasController(req: Request, res: Response) {
 
 export async function listarRecompensasPublicasController(req: Request, res: Response) {
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin', 'operador'], 'Acesso negado.');
   const tenantId = requireTenantId(authReq);
   const rewards = await makeService(authReq).listarPublicas(tenantId);
 
@@ -57,6 +59,7 @@ export async function listarRecompensasPublicasPorTenantController(req: Request,
 
 export async function criarRecompensaController(req: Request, res: Response) {
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin'], 'Acesso negado. Apenas administradores podem gerenciar recompensas.');
   const tenantId = requireTenantId(authReq);
   const nome = req.body.nome ?? req.body.name;
   const descricao = req.body.descricao ?? req.body.description;
@@ -79,6 +82,7 @@ export async function criarRecompensaController(req: Request, res: Response) {
 
 export async function atualizarRecompensaController(req: Request, res: Response) {
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin'], 'Acesso negado. Apenas administradores podem gerenciar recompensas.');
   const tenantId = requireTenantId(authReq);
   const nome = req.body.nome ?? req.body.name;
   const descricao = req.body.descricao ?? req.body.description;
@@ -102,6 +106,7 @@ export async function atualizarRecompensaController(req: Request, res: Response)
 
 export async function desativarRecompensaController(req: Request, res: Response) {
   const authReq = req as AuthenticatedRequest;
+  requireUserRole(authReq, ['admin'], 'Acesso negado. Apenas administradores podem gerenciar recompensas.');
   const tenantId = requireTenantId(authReq);
 
   const result = await withRlsTransaction(authReq, (client) => {

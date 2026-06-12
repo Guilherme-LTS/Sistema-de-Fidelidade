@@ -39,6 +39,6 @@ export async function lancarPontosController(req: Request, res: Response) {
     if (isHttpError(error)) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    return res.status(500).json({ error: 'Ocorreu um erro no servidor.', details: (error as Error).message });
+    return res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
   }
 }

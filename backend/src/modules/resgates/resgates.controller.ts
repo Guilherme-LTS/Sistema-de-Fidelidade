@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthenticatedRequest, withRlsTransaction } from '../../infra/database/db-rls';
 import { HttpError, isHttpError } from '../../shared/errors/http-error';
-import { requireTenantId } from '../../shared/request-context';
+import { requireTenantId, requireUserRole } from '../../shared/request-context';
 import { ResgatesRepository } from './resgates.repository';
 import { ResgatesService } from './resgates.service';
 
@@ -9,6 +9,7 @@ export async function resgatarRecompensaController(req: Request, res: Response) 
   try {
     const { document, recompensa_id } = req.body;
     const authReq = req as AuthenticatedRequest;
+    requireUserRole(authReq, ['admin', 'operador'], 'Acesso negado. Apenas administradores ou operadores podem resgatar recompensas.');
     const operadorId = authReq.usuario?.id;
     const tenantId = requireTenantId(authReq);
     const cpfLimpo = (document || '').replace(/\D/g, '');
@@ -37,6 +38,6 @@ export async function resgatarRecompensaController(req: Request, res: Response) 
     if (isHttpError(error)) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    return res.status(500).json({ error: error.message || 'Ocorreu um erro no servidor.' });
+    return res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
   }
 }

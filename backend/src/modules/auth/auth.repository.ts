@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { PoolClient } from 'pg';
+import { HttpError } from '../../shared/errors/http-error';
 
 export class AuthRepository {
   constructor(
@@ -15,10 +16,21 @@ export class AuthRepository {
     });
 
     if (error || !data.user) {
-      throw new Error(`Erro ao criar conta de Auth: ${error?.message}`);
+      const message = error?.message || 'Erro ao criar conta de autenticacao.';
+      const normalizedMessage = message.toLowerCase();
+
+      if (normalizedMessage.includes('already') || normalizedMessage.includes('registered')) {
+        throw new HttpError(409, 'Ja existe uma conta cadastrada com este e-mail.');
+      }
+
+      throw new HttpError(400, message);
     }
 
     return data.user;
+  }
+
+  async deleteAuthUser(userId: string) {
+    await this.supabaseAdmin.auth.admin.deleteUser(userId, true);
   }
 
   async createTenant(input: { tenantId: string; tenantName: string; document?: string | null }) {
@@ -50,8 +62,12 @@ export class AuthRepository {
   }
 
   async updateAuthUserMetadata(input: { userId: string; tenantId: string; role: string }) {
-    await this.supabaseAdmin.auth.admin.updateUserById(input.userId, {
+    const { error } = await this.supabaseAdmin.auth.admin.updateUserById(input.userId, {
       app_metadata: { tenant_id: input.tenantId, role: input.role },
     });
+
+    if (error) {
+      throw new HttpError(400, error.message);
+    }
   }
 }
