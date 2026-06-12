@@ -74,6 +74,91 @@ router.get('/rewards', async (req: Request, res: Response) => {
   }
 });
 
+router.get('/pontos/:document/restaurantes', async (req: Request, res: Response) => {
+  const rawDocument = req.params.document;
+  const document = Array.isArray(rawDocument) ? rawDocument[0] : rawDocument;
+  const cpfLimpo = document.replace(/\D/g, '');
+
+  if (!cpfLimpo) {
+    return res.status(400).json({ error: 'Documento invalido.' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `
+        SELECT
+          t.id::text as tenant_id,
+          t.name as tenant_name,
+          COALESCE(c.name, cp.name) as customer_name,
+          COALESCE(points.pontos_disponiveis, 0)::int as pontos_disponiveis,
+          COALESCE(points.pontos_pendentes, 0)::int as pontos_pendentes,
+          points.data_proxima_liberacao,
+          COALESCE(points.pontos_expirando, 0)::int as pontos_expirando,
+          points.data_proxima_expiracao,
+          COALESCE(activity.total_transacoes, 0)::int as total_transacoes,
+          COALESCE(activity.total_resgates, 0)::int as total_resgates,
+          activity.ultima_movimentacao
+        FROM customers c
+        LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id
+        INNER JOIN tenants t ON c.tenant_id = t.id
+        LEFT JOIN LATERAL (
+          SELECT
+            COALESCE(SUM(CASE
+              WHEN tr.available_at <= NOW() AND tr.expires_at > NOW()
+              THEN tr.remaining_points
+              ELSE 0
+            END), 0)::int as pontos_disponiveis,
+            COALESCE(SUM(CASE
+              WHEN tr.available_at > NOW()
+              THEN tr.remaining_points
+              ELSE 0
+            END), 0)::int as pontos_pendentes,
+            MIN(CASE
+              WHEN tr.available_at > NOW() THEN tr.available_at
+              ELSE NULL
+            END) as data_proxima_liberacao,
+            COALESCE(SUM(CASE
+              WHEN tr.available_at <= NOW()
+                AND tr.expires_at > NOW()
+                AND tr.expires_at <= NOW() + INTERVAL '30 days'
+              THEN tr.remaining_points
+              ELSE 0
+            END), 0)::int as pontos_expirando,
+            MIN(CASE
+              WHEN tr.available_at <= NOW() AND tr.expires_at > NOW() THEN tr.expires_at
+              ELSE NULL
+            END) as data_proxima_expiracao
+          FROM transactions tr
+          WHERE tr.customer_id = c.id
+            AND tr.tenant_id = c.tenant_id
+        ) points ON true
+        LEFT JOIN LATERAL (
+          SELECT
+            (SELECT COUNT(*) FROM transactions tr WHERE tr.customer_id = c.id AND tr.tenant_id = c.tenant_id) as total_transacoes,
+            (SELECT COUNT(*) FROM redemptions r WHERE r.customer_id = c.id AND r.tenant_id = c.tenant_id) as total_resgates,
+            GREATEST(
+              COALESCE((SELECT MAX(tr.created_at) FROM transactions tr WHERE tr.customer_id = c.id AND tr.tenant_id = c.tenant_id), c.created_at),
+              COALESCE((SELECT MAX(r.created_at) FROM redemptions r WHERE r.customer_id = c.id AND r.tenant_id = c.tenant_id), c.created_at),
+              c.created_at
+            ) as ultima_movimentacao
+        ) activity ON true
+        WHERE COALESCE(cp.document, c.document) = $1
+          AND c.deleted_at IS NULL
+          AND (cp.id IS NULL OR cp.deleted_at IS NULL)
+          AND t.is_active = true
+        ORDER BY activity.ultima_movimentacao DESC NULLS LAST, t.name ASC
+        LIMIT 50
+      `,
+      [cpfLimpo],
+    );
+
+    return res.status(200).json({ saldos: rows });
+  } catch (error) {
+    console.error('Erro ao listar restaurantes do cliente:', error);
+    return res.status(500).json({ error: 'Erro ao listar restaurantes do cliente.' });
+  }
+});
+
 router.get('/pontos/:document', async (req: Request, res: Response) => {
   const rawDocument = req.params.document;
   const document = Array.isArray(rawDocument) ? rawDocument[0] : rawDocument;

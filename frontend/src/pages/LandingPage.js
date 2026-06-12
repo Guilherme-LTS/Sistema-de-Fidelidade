@@ -41,6 +41,31 @@ const getPartnerInitials = (name) => {
   return words.map((word) => word.charAt(0).toUpperCase()).join('');
 };
 
+const getPartnerStatus = (partner) => {
+  const expiringPoints = Number(partner?.pontos_expirando || 0);
+  const pendingPoints = Number(partner?.pontos_pendentes || 0);
+  const redemptions = Number(partner?.total_resgates || 0);
+  const transactions = Number(partner?.total_transacoes || 0);
+
+  if (expiringPoints > 0) {
+    return `${formatPoints(expiringPoints)} pontos vencem em ${formatDate(partner.data_proxima_expiracao)}`;
+  }
+
+  if (pendingPoints > 0) {
+    return `${formatPoints(pendingPoints)} pontos pendentes`;
+  }
+
+  if (redemptions > 0) {
+    return `${redemptions} resgate${redemptions === 1 ? '' : 's'} realizado${redemptions === 1 ? '' : 's'}`;
+  }
+
+  if (transactions > 0) {
+    return `${transactions} compra${transactions === 1 ? '' : 's'} registrada${transactions === 1 ? '' : 's'}`;
+  }
+
+  return 'Cadastro ativo neste restaurante';
+};
+
 const readCustomerSession = () => {
   try {
     const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
@@ -67,11 +92,6 @@ function LandingPage() {
   const [nameInput, setNameInput] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  const [partners, setPartners] = useState([]);
-  const [partnersLoading, setPartnersLoading] = useState(false);
-  const [partnersError, setPartnersError] = useState('');
-  const [selectedPublicTenantId, setSelectedPublicTenantId] = useState('');
-
   const [balances, setBalances] = useState([]);
   const [loadingBalances, setLoadingBalances] = useState(false);
   const [balancesError, setBalancesError] = useState('');
@@ -86,9 +106,7 @@ function LandingPage() {
   const [tenantResolving, setTenantResolving] = useState(Boolean(tenantSlug));
   const [resolvedTenantId, setResolvedTenantId] = useState('');
   const [tenantResolveError, setTenantResolveError] = useState('');
-  const requiresPartnerSelection = !tenantSlug && !publicTenantIdFromEnv;
-  const activePublicTenantId = resolvedTenantId || selectedPublicTenantId || publicTenantIdFromEnv;
-  const selectedPublicPartner = partners.find((partner) => partner.tenant_id === selectedPublicTenantId) || null;
+  const activePublicTenantId = resolvedTenantId || publicTenantIdFromEnv;
 
   const filteredBalances = useMemo(() => {
     if (!searchTerm.trim()) return balances;
@@ -107,22 +125,19 @@ function LandingPage() {
       setLoadingBalances(true);
       setBalancesError('');
       const queryParams = new URLSearchParams();
-      const publicTenantId = preferredTenantId || selectedPublicTenantId || publicTenantIdFromEnv;
+      const publicTenantId = preferredTenantId || publicTenantIdFromEnv;
+      let endpoint = `${apiBase}/public/pontos/${session.document}/restaurantes`;
 
       if (publicTenantId) {
         queryParams.set('tenant_id', publicTenantId);
+        endpoint = `${apiBase}/public/pontos/${session.document}`;
       } else if (tenantSlug) {
         queryParams.set('tenant_slug', tenantSlug);
-      } else {
-        setBalances([]);
-        setSelectedPartner(null);
-        setStatement([]);
-        setRewards([]);
-        setBalancesError('Escolha o restaurante para consultar seus pontos.');
-        return;
+        endpoint = `${apiBase}/public/pontos/${session.document}`;
       }
 
-      const response = await fetch(`${apiBase}/public/pontos/${session.document}?${queryParams.toString()}`);
+      const query = queryParams.toString();
+      const response = await fetch(query ? `${endpoint}?${query}` : endpoint);
 
       if (response.status === 404) {
         setBalances([]);
@@ -142,7 +157,7 @@ function LandingPage() {
           : [];
       setBalances(nextBalances);
 
-      if (nextBalances.length === 1 && !preferredTenantId) {
+      if (nextBalances.length === 1 && (preferredTenantId || tenantSlug || publicTenantIdFromEnv)) {
         setSelectedPartner(nextBalances[0]);
       } else if (preferredTenantId && nextBalances.length > 0) {
         const preferred = nextBalances.find((item) => item.tenant_id === preferredTenantId);
@@ -155,46 +170,12 @@ function LandingPage() {
     } finally {
       setLoadingBalances(false);
     }
-  }, [apiBase, tenantSlug, selectedPublicTenantId, publicTenantIdFromEnv]);
+  }, [apiBase, tenantSlug, publicTenantIdFromEnv]);
 
   useEffect(() => {
     if (!customerSession) return;
     loadBalances(customerSession, activePublicTenantId);
   }, [customerSession, activePublicTenantId, loadBalances]);
-
-  useEffect(() => {
-    if (!requiresPartnerSelection) {
-      setPartners([]);
-      setPartnersError('');
-      setPartnersLoading(false);
-      return;
-    }
-
-    const loadPartners = async () => {
-      try {
-        setPartnersLoading(true);
-        setPartnersError('');
-        const response = await fetch(`${apiBase}/public/partners`);
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro ao carregar restaurantes.');
-        }
-        setPartners(Array.isArray(data.partners) ? data.partners : []);
-      } catch (error) {
-        setPartnersError(error.message || 'Erro ao carregar restaurantes.');
-      } finally {
-        setPartnersLoading(false);
-      }
-    };
-
-    loadPartners();
-  }, [apiBase, requiresPartnerSelection]);
-
-  useEffect(() => {
-    if (requiresPartnerSelection && !selectedPublicTenantId && partners.length === 1) {
-      setSelectedPublicTenantId(partners[0].tenant_id);
-    }
-  }, [partners, requiresPartnerSelection, selectedPublicTenantId]);
 
   useEffect(() => {
     if (!tenantSlug) {
@@ -237,11 +218,6 @@ function LandingPage() {
       return;
     }
 
-    if (requiresPartnerSelection && !selectedPublicTenantId) {
-      toast.warning('Escolha o restaurante para consultar seus pontos.');
-      return;
-    }
-
     setAuthLoading(true);
     const session = {
       document: normalizedDocument,
@@ -277,17 +253,6 @@ function LandingPage() {
     setRewards([]);
     setBalancesError('');
     setDetailError('');
-  };
-
-  const handlePartnerSelection = (tenantId) => {
-    setSelectedPublicTenantId(tenantId);
-    setSelectedPartner(null);
-    setBalances([]);
-    setStatement([]);
-    setRewards([]);
-    setBalancesError('');
-    setDetailError('');
-    setSearchTerm('');
   };
 
   const handleOpenPartner = useCallback(
@@ -406,25 +371,6 @@ function LandingPage() {
                     onChange={(event) => setNameInput(event.target.value)}
                   />
                 )}
-                {requiresPartnerSelection && (
-                  <select
-                    className={styles.input}
-                    value={selectedPublicTenantId}
-                    onChange={(event) => handlePartnerSelection(event.target.value)}
-                    disabled={partnersLoading}
-                    required
-                  >
-                    <option value="">
-                      {partnersLoading ? 'Carregando restaurantes...' : 'Escolha o restaurante'}
-                    </option>
-                    {partners.map((partner) => (
-                      <option key={partner.tenant_id} value={partner.tenant_id}>
-                        {partner.tenant_name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {partnersError && <p className={styles.errorText}>{partnersError}</p>}
                 <input
                   type="text"
                   className={styles.input}
@@ -447,38 +393,12 @@ function LandingPage() {
           <section className={styles.listScreen}>
             <div className={styles.titleBlock}>
               <h1>
-                Olá <span>{customerSession.name.toUpperCase()}</span>! Escolha um estabelecimento para continuar:
+                Olá <span>{customerSession.name.toUpperCase()}</span>! Seus pontos por restaurante:
               </h1>
               <p>Aqui aparecem apenas os restaurantes onde você já acumulou pontos.</p>
               {tenantResolving && <p className={styles.infoText}>Identificando estabelecimento do link...</p>}
               {tenantResolveError && <p className={styles.errorText}>{tenantResolveError}</p>}
             </div>
-
-            {requiresPartnerSelection && (
-              <div className={styles.partnerSelectorBox}>
-                <label htmlFor="partner-selector">Restaurante</label>
-                <select
-                  id="partner-selector"
-                  className={styles.input}
-                  value={selectedPublicTenantId}
-                  onChange={(event) => handlePartnerSelection(event.target.value)}
-                  disabled={partnersLoading}
-                >
-                  <option value="">
-                    {partnersLoading ? 'Carregando restaurantes...' : 'Escolha o restaurante'}
-                  </option>
-                  {partners.map((partner) => (
-                    <option key={partner.tenant_id} value={partner.tenant_id}>
-                      {partner.tenant_name}
-                    </option>
-                  ))}
-                </select>
-                {selectedPublicPartner && (
-                  <small>Consultando pontos em {selectedPublicPartner.tenant_name}.</small>
-                )}
-                {partnersError && <p className={styles.errorText}>{partnersError}</p>}
-              </div>
-            )}
 
             <div className={styles.searchWrap}>
               <input
@@ -531,8 +451,12 @@ function LandingPage() {
                     <div className={styles.partnerInfo}>
                       <strong>{partner.tenant_name}</strong>
                       <span>{formatPoints(partner.pontos_disponiveis)} pontos disponíveis</span>
+                      <small>{getPartnerStatus(partner)}</small>
                     </div>
-                    <div className={styles.partnerPoints}>{formatPoints(partner.pontos_disponiveis)}</div>
+                    <div className={styles.partnerAction}>
+                      <strong>{formatPoints(partner.pontos_disponiveis)}</strong>
+                      <span>Ver detalhes</span>
+                    </div>
                   </button>
                 ))}
               </div>

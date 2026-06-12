@@ -174,6 +174,23 @@ integrationTest('integration: public endpoints require tenant scope and isolate 
     const unscopedResponse = await fetch(`${server.baseUrl}/public/pontos/${fixture.document}`);
     assert.equal(unscopedResponse.status, 400);
 
+    const relatedResponse = await fetch(`${server.baseUrl}/public/pontos/${fixture.document}/restaurantes`);
+    assert.equal(relatedResponse.status, 200);
+    const relatedBody = await relatedResponse.json() as any;
+    const relatedTenants = relatedBody.saldos
+      .map((saldo: any) => ({
+        tenantId: saldo.tenant_id,
+        points: saldo.pontos_disponiveis,
+      }))
+      .sort((a: any, b: any) => a.tenantId.localeCompare(b.tenantId));
+    assert.deepEqual(
+      relatedTenants,
+      [
+        { tenantId: fixture.tenantA.tenantId, points: 120 },
+        { tenantId: fixture.tenantB.tenantId, points: 300 },
+      ].sort((a, b) => a.tenantId.localeCompare(b.tenantId)),
+    );
+
     const tenantAResponse = await fetch(
       `${server.baseUrl}/public/pontos/${fixture.document}?tenant_id=${fixture.tenantA.tenantId}`,
     );
