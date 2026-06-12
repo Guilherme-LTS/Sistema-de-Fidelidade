@@ -281,3 +281,50 @@ test('AdminUsersService valida role ao criar usuario interno', async () => {
     (error) => error instanceof HttpError && error.statusCode === 400 && error.message === 'Role invalida.',
   );
 });
+
+test('AdminUsersService cria usuario de autenticacao e vinculo no tenant', async () => {
+  const calls: string[] = [];
+  const service = new AdminUsersService(
+    {
+      createStaff: async (input: any) => {
+        calls.push(`createStaff:${input.userId}:${input.role}`);
+        assert.equal(input.tenantId, 'tenant-1');
+        assert.equal(input.nome, 'Operador');
+        return {
+          id: 'tenant-user-1',
+          user_id: input.userId,
+          name: input.nome,
+          role: input.role,
+          is_active: true,
+        };
+      },
+    } as any,
+    {
+      auth: {
+        admin: {
+          createUser: async (input: any) => {
+            calls.push(`createUser:${input.email}:${input.app_metadata.role}`);
+            assert.equal(input.password, 'senha123');
+            assert.equal(input.app_metadata.tenant_id, 'tenant-1');
+            return { data: { user: { id: 'auth-user-1' } }, error: null };
+          },
+          deleteUser: async () => {
+            calls.push('deleteUser');
+            return { data: {}, error: null };
+          },
+        },
+      },
+    } as any,
+  );
+
+  const result = await service.criarUsuario({
+    tenantId: 'tenant-1',
+    nome: 'Operador',
+    email: 'operador@example.com',
+    role: 'operador',
+    senha: 'senha123',
+  });
+
+  assert.equal(result?.usuario.supabase_id, 'auth-user-1');
+  assert.deepEqual(calls, ['createUser:operador@example.com:operador', 'createStaff:auth-user-1:operador']);
+});

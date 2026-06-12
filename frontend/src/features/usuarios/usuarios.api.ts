@@ -25,6 +25,7 @@ export type UsuarioPayload = {
   nome: string;
   email: string;
   role: string;
+  senha?: string;
 };
 
 const normalizeUsuario = (row: UsuarioApi): Usuario => ({

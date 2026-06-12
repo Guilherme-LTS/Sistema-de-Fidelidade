@@ -5,7 +5,6 @@ import { adminPool } from '../src/infra/database/db';
 import { AuthenticatedRequest, withRlsTransaction } from '../src/infra/database/db-rls';
 import { logAuditEvent } from '../src/shared/auditoria/audit';
 import { AdminUsersRepository } from '../src/modules/admin/admin.users.repository';
-import { AdminUsersService } from '../src/modules/admin/admin.users.service';
 import { RecompensasRepository } from '../src/modules/recompensas/recompensas.repository';
 import { RecompensasService } from '../src/modules/recompensas/recompensas.service';
 
@@ -19,6 +18,7 @@ const hasDbConfig = Boolean(
 type IntegrationContext = {
   tenantId: string;
   userId: string;
+  staffUserId: string;
   tenantUserId: string;
   document: string;
 };
@@ -48,9 +48,11 @@ const makeAuthRequest = (ctx: IntegrationContext): AuthenticatedRequest => {
 const setupContext = async (): Promise<IntegrationContext> => {
   const tenantId = randomUUID();
   const userId = randomUUID();
+  const staffUserId = randomUUID();
   const tenantUserId = randomUUID();
   const document = makeDocument();
   const email = `admin-${userId}@example.com`;
+  const staffEmail = `operador-${staffUserId}@example.com`;
 
   await adminPool.query(
     `
@@ -78,6 +80,31 @@ const setupContext = async (): Promise<IntegrationContext> => {
   );
 
   await adminPool.query(
+    `
+      INSERT INTO auth.users (
+        id,
+        aud,
+        role,
+        email,
+        email_confirmed_at,
+        raw_app_meta_data,
+        raw_user_meta_data,
+        created_at,
+        updated_at,
+        is_sso_user,
+        is_anonymous
+      )
+      VALUES ($1, 'authenticated', 'authenticated', $2, NOW(), $3, $4, NOW(), NOW(), false, false)
+    `,
+    [
+      staffUserId,
+      staffEmail,
+      JSON.stringify({ tenant_id: tenantId, role: 'operador' }),
+      JSON.stringify({ name: 'Operador Novo' }),
+    ],
+  );
+
+  await adminPool.query(
     'INSERT INTO tenants (id, name, document, is_active) VALUES ($1, $2, $3, true)',
     [tenantId, 'Tenant Admin Teste', document],
   );
@@ -87,7 +114,7 @@ const setupContext = async (): Promise<IntegrationContext> => {
     [tenantUserId, userId, tenantId, 'Admin Teste', 'admin'],
   );
 
-  return { tenantId, userId, tenantUserId, document };
+  return { tenantId, userId, staffUserId, tenantUserId, document };
 };
 
 const cleanupContext = async (ctx: IntegrationContext) => {
@@ -97,7 +124,7 @@ const cleanupContext = async (ctx: IntegrationContext) => {
   await adminPool.query('DELETE FROM rewards WHERE tenant_id = $1', [ctx.tenantId]);
   await adminPool.query('DELETE FROM tenant_users WHERE tenant_id = $1', [ctx.tenantId]);
   await adminPool.query('DELETE FROM tenants WHERE id = $1', [ctx.tenantId]);
-  await adminPool.query('DELETE FROM auth.users WHERE id = $1', [ctx.userId]);
+  await adminPool.query('DELETE FROM auth.users WHERE id = ANY($1::uuid[])', [[ctx.userId, ctx.staffUserId]]);
 };
 
 integrationTest('integration: admin writes preserve RLS context', async (t) => {
@@ -132,16 +159,16 @@ integrationTest('integration: admin writes preserve RLS context', async (t) => {
     assert.equal(rewardAudit.rows[0]?.action, 'CRIACAO_RECOMPENSA');
 
     const usuarioInterno = await withRlsTransaction(authReq, async (client) => {
-      const service = new AdminUsersService(new AdminUsersRepository(authReq, client));
-      return service.criarUsuario({
+      const repository = new AdminUsersRepository(authReq, client);
+      return repository.createStaff({
         tenantId: ctx.tenantId,
+        userId: ctx.staffUserId,
         nome: 'Operador Novo',
-        email: `operador-${ctx.userId}@example.com`,
         role: 'operador',
       });
     });
 
-    assert.ok(usuarioInterno?.usuario.id, 'usuario interno deve ser criado');
+    assert.ok(usuarioInterno?.id, 'usuario interno deve ser criado');
 
     await withRlsTransaction(authReq, async (client) => {
       await client.query(`

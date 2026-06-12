@@ -37,6 +37,7 @@ function UsuariosPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
   const [role, setRole] = useState('operador');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,6 +67,7 @@ function UsuariosPage() {
     setEditId(null);
     setNome('');
     setEmail('');
+    setSenha('');
     setRole('operador');
     setShowForm(false);
   };
@@ -74,6 +76,7 @@ function UsuariosPage() {
     setEditId(user.id);
     setNome(user.nome || '');
     setEmail(user.email || '');
+    setSenha('');
     setRole(user.role);
     setShowForm(true);
   };
@@ -81,7 +84,7 @@ function UsuariosPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!nome || !email) {
+    if (!nome || !email || (!editId && senha.length < 6)) {
       toast.warning('Preencha todos os campos obrigatórios.');
       return;
     }
@@ -93,7 +96,7 @@ function UsuariosPage() {
         await salvarUsuario({ nome, email, role }, editId);
         toast.success('Usuário atualizado com sucesso!');
       } else {
-        await salvarUsuario({ nome, email, role });
+        await salvarUsuario({ nome, email, role, senha });
         toast.success('Usuário criado com sucesso!');
       }
       resetForm();
@@ -217,6 +220,20 @@ function UsuariosPage() {
                     required
                   />
                 </div>
+
+                {!editId && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium leading-none text-stone-700">Senha temporaria</label>
+                    <Input
+                      type="password"
+                      value={senha}
+                      onChange={(e) => setSenha(e.target.value)}
+                      placeholder="Minimo de 6 caracteres"
+                      minLength={6}
+                      required
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none text-stone-700">E-mail</label>
