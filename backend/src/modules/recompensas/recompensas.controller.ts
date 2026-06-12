@@ -1,8 +1,12 @@
 import { Request, Response } from 'express';
+import { adminPool } from '../../infra/database/db';
 import { AuthenticatedRequest, withRlsTransaction } from '../../infra/database/db-rls';
 import { requireTenantId } from '../../shared/request-context';
 import { RecompensasRepository } from './recompensas.repository';
 import { RecompensasService } from './recompensas.service';
+
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 function makeService(authReq: AuthenticatedRequest) {
   return new RecompensasService(new RecompensasRepository(authReq));
@@ -22,6 +26,33 @@ export async function listarRecompensasPublicasController(req: Request, res: Res
   const rewards = await makeService(authReq).listarPublicas(tenantId);
 
   return res.status(200).json(rewards);
+}
+
+export async function listarRecompensasPublicasPorTenantController(req: Request, res: Response) {
+  const tenantId = String(req.params.tenant_id || '').trim();
+
+  if (!tenantId) {
+    return res.status(400).json({ error: 'tenant_id e obrigatorio.' });
+  }
+
+  if (!isUuid(tenantId)) {
+    return res.status(400).json({ error: 'tenant_id invalido.' });
+  }
+
+  const { rows } = await adminPool.query(
+    `
+      SELECT r.id, r.name, r.description, r.points_cost
+      FROM rewards r
+      INNER JOIN tenants t ON t.id = r.tenant_id
+      WHERE r.tenant_id = $1
+        AND r.is_active = true
+        AND t.is_active = true
+      ORDER BY r.points_cost ASC
+    `,
+    [tenantId],
+  );
+
+  return res.status(200).json({ rewards: rows });
 }
 
 export async function criarRecompensaController(req: Request, res: Response) {

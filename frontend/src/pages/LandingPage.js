@@ -97,7 +97,23 @@ function LandingPage() {
     try {
       setLoadingBalances(true);
       setBalancesError('');
-      const response = await fetch(`${apiBase}/public/pontos/${session.document}`);
+      const queryParams = new URLSearchParams();
+      const publicTenantId = preferredTenantId || process.env.REACT_APP_PUBLIC_TENANT_ID || '';
+
+      if (publicTenantId) {
+        queryParams.set('tenant_id', publicTenantId);
+      } else if (tenantSlug) {
+        queryParams.set('tenant_slug', tenantSlug);
+      } else {
+        setBalances([]);
+        setSelectedPartner(null);
+        setStatement([]);
+        setRewards([]);
+        setBalancesError('Acesse pelo link ou QR Code do restaurante para consultar seus pontos.');
+        return;
+      }
+
+      const response = await fetch(`${apiBase}/public/pontos/${session.document}?${queryParams.toString()}`);
 
       if (response.status === 404) {
         setBalances([]);
@@ -130,7 +146,7 @@ function LandingPage() {
     } finally {
       setLoadingBalances(false);
     }
-  }, [apiBase]);
+  }, [apiBase, tenantSlug]);
 
   useEffect(() => {
     if (!customerSession) return;
