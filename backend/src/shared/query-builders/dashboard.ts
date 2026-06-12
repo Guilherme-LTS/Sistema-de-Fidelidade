@@ -14,6 +14,7 @@ export type DashboardChartPoint = {
   pendentes: number;
   lancados: number;
   disponiveis: number;
+  resgates: number;
   redemptions: number;
 };
 
@@ -43,6 +44,7 @@ export const QUERY_DASHBOARD_TOP_CLIENTS = () => {
     WHERE
       c.tenant_id = $1
       AND c.deleted_at IS NULL
+      AND (cp.id IS NULL OR cp.deleted_at IS NULL)
       AND (SELECT COALESCE(SUM(t.remaining_points), 0) FROM transactions t WHERE t.customer_id = c.id AND t.tenant_id = $1 AND t.available_at <= NOW() AND t.expires_at > NOW()) > 0
     ORDER BY
       saldo_pontos DESC
@@ -124,6 +126,7 @@ export const buildDashboardChartData = (rows: DashboardChartRow[]): DashboardCha
       lancados,
       // Legacy alias for older consumers.
       disponiveis: lancados,
+      resgates: redemptions,
       redemptions,
     };
   });

@@ -17,7 +17,7 @@ export async function carregarDashboardStats(): Promise<DashboardStats> {
         name: item.name,
         pendentes: Number(item.pendentes ?? 0),
         lancados: Number(item.lancados ?? item.disponiveis ?? item.pontos ?? 0),
-        resgates: Number(item.resgates ?? 0),
+        resgates: Number(item.resgates ?? item.redemptions ?? 0),
       }))
     : [];
 
