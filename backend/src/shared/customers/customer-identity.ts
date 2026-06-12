@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { PoolClient } from 'pg';
+import { adminPool } from '../../infra/database/db';
 
 type DbExecutor = Pick<PoolClient, 'query'>;
 
@@ -35,23 +36,6 @@ function cleanName(name?: string | null) {
   return normalized.length > 0 ? normalized : null;
 }
 
-async function findConsumerProfileByDocument(
-  executor: DbExecutor,
-  document: string,
-): Promise<ConsumerProfileRow | null> {
-  const result = await executor.query(
-    `
-      SELECT id, document, name, lgpd_consent, consent_date
-      FROM consumer_profiles
-      WHERE document = $1
-      LIMIT 1
-    `,
-    [document],
-  );
-
-  return result.rows[0] || null;
-}
-
 export async function upsertConsumerProfile(
   executor: DbExecutor,
   input: Pick<TenantCustomerIdentityInput, 'document' | 'name' | 'lgpdConsent' | 'consentDate'>,
@@ -61,43 +45,51 @@ export async function upsertConsumerProfile(
   const lgpdConsent = input.lgpdConsent ?? false;
   const consentDate = input.consentDate ?? null;
 
-  const existingProfile = await findConsumerProfileByDocument(executor, document);
+  const generatedId = randomUUID();
+  const savepointName = `consumer_profile_${generatedId.replace(/-/g, '_')}`;
 
-  if (existingProfile?.id) {
-    const result = await executor.query(
+  await executor.query(`SAVEPOINT ${savepointName}`);
+  try {
+    await executor.query(
+      `
+        INSERT INTO consumer_profiles (id, document, name, lgpd_consent, consent_date)
+        VALUES ($1, $2, $3, $4, $5)
+      `,
+      [generatedId, document, name, lgpdConsent, consentDate],
+    );
+
+    await executor.query(`RELEASE SAVEPOINT ${savepointName}`);
+    return {
+      id: generatedId,
+      document,
+      name,
+      lgpd_consent: lgpdConsent,
+      consent_date: consentDate,
+    };
+  } catch (error: any) {
+    await executor.query(`ROLLBACK TO SAVEPOINT ${savepointName}`).catch(() => {});
+    await executor.query(`RELEASE SAVEPOINT ${savepointName}`).catch(() => {});
+
+    if (error?.code !== '23505' || error?.constraint !== 'consumer_profiles_document_key') {
+      throw error;
+    }
+
+    const result = await adminPool.query(
       `
         UPDATE consumer_profiles
-        SET name = COALESCE(name, $1),
-            lgpd_consent = lgpd_consent OR $2,
-            consent_date = COALESCE(consent_date, $3),
+        SET name = COALESCE(name, $2),
+            lgpd_consent = lgpd_consent OR $3,
+            consent_date = COALESCE(consent_date, $4),
             deleted_at = NULL,
             updated_at = NOW()
-        WHERE id = $4
-        RETURNING id, document, name, lgpd_consent, consent_date
+        WHERE document = $1
+        RETURNING id, document, $2::varchar AS name, lgpd_consent, consent_date
       `,
-      [name, lgpdConsent, consentDate, existingProfile.id],
+      [document, name, lgpdConsent, consentDate],
     );
 
     return result.rows[0];
   }
-
-  const generatedId = randomUUID();
-
-  await executor.query(
-    `
-      INSERT INTO consumer_profiles (id, document, name, lgpd_consent, consent_date)
-      VALUES ($1, $2, $3, $4, $5)
-    `,
-    [generatedId, document, name, lgpdConsent, consentDate],
-  );
-
-  return {
-    id: generatedId,
-    document,
-    name,
-    lgpd_consent: lgpdConsent,
-    consent_date: consentDate,
-  };
 }
 
 export async function resolveTenantCustomerByDocument(
@@ -138,37 +130,32 @@ export async function upsertTenantCustomerByDocument(
   const document = cleanDocument(input.document);
   const displayName = cleanName(input.name);
 
+  const existingCustomer = await resolveTenantCustomerByDocument(executor, tenantId, document);
+
+  if (existingCustomer?.id) {
+    const updated = await executor.query(
+      `
+        UPDATE customers
+        SET name = COALESCE($1, name),
+            document = $2,
+            lgpd_consent = COALESCE($3, lgpd_consent),
+            consent_date = COALESCE($4, consent_date),
+            updated_at = NOW()
+        WHERE id = $5
+        RETURNING id, name, document, consumer_profile_id
+      `,
+      [displayName, document, input.lgpdConsent ?? null, input.consentDate ?? null, existingCustomer.id],
+    );
+
+    return updated.rows[0];
+  }
+
   const profile = await upsertConsumerProfile(executor, {
     document,
     name: displayName,
     lgpdConsent: input.lgpdConsent,
     consentDate: input.consentDate,
   });
-
-  const existingCustomer = await resolveTenantCustomerByDocument(executor, tenantId, document);
-
-  if (existingCustomer?.id) {
-    if (existingCustomer.consumer_profile_id !== profile.id || existingCustomer.name !== displayName) {
-      const updated = await executor.query(
-        `
-          UPDATE customers
-          SET consumer_profile_id = $1,
-              name = COALESCE($2, name),
-              document = $3,
-              lgpd_consent = COALESCE($4, lgpd_consent),
-              consent_date = COALESCE($5, consent_date),
-              updated_at = NOW()
-          WHERE id = $6
-          RETURNING id, name, document, consumer_profile_id
-        `,
-        [profile.id, displayName, document, input.lgpdConsent ?? null, input.consentDate ?? null, existingCustomer.id],
-      );
-
-      return updated.rows[0];
-    }
-
-    return existingCustomer;
-  }
 
   const inserted = await executor.query(
     `
