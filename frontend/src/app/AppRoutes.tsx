@@ -12,6 +12,7 @@ import PremiosPage from '../features/recompensas/PremiosPage';
 import AuditoriaPage from '../features/AuditoriaPage';
 import RegulamentoPage from '../features/RegulamentoPage';
 import CadastroPage from '../features/auth/CadastroPage';
+import AlterarSenhaPage from '../features/auth/AlterarSenhaPage';
 import UsuariosPage from '../features/usuarios/UsuariosPage';
 import ConfiguracoesPage from '../features/ConfiguracoesPage';
 import AdminRoute from '../features/auth/AdminRoute';
@@ -25,6 +26,7 @@ export default function AppRoutes() {
 
       <Route path="/login" element={<LoginPage />} />
       <Route path="/cadastro" element={<CadastroPage />} />
+      <Route path="/alterar-senha" element={<AlterarSenhaPage />} />
       <Route path="/regulamento" element={<RegulamentoPage />} />
 
       <Route path="/admin" element={<AdminLayout />}>
@@ -36,6 +38,7 @@ export default function AppRoutes() {
         <Route path="configuracoes" element={<AdminRoute><ConfiguracoesPage /></AdminRoute>} />
         <Route path="operacoes" element={<OperacoesPage />} />
         <Route path="clientes" element={<ClientesPage />} />
+        <Route path="alterar-senha" element={<AlterarSenhaPage />} />
       </Route>
     </Routes>
   );

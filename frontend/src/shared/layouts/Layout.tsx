@@ -1,10 +1,11 @@
 // frontend/src/shared/layouts/Layout.tsx
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Settings2, Users, Gift, ScrollText, UserCog, LogOut, Sliders } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Settings2, Users, Gift, ScrollText, UserCog, LogOut, Sliders, KeyRound } from 'lucide-react';
 import { getUser } from '../../features/auth/auth';
 import { Button } from '../../components/ui/button';
 import { cn } from '../../utils/utils';
+import { supabase } from '../../services/supabase';
 
 function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,8 +23,10 @@ function Layout() {
     return () => document.removeEventListener('keydown', handleEsc);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userPerfil');
+    await supabase.auth.signOut().catch(() => {});
     window.location.href = '/';
   };
 
@@ -35,6 +38,7 @@ function Layout() {
     { to: '/admin/configuracoes', icon: Sliders, label: 'Configurações', adminOnly: true },
     { to: '/admin/auditoria', icon: ScrollText, label: 'Auditoria', adminOnly: true },
     { to: '/admin/usuarios', icon: UserCog, label: 'Usuários Internos', adminOnly: true },
+    { to: '/admin/alterar-senha', icon: KeyRound, label: 'Alterar Senha', adminOnly: false },
   ];
 
   return (

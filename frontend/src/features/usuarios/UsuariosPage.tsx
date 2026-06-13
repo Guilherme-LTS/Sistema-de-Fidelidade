@@ -27,7 +27,14 @@ import {
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
-import { Plus, X, Pencil, Ban, CheckCircle, Trash2, Search, UserCog } from 'lucide-react';
+import { Plus, X, Pencil, Ban, CheckCircle, Trash2, Search, UserCog, Eye, EyeOff, Copy, Shuffle } from 'lucide-react';
+
+const generateTemporaryPassword = () => {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%';
+  const bytes = new Uint32Array(12);
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (value) => alphabet[value % alphabet.length]).join('');
+};
 
 function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -38,6 +45,7 @@ function UsuariosPage() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [showSenha, setShowSenha] = useState(false);
   const [role, setRole] = useState('operador');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,6 +76,7 @@ function UsuariosPage() {
     setNome('');
     setEmail('');
     setSenha('');
+    setShowSenha(false);
     setRole('operador');
     setShowForm(false);
   };
@@ -77,8 +86,30 @@ function UsuariosPage() {
     setNome(user.nome || '');
     setEmail(user.email || '');
     setSenha('');
+    setShowSenha(false);
     setRole(user.role);
     setShowForm(true);
+  };
+
+  const handleGeneratePassword = () => {
+    const generated = generateTemporaryPassword();
+    setSenha(generated);
+    setShowSenha(true);
+    toast.info('Senha temporária gerada. Copie e envie ao funcionário por um canal seguro.');
+  };
+
+  const handleCopyPassword = async () => {
+    if (!senha) {
+      toast.warning('Gere ou informe uma senha temporária primeiro.');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(senha);
+      toast.success('Senha temporária copiada.');
+    } catch {
+      toast.error('Não foi possível copiar a senha automaticamente.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -223,15 +254,44 @@ function UsuariosPage() {
 
                 {!editId && (
                   <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none text-stone-700">Senha temporaria</label>
-                    <Input
-                      type="password"
-                      value={senha}
-                      onChange={(e) => setSenha(e.target.value)}
-                      placeholder="Minimo de 6 caracteres"
-                      minLength={6}
-                      required
-                    />
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-sm font-medium leading-none text-stone-700">Senha temporária</label>
+                      <Button type="button" variant="ghost" size="sm" onClick={handleGeneratePassword}>
+                        <Shuffle className="mr-2 h-3.5 w-3.5" />
+                        Gerar
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        type={showSenha ? 'text' : 'password'}
+                        value={senha}
+                        onChange={(e) => setSenha(e.target.value)}
+                        placeholder="Mínimo de 6 caracteres"
+                        minLength={6}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setShowSenha((current) => !current)}
+                        title={showSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        {showSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleCopyPassword}
+                        title="Copiar senha temporária"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs leading-relaxed text-stone-500">
+                      O funcionário usará esta senha no primeiro login. Oriente-o a alterá-la em seguida.
+                    </p>
                   </div>
                 )}
 
