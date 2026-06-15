@@ -77,6 +77,8 @@ export class AdminUsersService {
     nome: string;
     role: string;
     email?: string | null;
+    currentTenantUserId?: string | null;
+    currentRole?: string | null;
   }) {
     this.validateName(input.nome, 'Nome e role sao obrigatorios.');
     this.validateEmail(input.email);
@@ -85,9 +87,19 @@ export class AdminUsersService {
     }
     this.validateRole(input.role);
 
+    if (input.currentTenantUserId === input.id && input.currentRole && input.role !== input.currentRole) {
+      throw new HttpError(400, 'Não é possível alterar seu próprio perfil de acesso.');
+    }
+
     const supabaseAdmin = this.requireSupabaseAdmin();
 
     try {
+      const current = await this.repository.findStaffById({ id: input.id, tenantId: input.tenantId });
+      if (!current) {
+        throw new HttpError(404, 'Funcionário não encontrado.');
+      }
+      this.ensureManageableStaff(current);
+
       const usuario = await this.repository.updateStaff({
         id: input.id,
         tenantId: input.tenantId,
@@ -96,7 +108,7 @@ export class AdminUsersService {
       });
 
       if (!usuario) {
-        throw new HttpError(404, 'Funcionario nao encontrado.');
+        throw new HttpError(404, 'Funcionário não encontrado.');
       }
 
       const { error } = await supabaseAdmin.auth.admin.updateUserById(usuario.user_id, {
@@ -118,10 +130,20 @@ export class AdminUsersService {
     }
   }
 
-  async alterarStatus(input: { id: string; tenantId: string; ativo: boolean }) {
+  async alterarStatus(input: { id: string; tenantId: string; ativo: boolean; currentTenantUserId?: string | null }) {
+    if (input.currentTenantUserId === input.id && input.ativo === false) {
+      throw new HttpError(400, 'Não é possível bloquear o próprio usuário.');
+    }
+
+    const current = await this.repository.findStaffById({ id: input.id, tenantId: input.tenantId });
+    if (!current) {
+      throw new HttpError(404, 'Funcionário não encontrado.');
+    }
+    this.ensureManageableStaff(current);
+
     const usuario = await this.repository.updateStaffStatus(input);
     if (!usuario) {
-      throw new HttpError(404, 'Funcionario nao encontrado.');
+      throw new HttpError(404, 'Funcionário não encontrado.');
     }
 
     const supabaseAdmin = this.requireSupabaseAdmin();
@@ -136,10 +158,20 @@ export class AdminUsersService {
     return { message: input.ativo ? 'Usuario desbloqueado.' : 'Usuario bloqueado.' };
   }
 
-  async excluirUsuario(input: { id: string; tenantId: string }) {
+  async excluirUsuario(input: { id: string; tenantId: string; currentTenantUserId?: string | null }) {
+    if (input.currentTenantUserId === input.id) {
+      throw new HttpError(400, 'Não é possível excluir o próprio usuário.');
+    }
+
+    const current = await this.repository.findStaffById({ id: input.id, tenantId: input.tenantId });
+    if (!current) {
+      throw new HttpError(404, 'Funcionário não encontrado.');
+    }
+    this.ensureManageableStaff(current);
+
     const usuario = await this.repository.deleteStaff(input);
     if (!usuario) {
-      throw new HttpError(404, 'Funcionario nao encontrado.');
+      throw new HttpError(404, 'Funcionário não encontrado.');
     }
 
     const supabaseAdmin = this.requireSupabaseAdmin();
@@ -173,6 +205,12 @@ export class AdminUsersService {
   private validateRole(role: string) {
     if (role !== 'admin' && role !== 'operador') {
       throw new HttpError(400, 'Role invalida.');
+    }
+  }
+
+  private ensureManageableStaff(usuario: { is_owner?: boolean }) {
+    if (usuario.is_owner) {
+      throw new HttpError(400, 'O dono da conta é somente leitura e não pode ser alterado por esta tela.');
     }
   }
 

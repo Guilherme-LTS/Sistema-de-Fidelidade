@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { adminPool as pool } from '../../infra/database/db';
+import { getAppNow } from '../../shared/time/app-clock';
 
 const router = Router();
 
@@ -84,8 +85,10 @@ router.get('/pontos/:document/restaurantes', async (req: Request, res: Response)
   }
 
   try {
+    const appNow = getAppNow();
     const { rows } = await pool.query(
       `
+        WITH app_clock AS (SELECT $2::timestamptz AS now_at)
         SELECT
           t.id::text as tenant_id,
           t.name as tenant_name,
@@ -104,28 +107,28 @@ router.get('/pontos/:document/restaurantes', async (req: Request, res: Response)
         LEFT JOIN LATERAL (
           SELECT
             COALESCE(SUM(CASE
-              WHEN tr.available_at <= NOW() AND tr.expires_at > NOW()
+              WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock)
               THEN tr.remaining_points
               ELSE 0
             END), 0)::int as pontos_disponiveis,
             COALESCE(SUM(CASE
-              WHEN tr.available_at > NOW()
+              WHEN tr.available_at > (SELECT now_at FROM app_clock)
               THEN tr.remaining_points
               ELSE 0
             END), 0)::int as pontos_pendentes,
             MIN(CASE
-              WHEN tr.available_at > NOW() THEN tr.available_at
+              WHEN tr.available_at > (SELECT now_at FROM app_clock) THEN tr.available_at
               ELSE NULL
             END) as data_proxima_liberacao,
             COALESCE(SUM(CASE
-              WHEN tr.available_at <= NOW()
-                AND tr.expires_at > NOW()
-                AND tr.expires_at <= NOW() + INTERVAL '30 days'
+              WHEN tr.available_at <= (SELECT now_at FROM app_clock)
+                AND tr.expires_at > (SELECT now_at FROM app_clock)
+                AND tr.expires_at <= (SELECT now_at FROM app_clock) + INTERVAL '30 days'
               THEN tr.remaining_points
               ELSE 0
             END), 0)::int as pontos_expirando,
             MIN(CASE
-              WHEN tr.available_at <= NOW() AND tr.expires_at > NOW() THEN tr.expires_at
+              WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock) THEN tr.expires_at
               ELSE NULL
             END) as data_proxima_expiracao
           FROM transactions tr
@@ -149,7 +152,7 @@ router.get('/pontos/:document/restaurantes', async (req: Request, res: Response)
         ORDER BY activity.ultima_movimentacao DESC NULLS LAST, t.name ASC
         LIMIT 50
       `,
-      [cpfLimpo],
+      [cpfLimpo, appNow],
     );
 
     return res.status(200).json({ saldos: rows });
@@ -179,35 +182,37 @@ router.get('/pontos/:document', async (req: Request, res: Response) => {
   }
 
   try {
+    const appNow = getAppNow();
     const { rows } = await pool.query(
       `
+        WITH app_clock AS (SELECT $4::timestamptz AS now_at)
         SELECT
           t.id::text as tenant_id,
           t.name as tenant_name,
           COALESCE(c.name, cp.name) as customer_name,
           COALESCE(SUM(CASE
-            WHEN tr.available_at <= NOW() AND tr.expires_at > NOW()
+            WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock)
             THEN tr.remaining_points
             ELSE 0
           END), 0)::int as pontos_disponiveis,
           COALESCE(SUM(CASE
-            WHEN tr.available_at > NOW()
+            WHEN tr.available_at > (SELECT now_at FROM app_clock)
             THEN tr.remaining_points
             ELSE 0
           END), 0)::int as pontos_pendentes,
           MIN(CASE
-            WHEN tr.available_at > NOW() THEN tr.available_at
+            WHEN tr.available_at > (SELECT now_at FROM app_clock) THEN tr.available_at
             ELSE NULL
           END) as data_proxima_liberacao,
           COALESCE(SUM(CASE
-            WHEN tr.available_at <= NOW()
-              AND tr.expires_at > NOW()
-              AND tr.expires_at <= NOW() + INTERVAL '30 days'
+            WHEN tr.available_at <= (SELECT now_at FROM app_clock)
+              AND tr.expires_at > (SELECT now_at FROM app_clock)
+              AND tr.expires_at <= (SELECT now_at FROM app_clock) + INTERVAL '30 days'
             THEN tr.remaining_points
             ELSE 0
           END), 0)::int as pontos_expirando,
           MIN(CASE
-            WHEN tr.available_at <= NOW() AND tr.expires_at > NOW() THEN tr.expires_at
+            WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock) THEN tr.expires_at
             ELSE NULL
           END) as data_proxima_expiracao
         FROM customers c
@@ -226,7 +231,7 @@ router.get('/pontos/:document', async (req: Request, res: Response) => {
         GROUP BY t.id, t.name, COALESCE(c.name, cp.name)
         LIMIT 1
       `,
-      [cpfLimpo, tenantId || null, tenantSlug || null],
+      [cpfLimpo, tenantId || null, tenantSlug || null, appNow],
     );
 
     if (rows.length === 0) {

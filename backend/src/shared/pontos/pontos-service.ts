@@ -1,4 +1,5 @@
 import { PoolClient } from 'pg';
+import { getAppNow } from '../time/app-clock';
 
 export type TenantPointSettings = {
   carencia_pontos: number;
@@ -36,7 +37,7 @@ export async function loadTenantPointSettings(client: PoolClient, tenantId: stri
   return configs;
 }
 
-export function calculatePointTimelines(carenciaDias: number, expiracaoDias: number, baseDate = new Date()) {
+export function calculatePointTimelines(carenciaDias: number, expiracaoDias: number, baseDate = getAppNow()) {
   const availableAt = new Date(baseDate.getTime() + carenciaDias * 24 * 60 * 60 * 1000);
   const expiresAt = new Date(availableAt.getTime() + expiracaoDias * 24 * 60 * 60 * 1000);
 

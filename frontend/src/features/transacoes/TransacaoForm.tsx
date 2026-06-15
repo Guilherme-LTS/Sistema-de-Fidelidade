@@ -42,7 +42,7 @@ function TransacaoForm() {
         setClienteInfo(await consultarClientePorCpf(cpfLimpo));
       } catch (error: any) {
         if (error.response?.status === 404) {
-          setClienteInfo({ isNew: true, error: 'Novo cliente será cadastrado' });
+          setClienteInfo({ isNew: true, error: 'Cliente não encontrado. Informe o nome para cadastrar e lançar pontos.' });
         } else {
           setClienteInfo({ error: 'Erro ao buscar cliente' });
         }

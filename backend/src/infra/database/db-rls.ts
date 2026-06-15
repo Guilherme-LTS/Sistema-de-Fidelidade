@@ -1,6 +1,7 @@
 import { Request } from 'express';
 import { PoolClient } from 'pg';
 import pool from './db';
+import { getAppNowOverride } from '../../shared/time/app-clock';
 
 /**
  * Interface que representa os dados retornados no JWT do Auth do Supabase.
@@ -55,6 +56,11 @@ export const setRlsClaims = async (client: PoolClient, req: AuthenticatedRequest
     // 3. Configuramos especificamente o tenant_id em uma variável separada se necessário por alguma policy customizada
     if (tenantId) {
       await client.query(`SET LOCAL app.current_tenant = '${tenantId}'`);
+    }
+
+    const fakeNow = getAppNowOverride();
+    if (fakeNow) {
+      await client.query("SELECT set_config('app.fake_now', $1, true)", [fakeNow.toISOString()]);
     }
   } catch (err: any) {
     console.error('Erro ao configurar claims de RLS:', err.message);
@@ -119,6 +125,11 @@ export const queryWithRLS = async (req: AuthenticatedRequest, queryStr: string, 
     // SEGURO: Escapamos a string JSON para evitar SQL injection via aspas
     const sanitizedClaims = sanitizeJsonForSQL(jwtClaims);
     await client.query(`SET LOCAL request.jwt.claims = '${sanitizedClaims}'`);
+
+    const fakeNow = getAppNowOverride();
+    if (fakeNow) {
+      await client.query("SELECT set_config('app.fake_now', $1, true)", [fakeNow.toISOString()]);
+    }
 
     // 4. Executar a query verdadeira e limpa (ex: "SELECT * FROM customers")
     const result = await client.query(queryStr, params);

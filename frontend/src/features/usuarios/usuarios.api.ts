@@ -7,6 +7,7 @@ export interface Usuario {
   email: string;
   role: string;
   ativo: boolean;
+  isOwner: boolean;
 }
 
 type UsuarioApi = {
@@ -19,6 +20,7 @@ type UsuarioApi = {
   role?: string;
   ativo?: boolean;
   is_active?: boolean;
+  is_owner?: boolean;
 };
 
 export type UsuarioPayload = {
@@ -35,6 +37,7 @@ const normalizeUsuario = (row: UsuarioApi): Usuario => ({
   email: row.email || '',
   role: row.role || 'operador',
   ativo: typeof row.ativo === 'boolean' ? row.ativo : Boolean(row.is_active),
+  isOwner: Boolean(row.is_owner),
 });
 
 export async function listarUsuarios() {

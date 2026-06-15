@@ -1,4 +1,5 @@
 import { AuthenticatedRequest, queryWithRLS } from '../../infra/database/db-rls';
+import { APP_NOW_SQL } from '../time/app-clock';
 
 export interface CustomerListQueryInput {
   busca?: string;
@@ -133,28 +134,28 @@ export const getCustomerFinancialSummary = async (
 ): Promise<Omit<CustomerFinancialSummary, 'nome' | 'document'>> => {
   const creditosResult = await queryWithRLS(
     authReq,
-    `SELECT COALESCE(SUM(remaining_points), 0) as total FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at <= NOW() AND expires_at > NOW()`,
+    `SELECT COALESCE(SUM(remaining_points), 0) as total FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at <= ${APP_NOW_SQL} AND expires_at > ${APP_NOW_SQL}`,
     [customerId, tenantId],
   );
   const pontosDisponiveis = parseInt(creditosResult.rows[0].total, 10) || 0;
 
   const pontosPendentesResult = await queryWithRLS(
     authReq,
-    `SELECT COALESCE(SUM(remaining_points), 0) as total FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at > NOW()`,
+    `SELECT COALESCE(SUM(remaining_points), 0) as total FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at > ${APP_NOW_SQL}`,
     [customerId, tenantId],
   );
   const pontosPendentes = parseInt(pontosPendentesResult.rows[0].total, 10) || 0;
 
   const proximoVencimentoResult = await queryWithRLS(
     authReq,
-    `SELECT MIN(expires_at) as proximo_vencimento FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND expires_at > NOW() AND available_at <= NOW() AND remaining_points > 0`,
+    `SELECT MIN(expires_at) as proximo_vencimento FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND expires_at > ${APP_NOW_SQL} AND available_at <= ${APP_NOW_SQL} AND remaining_points > 0`,
     [customerId, tenantId],
   );
   const proximoVencimento = proximoVencimentoResult.rows[0].proximo_vencimento ?? null;
 
   const expiracaoUrgenteResult = await queryWithRLS(
     authReq,
-    `SELECT COALESCE(SUM(remaining_points), 0) as pontos_expirando, MIN(expires_at) as data_proxima_expiracao FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at <= NOW() AND expires_at > NOW() AND expires_at <= NOW() + INTERVAL '7 days' AND remaining_points > 0`,
+    `SELECT COALESCE(SUM(remaining_points), 0) as pontos_expirando, MIN(expires_at) as data_proxima_expiracao FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at <= ${APP_NOW_SQL} AND expires_at > ${APP_NOW_SQL} AND expires_at <= ${APP_NOW_SQL} + INTERVAL '7 days' AND remaining_points > 0`,
     [customerId, tenantId],
   );
   const pontosExpirando = parseInt(expiracaoUrgenteResult.rows[0].pontos_expirando, 10) || 0;
@@ -162,7 +163,7 @@ export const getCustomerFinancialSummary = async (
 
   const liberacaoUrgenteResult = await queryWithRLS(
     authReq,
-    `SELECT MIN(available_at) as data_proxima_liberacao FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at > NOW() AND remaining_points > 0`,
+    `SELECT MIN(available_at) as data_proxima_liberacao FROM transactions WHERE customer_id = $1 AND tenant_id = $2 AND available_at > ${APP_NOW_SQL} AND remaining_points > 0`,
     [customerId, tenantId],
   );
   const dataProximaLiberacao = liberacaoUrgenteResult.rows[0].data_proxima_liberacao ?? null;

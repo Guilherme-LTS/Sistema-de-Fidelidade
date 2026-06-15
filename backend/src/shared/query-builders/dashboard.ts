@@ -1,6 +1,7 @@
 /**
  * Query builders for dashboard metrics, top clients, and charts.
  */
+import { APP_NOW_SQL } from '../time/app-clock';
 
 export type DashboardChartRow = {
   dia: string | Date;
@@ -24,8 +25,8 @@ export type DashboardChartPoint = {
 export const QUERY_DASHBOARD_METRICS = () => {
   return `SELECT 
     (SELECT COUNT(*) FROM customers WHERE tenant_id = $1 AND deleted_at IS NULL) as total_clientes, 
-    (SELECT COALESCE(SUM(remaining_points), 0) FROM transactions WHERE tenant_id = $1 AND remaining_points > 0 AND available_at > NOW()) as pontos_pendentes,
-    (SELECT COALESCE(SUM(remaining_points), 0) FROM transactions WHERE tenant_id = $1 AND remaining_points > 0 AND available_at <= NOW() AND expires_at > NOW()) as pontos_disponiveis,
+    (SELECT COALESCE(SUM(remaining_points), 0) FROM transactions WHERE tenant_id = $1 AND remaining_points > 0 AND available_at > ${APP_NOW_SQL}) as pontos_pendentes,
+    (SELECT COALESCE(SUM(remaining_points), 0) FROM transactions WHERE tenant_id = $1 AND remaining_points > 0 AND available_at <= ${APP_NOW_SQL} AND expires_at > ${APP_NOW_SQL}) as pontos_disponiveis,
     (SELECT COALESCE(SUM(points_spent), 0) FROM redemptions WHERE tenant_id = $1) as pontos_resgatados;`;
 };
 
@@ -37,7 +38,7 @@ export const QUERY_DASHBOARD_TOP_CLIENTS = () => {
     SELECT
       COALESCE(c.name, cp.name) AS nome,
       cp.document,
-      (SELECT COALESCE(SUM(t.remaining_points), 0) FROM transactions t WHERE t.customer_id = c.id AND t.tenant_id = $1 AND t.available_at <= NOW() AND t.expires_at > NOW()) as saldo_pontos
+      (SELECT COALESCE(SUM(t.remaining_points), 0) FROM transactions t WHERE t.customer_id = c.id AND t.tenant_id = $1 AND t.available_at <= ${APP_NOW_SQL} AND t.expires_at > ${APP_NOW_SQL}) as saldo_pontos
     FROM
       customers c
     LEFT JOIN consumer_profiles cp ON cp.id = c.consumer_profile_id
@@ -45,7 +46,7 @@ export const QUERY_DASHBOARD_TOP_CLIENTS = () => {
       c.tenant_id = $1
       AND c.deleted_at IS NULL
       AND (cp.id IS NULL OR cp.deleted_at IS NULL)
-      AND (SELECT COALESCE(SUM(t.remaining_points), 0) FROM transactions t WHERE t.customer_id = c.id AND t.tenant_id = $1 AND t.available_at <= NOW() AND t.expires_at > NOW()) > 0
+      AND (SELECT COALESCE(SUM(t.remaining_points), 0) FROM transactions t WHERE t.customer_id = c.id AND t.tenant_id = $1 AND t.available_at <= ${APP_NOW_SQL} AND t.expires_at > ${APP_NOW_SQL}) > 0
     ORDER BY
       saldo_pontos DESC
     LIMIT 5;

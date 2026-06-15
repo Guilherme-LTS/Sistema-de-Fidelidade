@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { logAuditEvent } from '../../shared/auditoria/audit';
 import { resolveTenantCustomerByDocument } from '../../shared/customers/customer-identity';
 import { FifoDebitUpdate, buildFifoUpdateQuery } from '../../shared/pontos/pontos-service';
+import { APP_NOW_SQL } from '../../shared/time/app-clock';
 
 export class ResgatesRepository {
   constructor(private readonly client: PoolClient) {}
@@ -28,8 +29,8 @@ export class ResgatesRepository {
         WHERE customer_id = $1
           AND tenant_id = $2
           AND remaining_points > 0
-          AND available_at <= NOW()
-          AND expires_at > NOW()
+          AND available_at <= ${APP_NOW_SQL}
+          AND expires_at > ${APP_NOW_SQL}
         ORDER BY expires_at ASC, created_at ASC
         FOR UPDATE
       `,

@@ -27,7 +27,7 @@ export class AdminUsersRepository {
 
   async listStaff(tenantId: string) {
     const query = `
-      SELECT u.id, u.user_id, u.name, u.role, u.is_active
+      SELECT u.id, u.user_id, u.name, u.role, u.is_active, (u.user_id = u.tenant_id) AS is_owner
       FROM tenant_users u
       WHERE u.tenant_id = $1
         AND u.deleted_at IS NULL
@@ -50,6 +50,15 @@ export class AdminUsersRepository {
       ...user,
       email: emailByUserId.get(user.user_id) || '',
     }));
+  }
+
+  async findStaffById(input: { id: string; tenantId: string }) {
+    const result = await this.query(
+      'SELECT id, user_id, role, (user_id = tenant_id) AS is_owner FROM tenant_users WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL',
+      [input.id, input.tenantId],
+    );
+
+    return result.rows[0] || null;
   }
 
   async updateStaff(input: { id: string; tenantId: string; nome: string; role: string }) {

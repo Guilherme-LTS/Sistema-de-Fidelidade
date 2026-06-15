@@ -28,7 +28,7 @@ export class ClientesService {
     const cliente = await this.repository.findByDocument(input.tenantId, cpfLimpo);
 
     if (!cliente) {
-      throw new HttpError(404, 'Cliente nÃ£o encontrado.');
+      throw new HttpError(404, 'Cliente não encontrado.');
     }
 
     const summary = await this.repository.getFinancialSummary(input.tenantId, cliente.id);
@@ -45,7 +45,7 @@ export class ClientesService {
     const cliente = await this.repository.findByDocument(input.tenantId, cpfLimpo);
 
     if (!cliente) {
-      throw new HttpError(404, 'Cliente nÃ£o encontrado.');
+      throw new HttpError(404, 'Cliente não encontrado.');
     }
 
     return this.repository.getStatement(input.tenantId, cliente.id, input.limit);
@@ -58,16 +58,16 @@ export class ClientesService {
     lgpdConsentimento: boolean;
   }) {
     if (!input.nome || !input.document) {
-      throw new HttpError(400, 'Nome e CPF sÃ£o obrigatÃ³rios.');
+      throw new HttpError(400, 'Nome e CPF são obrigatórios.');
     }
 
     if (input.lgpdConsentimento !== true) {
-      throw new HttpError(400, 'Ã‰ necessÃ¡rio aceitar os termos de uso e a polÃ­tica de privacidade.');
+      throw new HttpError(400, 'É necessário aceitar os termos de uso e a política de privacidade.');
     }
 
     const cpfValidation = validateAndCleanCPF(input.document);
     if (!cpfValidation.isValid) {
-      throw new HttpError(400, cpfValidation.error || 'Formato de CPF invÃ¡lido.');
+      throw new HttpError(400, cpfValidation.error || 'CPF inválido.');
     }
 
     return this.repository.upsertCustomer({
@@ -80,12 +80,12 @@ export class ClientesService {
   }
 
   private cleanRouteCpf(document: string) {
-    const cpfParam = (document || '').replace(/\D/g, '');
+    const cpfValidation = validateAndCleanCPF(document || '');
 
-    if (!cpfParam || cpfParam.length !== 11) {
-      throw new HttpError(400, 'Formato de CPF invÃ¡lido.');
+    if (!cpfValidation.isValid) {
+      throw new HttpError(400, cpfValidation.error || 'CPF inválido.');
     }
 
-    return cpfParam;
+    return cpfValidation.cleaned;
   }
 }

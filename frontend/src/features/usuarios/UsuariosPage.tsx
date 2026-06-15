@@ -27,7 +27,7 @@ import {
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
-import { Plus, X, Pencil, Ban, CheckCircle, Trash2, Search, UserCog, Eye, EyeOff, Copy, Shuffle } from 'lucide-react';
+import { Plus, X, Pencil, Ban, CheckCircle, Trash2, Search, UserCog, Eye, EyeOff, Copy, Shuffle, Crown } from 'lucide-react';
 
 const generateTemporaryPassword = () => {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%';
@@ -196,7 +196,9 @@ function UsuariosPage() {
   };
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredUsuarios = usuarios.filter((u) => {
+  const ownerUser = usuarios.find((usuario) => usuario.isOwner);
+  const managedUsuarios = usuarios.filter((usuario) => !usuario.isOwner);
+  const filteredUsuarios = managedUsuarios.filter((u) => {
     if (!normalizedSearch) return true;
     const nomeSafe = (u.nome || '').toLowerCase();
     const emailSafe = (u.email || '').toLowerCase();
@@ -331,12 +333,42 @@ function UsuariosPage() {
         </Card>
       )}
 
+      {ownerUser && (
+        <Card className="border-amber-200 bg-amber-50/60 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-amber-900">
+              <Crown className="h-5 w-5 text-amber-600" />
+              Dono da conta
+            </CardTitle>
+            <CardDescription className="text-amber-800">
+              Usuário principal criado junto com o restaurante. Este acesso é somente leitura nesta tela.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 rounded-lg border border-amber-200 bg-white/80 p-4 sm:grid-cols-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Nome</p>
+                <p className="mt-1 font-medium text-stone-900">{ownerUser.nome || '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">E-mail</p>
+                <p className="mt-1 font-medium text-stone-900">{ownerUser.email || '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Perfil</p>
+                <p className="mt-1 font-medium text-stone-900">{(ownerUser.role || 'admin').toUpperCase()}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <CardTitle>Usuários Internos</CardTitle>
-              <CardDescription>Lista de todos os funcionários cadastrados.</CardDescription>
+              <CardTitle>Usuários internos gerenciáveis</CardTitle>
+              <CardDescription>Funcionários e operadores que podem ser editados, bloqueados ou removidos.</CardDescription>
             </div>
             <div className="relative w-full sm:w-72">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-stone-500" />
@@ -409,7 +441,7 @@ function UsuariosPage() {
                   {filteredUsuarios.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} className="h-24 text-center text-stone-500">
-                        {usuarios.length === 0 ? "Nenhum usuário cadastrado." : "Nenhum usuário encontado com a busca atual."}
+                        {managedUsuarios.length === 0 ? "Nenhum usuário interno cadastrado." : "Nenhum usuário encontrado com a busca atual."}
                       </TableCell>
                     </TableRow>
                   )}

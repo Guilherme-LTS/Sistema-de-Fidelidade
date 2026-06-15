@@ -44,6 +44,8 @@ export async function atualizarUsuarioAdminController(req: Request, res: Respons
       nome,
       role,
       email,
+      currentTenantUserId: authReq.usuario?.id,
+      currentRole: authReq.usuario?.role,
     });
   });
 
@@ -60,6 +62,7 @@ export async function alterarStatusUsuarioAdminController(req: Request, res: Res
       id: String(req.params.id),
       tenantId,
       ativo: req.body.ativo,
+      currentTenantUserId: authReq.usuario?.id,
     });
   });
 
@@ -75,6 +78,7 @@ export async function excluirUsuarioAdminController(req: Request, res: Response)
     return service.excluirUsuario({
       id: String(req.params.id),
       tenantId,
+      currentTenantUserId: authReq.usuario?.id,
     });
   });
 

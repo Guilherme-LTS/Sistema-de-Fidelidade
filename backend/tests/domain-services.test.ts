@@ -9,6 +9,7 @@ import { UsuariosService } from '../src/modules/usuarios/usuarios.service';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { AdminUsersService } from '../src/modules/admin/admin.users.service';
 import { HttpError } from '../src/shared/errors/http-error';
+import { isValidCpf, validateAndCleanCPF } from '../src/shared/validators/cpf';
 
 const mockReq = { headers: {}, socket: {} } as any;
 
@@ -29,10 +30,20 @@ test('TransacoesService rejeita CPF invalido antes de gravar dados', async () =>
       operadorId: 'operator-1',
       req: mockReq,
     }),
-    (error) => error instanceof HttpError && error.statusCode === 400 && error.message === 'CPF invÃ¡lido.',
+    (error) => error instanceof HttpError && error.statusCode === 400 && error.message === 'CPF inválido.',
   );
 
   assert.deepEqual(calls, []);
+});
+
+test('validateAndCleanCPF bloqueia CPFs repetidos e digitos verificadores invalidos', () => {
+  assert.equal(isValidCpf('11111111111'), false);
+  assert.equal(isValidCpf('12345678900'), false);
+  assert.equal(isValidCpf('52998224725'), true);
+  assert.deepEqual(validateAndCleanCPF('529.982.247-25'), {
+    isValid: true,
+    cleaned: '52998224725',
+  });
 });
 
 test('TransacoesService calcula pontos, cria cliente/transacao e registra auditoria', async () => {
@@ -407,4 +418,71 @@ test('AdminUsersService cria usuario de autenticacao e vinculo no tenant', async
 
   assert.equal(result?.usuario.supabase_id, 'auth-user-1');
   assert.deepEqual(calls, ['createUser:operador@example.com:operador', 'createStaff:auth-user-1:operador']);
+});
+
+test('AdminUsersService impede auto-bloqueio do usuario autenticado', async () => {
+  const service = new AdminUsersService({} as any);
+
+  await assert.rejects(
+    () =>
+      service.alterarStatus({
+        id: 'tenant-user-1',
+        tenantId: 'tenant-1',
+        ativo: false,
+        currentTenantUserId: 'tenant-user-1',
+      }),
+    (error) => error instanceof HttpError && error.statusCode === 400 && error.message === 'Não é possível bloquear o próprio usuário.',
+  );
+});
+
+test('AdminUsersService impede auto-exclusao do usuario autenticado', async () => {
+  const service = new AdminUsersService({} as any);
+
+  await assert.rejects(
+    () =>
+      service.excluirUsuario({
+        id: 'tenant-user-1',
+        tenantId: 'tenant-1',
+        currentTenantUserId: 'tenant-user-1',
+      }),
+    (error) => error instanceof HttpError && error.statusCode === 400 && error.message === 'Não é possível excluir o próprio usuário.',
+  );
+});
+
+test('AdminUsersService impede alterar o proprio perfil de acesso', async () => {
+  const service = new AdminUsersService({} as any);
+
+  await assert.rejects(
+    () =>
+      service.atualizarUsuario({
+        id: 'tenant-user-1',
+        tenantId: 'tenant-1',
+        nome: 'Admin',
+        email: 'admin@example.com',
+        role: 'operador',
+        currentTenantUserId: 'tenant-user-1',
+        currentRole: 'admin',
+      }),
+    (error) => error instanceof HttpError && error.statusCode === 400 && error.message === 'Não é possível alterar seu próprio perfil de acesso.',
+  );
+});
+
+test('AdminUsersService impede gerenciar dono do tenant', async () => {
+  const service = new AdminUsersService({
+    findStaffById: async () => ({ id: 'owner-user', user_id: 'tenant-1', role: 'admin', is_owner: true }),
+  } as any);
+
+  await assert.rejects(
+    () =>
+      service.alterarStatus({
+        id: 'owner-user',
+        tenantId: 'tenant-1',
+        ativo: false,
+        currentTenantUserId: 'admin-2',
+      }),
+    (error) =>
+      error instanceof HttpError &&
+      error.statusCode === 400 &&
+      error.message === 'O dono da conta é somente leitura e não pode ser alterado por esta tela.',
+  );
 });

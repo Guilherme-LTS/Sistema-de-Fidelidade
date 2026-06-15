@@ -1,7 +1,7 @@
 import { Request } from 'express';
-import { cpf as cpfValidator } from 'cpf-cnpj-validator';
 import { HttpError } from '../../shared/errors/http-error';
 import { calculatePointTimelines } from '../../shared/pontos/pontos-service';
+import { validateAndCleanCPF } from '../../shared/validators/cpf';
 import { TransacoesRepository } from './transacoes.repository';
 
 export type LancarPontosInput = {
@@ -17,12 +17,13 @@ export class TransacoesService {
   constructor(private readonly repository: TransacoesRepository) {}
 
   async lancarPontos(input: LancarPontosInput) {
-    const cpfLimpo = (input.document || '').replace(/\D/g, '');
+    const cpfValidation = validateAndCleanCPF(input.document || '');
 
-    if (!cpfValidator.isValid(cpfLimpo)) {
-      throw new HttpError(400, 'CPF invÃ¡lido.');
+    if (!cpfValidation.isValid) {
+      throw new HttpError(400, cpfValidation.error || 'CPF inválido.');
     }
 
+    const cpfLimpo = cpfValidation.cleaned;
     const pontosGanhos = Math.floor(input.valor);
     const configs = await this.repository.loadPointSettings(input.tenantId);
     const { availableAt, expiresAt } = calculatePointTimelines(

@@ -17,6 +17,32 @@ test('calculatePointTimelines uses base date offsets', () => {
   assert.equal(expiresAt.getTime(), expectedExpires.getTime());
 });
 
+test('calculatePointTimelines uses APP_FAKE_NOW outside production', () => {
+  const previousFakeNow = process.env.APP_FAKE_NOW;
+  const previousNodeEnv = process.env.NODE_ENV;
+
+  process.env.NODE_ENV = 'test';
+  process.env.APP_FAKE_NOW = '2025-03-10T12:00:00.000Z';
+
+  try {
+    const { availableAt, expiresAt } = calculatePointTimelines(1, 5);
+    assert.equal(availableAt.toISOString(), '2025-03-11T12:00:00.000Z');
+    assert.equal(expiresAt.toISOString(), '2025-03-16T12:00:00.000Z');
+  } finally {
+    if (previousFakeNow === undefined) {
+      delete process.env.APP_FAKE_NOW;
+    } else {
+      process.env.APP_FAKE_NOW = previousFakeNow;
+    }
+
+    if (previousNodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+  }
+});
+
 test('buildFifoDebitUpdates calculates FIFO debits and remaining points', () => {
   const transactions = [
     { id: 1, remaining_points: 50 },

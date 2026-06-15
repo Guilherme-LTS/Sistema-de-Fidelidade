@@ -20,6 +20,8 @@ const formatarData = (dataISO: string) => {
   return new Date(data.getTime() + data.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
+const CUSTOMER_NOT_FOUND_MESSAGE = 'Cliente não encontrado. Cadastre o cliente antes de lançar pontos.';
+
 interface ConsultaSaldoProps {
   onConsulta?: (saldo: number | null) => void;
   onNotFound?: () => void;
@@ -58,7 +60,7 @@ function ConsultaSaldo({ onConsulta, onNotFound }: ConsultaSaldoProps) {
         if (onNotFound) {
           onNotFound();
         } else {
-          toast.error('Cliente não encontrado.');
+          toast.error(CUSTOMER_NOT_FOUND_MESSAGE);
         }
       } else {
         toast.error(getErrorMessage(error));

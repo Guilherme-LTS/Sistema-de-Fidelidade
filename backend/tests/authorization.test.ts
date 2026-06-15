@@ -4,6 +4,7 @@ import { HttpError } from '../src/shared/errors/http-error';
 import { requireUserRole } from '../src/shared/request-context';
 import { dashboardStatsController } from '../src/modules/dashboard/dashboard.controller';
 import { criarRecompensaController } from '../src/modules/recompensas/recompensas.controller';
+import verificaToken from '../src/shared/middlewares/autenticacao';
 
 const makeReq = (role: string) => ({
   headers: {},
@@ -73,4 +74,18 @@ test('requireUserRole permite operador em endpoint operacional', () => {
   const role = requireUserRole(makeReq('operador'), ['admin', 'operador']);
 
   assert.equal(role, 'operador');
+});
+
+test('verificaToken retorna 401 quando Authorization nao e enviado', async () => {
+  const req = { headers: {} } as any;
+  const res = makeRes();
+  let nextCalled = false;
+
+  await verificaToken(req, res, () => {
+    nextCalled = true;
+  });
+
+  assert.equal(res.statusCode, 401);
+  assert.deepEqual(res.body, { error: 'Token não fornecido.' });
+  assert.equal(nextCalled, false);
 });
