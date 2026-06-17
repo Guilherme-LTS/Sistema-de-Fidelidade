@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+const configuredApiBaseUrl = process.env.REACT_APP_API_URL?.trim();
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction && !configuredApiBaseUrl) {
+  throw new Error('REACT_APP_API_URL deve ser definido no ambiente de producao.');
+}
+
+export const API_BASE_URL = configuredApiBaseUrl || 'http://localhost:3001';
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
 

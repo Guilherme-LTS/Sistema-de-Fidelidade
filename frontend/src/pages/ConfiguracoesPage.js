@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../services/api';
 import styles from './ConfiguracoesPage.module.css';
 
 const ConfiguracoesPage = () => {
@@ -10,7 +11,7 @@ const ConfiguracoesPage = () => {
     // Buscar configurações atuais
     const fetchConfig = async () => {
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/configuracoes/expiracao`);
+        const res = await fetch(`${API_BASE_URL}/configuracoes/expiracao`);
         if (res.ok) {
           const data = await res.json();
           setExpiracao({ valor: data.valor, unidade: data.unidade });
@@ -28,7 +29,7 @@ const ConfiguracoesPage = () => {
     setFeedback(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/configuracoes/expiracao`, {
+      const res = await fetch(`${API_BASE_URL}/configuracoes/expiracao`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

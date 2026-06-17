@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../services/api';
 import styles from './LandingPage.module.css';
 
 const CUSTOMER_SESSION_KEY = 'fidelizi.customer.session.v1';
@@ -83,7 +84,6 @@ const readCustomerSession = () => {
 
 function LandingPage() {
   const { tenantSlug } = useParams();
-  const apiBase = process.env.REACT_APP_API_URL;
   const publicTenantIdFromEnv = process.env.REACT_APP_PUBLIC_TENANT_ID || '';
 
   const [customerSession, setCustomerSession] = useState(() => readCustomerSession());
@@ -126,14 +126,14 @@ function LandingPage() {
       setBalancesError('');
       const queryParams = new URLSearchParams();
       const publicTenantId = preferredTenantId || publicTenantIdFromEnv;
-      let endpoint = `${apiBase}/public/pontos/${session.document}/restaurantes`;
+        let endpoint = `${API_BASE_URL}/public/pontos/${session.document}/restaurantes`;
 
       if (publicTenantId) {
         queryParams.set('tenant_id', publicTenantId);
-        endpoint = `${apiBase}/public/pontos/${session.document}`;
+          endpoint = `${API_BASE_URL}/public/pontos/${session.document}`;
       } else if (tenantSlug) {
         queryParams.set('tenant_slug', tenantSlug);
-        endpoint = `${apiBase}/public/pontos/${session.document}`;
+          endpoint = `${API_BASE_URL}/public/pontos/${session.document}`;
       }
 
       const query = queryParams.toString();
@@ -170,7 +170,7 @@ function LandingPage() {
     } finally {
       setLoadingBalances(false);
     }
-  }, [apiBase, tenantSlug, publicTenantIdFromEnv]);
+  }, [tenantSlug, publicTenantIdFromEnv]);
 
   useEffect(() => {
     if (!customerSession) return;
@@ -190,7 +190,7 @@ function LandingPage() {
         setTenantResolving(true);
         setResolvedTenantId('');
         setTenantResolveError('');
-        const response = await fetch(`${apiBase}/public/tenants/${encodeURIComponent(tenantSlug)}`);
+        const response = await fetch(`${API_BASE_URL}/public/tenants/${encodeURIComponent(tenantSlug)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Não foi possível resolver o tenant.');
         setResolvedTenantId(data.tenant_id || '');
@@ -202,7 +202,7 @@ function LandingPage() {
     };
 
     resolveTenant();
-  }, [tenantSlug, apiBase]);
+  }, [tenantSlug]);
 
   const handleAuthenticate = async (event) => {
     event.preventDefault();
@@ -267,8 +267,8 @@ function LandingPage() {
 
       try {
         const [statementRes, rewardsRes] = await Promise.all([
-          fetch(`${apiBase}/public/extrato/${customerSession.document}?tenant_id=${encodeURIComponent(partner.tenant_id)}`),
-          fetch(`${apiBase}/public/rewards?tenant_id=${encodeURIComponent(partner.tenant_id)}`),
+          fetch(`${API_BASE_URL}/public/extrato/${customerSession.document}?tenant_id=${encodeURIComponent(partner.tenant_id)}`),
+          fetch(`${API_BASE_URL}/public/rewards?tenant_id=${encodeURIComponent(partner.tenant_id)}`),
         ]);
 
         const statementData = await statementRes.json();
@@ -289,7 +289,7 @@ function LandingPage() {
         setLoadingDetail(false);
       }
     },
-    [apiBase, customerSession]
+    [customerSession]
   );
 
   useEffect(() => {
