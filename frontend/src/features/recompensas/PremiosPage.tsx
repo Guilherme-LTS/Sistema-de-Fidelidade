@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import Spinner from '../../shared/components/Spinner';
-import api from '../../services/api';
+import {
+  excluirRecompensa,
+  listarRecompensas,
+  normalizeRecompensa,
+  Recompensa,
+  salvarRecompensa,
+} from './recompensas.api';
 
 import {
   Card,
@@ -22,14 +28,6 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Gift, Plus, Pencil, Trash2, X, AlertTriangle } from 'lucide-react';
 
-interface Recompensa {
-  id: number;
-  nome: string;
-  name?: string;
-  descricao: string;
-  points_cost: string | number;
-}
-
 function PremiosPage() {
   const [recompensas, setRecompensas] = useState<Recompensa[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,17 +45,9 @@ function PremiosPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const normalizeRecompensa = (recompensa: any): Recompensa => ({
-    ...recompensa,
-    nome: recompensa?.nome ?? recompensa?.name ?? '',
-    descricao: recompensa?.descricao ?? recompensa?.description ?? '',
-    points_cost: recompensa?.points_cost ?? recompensa?.custo_pontos ?? '',
-  });
-
   const fetchRecompensas = useCallback(async () => {
     try {
-      const { data } = await api.get('/recompensas'); 
-      setRecompensas((data || []).map(normalizeRecompensa));
+      setRecompensas(await listarRecompensas());
     } catch (error: any) {
       toast.error(error.message || 'Erro ao carregar recompensas');
     } finally {
@@ -128,11 +118,7 @@ function PremiosPage() {
     }
 
     try {
-      if (isEditing) {
-        await api.put(`/recompensas/${dadosParaEnviar.id}`, dadosParaEnviar);
-      } else {
-        await api.post(`/recompensas`, dadosParaEnviar);
-      }
+      await salvarRecompensa(dadosParaEnviar);
       
       toast.success(`Recompensa ${isEditing ? 'atualizada' : 'criada'} com sucesso!`);
       fetchRecompensas();
@@ -150,7 +136,7 @@ function PremiosPage() {
     setIsDeleting(true);
 
     try {
-      await api.delete(`/recompensas/${recompensaParaExcluir.id}`);
+      await excluirRecompensa(recompensaParaExcluir.id);
       toast.success('Recompensa excluída com sucesso!');
       fetchRecompensas();
       handleCloseDeleteModal();

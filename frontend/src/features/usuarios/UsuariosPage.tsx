@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import api from '../../services/api';
+import {
+  alterarStatusUsuario,
+  excluirUsuario,
+  listarUsuarios,
+  salvarUsuario,
+  Usuario,
+} from './usuarios.api';
 
 import {
   Card,
@@ -21,27 +27,13 @@ import {
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
-import { Plus, X, Pencil, Ban, CheckCircle, Trash2, Search, UserCog } from 'lucide-react';
+import { Plus, X, Pencil, Ban, CheckCircle, Trash2, Search, UserCog, Eye, EyeOff, Copy, Shuffle, Crown } from 'lucide-react';
 
-interface Usuario {
-  id: string;
-  supabase_id: string;
-  nome: string;
-  email: string;
-  role: string;
-  ativo: boolean;
-}
-
-type UsuarioApi = {
-  id: string;
-  supabase_id?: string;
-  user_id?: string;
-  nome?: string;
-  name?: string;
-  email?: string;
-  role?: string;
-  ativo?: boolean;
-  is_active?: boolean;
+const generateTemporaryPassword = () => {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%';
+  const bytes = new Uint32Array(12);
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (value) => alphabet[value % alphabet.length]).join('');
 };
 
 function UsuariosPage() {
@@ -52,6 +44,8 @@ function UsuariosPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [showSenha, setShowSenha] = useState(false);
   const [role, setRole] = useState('operador');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,16 +58,7 @@ function UsuariosPage() {
   const fetchUsuarios = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/admin/usuarios');
-      const normalized: Usuario[] = (response.data as UsuarioApi[]).map((row) => ({
-        id: String(row.id),
-        supabase_id: row.supabase_id || row.user_id || '',
-        nome: row.nome || row.name || '',
-        email: row.email || '',
-        role: row.role || 'operador',
-        ativo: typeof row.ativo === 'boolean' ? row.ativo : Boolean(row.is_active),
-      }));
-      setUsuarios(normalized);
+      setUsuarios(await listarUsuarios());
     } catch (error) {
       console.error(error);
       toast.error('Erro ao carregar usuários.');
@@ -90,6 +75,8 @@ function UsuariosPage() {
     setEditId(null);
     setNome('');
     setEmail('');
+    setSenha('');
+    setShowSenha(false);
     setRole('operador');
     setShowForm(false);
   };
@@ -98,14 +85,37 @@ function UsuariosPage() {
     setEditId(user.id);
     setNome(user.nome || '');
     setEmail(user.email || '');
+    setSenha('');
+    setShowSenha(false);
     setRole(user.role);
     setShowForm(true);
+  };
+
+  const handleGeneratePassword = () => {
+    const generated = generateTemporaryPassword();
+    setSenha(generated);
+    setShowSenha(true);
+    toast.info('Senha temporária gerada. Copie e envie ao funcionário por um canal seguro.');
+  };
+
+  const handleCopyPassword = async () => {
+    if (!senha) {
+      toast.warning('Gere ou informe uma senha temporária primeiro.');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(senha);
+      toast.success('Senha temporária copiada.');
+    } catch {
+      toast.error('Não foi possível copiar a senha automaticamente.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!nome || !email) {
+    if (!nome || !email || (!editId && senha.length < 6)) {
       toast.warning('Preencha todos os campos obrigatórios.');
       return;
     }
@@ -114,12 +124,10 @@ function UsuariosPage() {
 
     try {
       if (editId) {
-        await api.put(`/admin/usuarios/${editId}`, { nome, email, role });
+        await salvarUsuario({ nome, email, role }, editId);
         toast.success('Usuário atualizado com sucesso!');
       } else {
-        await api.post('/admin/usuarios', {
-          nome, email, role
-        });
+        await salvarUsuario({ nome, email, role, senha });
         toast.success('Usuário criado com sucesso!');
       }
       resetForm();
@@ -159,7 +167,7 @@ function UsuariosPage() {
     if (!selectedUser) return;
     setIsStatusSubmitting(true);
     try {
-      await api.patch(`/admin/usuarios/${selectedUser.id}/status`, { ativo: !selectedUser.ativo });
+      await alterarStatusUsuario(selectedUser.id, !selectedUser.ativo);
       toast.success(selectedUser.ativo ? 'Usuário bloqueado com sucesso!' : 'Usuário desbloqueado com sucesso!');
       fetchUsuarios();
     } catch (error: any) {
@@ -175,7 +183,7 @@ function UsuariosPage() {
     if (!selectedUser) return;
     setIsDeleteSubmitting(true);
     try {
-      await api.delete(`/admin/usuarios/${selectedUser.id}`);
+      await excluirUsuario(selectedUser.id);
       toast.success('Usuário excluído!');
       fetchUsuarios();
     } catch (error: any) {
@@ -188,7 +196,9 @@ function UsuariosPage() {
   };
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredUsuarios = usuarios.filter((u) => {
+  const ownerUser = usuarios.find((usuario) => usuario.isOwner);
+  const managedUsuarios = usuarios.filter((usuario) => !usuario.isOwner);
+  const filteredUsuarios = managedUsuarios.filter((u) => {
     if (!normalizedSearch) return true;
     const nomeSafe = (u.nome || '').toLowerCase();
     const emailSafe = (u.email || '').toLowerCase();
@@ -244,6 +254,49 @@ function UsuariosPage() {
                   />
                 </div>
 
+                {!editId && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-sm font-medium leading-none text-stone-700">Senha temporária</label>
+                      <Button type="button" variant="ghost" size="sm" onClick={handleGeneratePassword}>
+                        <Shuffle className="mr-2 h-3.5 w-3.5" />
+                        Gerar
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        type={showSenha ? 'text' : 'password'}
+                        value={senha}
+                        onChange={(e) => setSenha(e.target.value)}
+                        placeholder="Mínimo de 6 caracteres"
+                        minLength={6}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setShowSenha((current) => !current)}
+                        title={showSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        {showSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleCopyPassword}
+                        title="Copiar senha temporária"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs leading-relaxed text-stone-500">
+                      O funcionário usará esta senha no primeiro login. Oriente-o a alterá-la em seguida.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none text-stone-700">E-mail</label>
                   <Input
@@ -280,12 +333,42 @@ function UsuariosPage() {
         </Card>
       )}
 
+      {ownerUser && (
+        <Card className="border-amber-200 bg-amber-50/60 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-amber-900">
+              <Crown className="h-5 w-5 text-amber-600" />
+              Dono da conta
+            </CardTitle>
+            <CardDescription className="text-amber-800">
+              Usuário principal criado junto com o restaurante. Este acesso é somente leitura nesta tela.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 rounded-lg border border-amber-200 bg-white/80 p-4 sm:grid-cols-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Nome</p>
+                <p className="mt-1 font-medium text-stone-900">{ownerUser.nome || '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">E-mail</p>
+                <p className="mt-1 font-medium text-stone-900">{ownerUser.email || '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Perfil</p>
+                <p className="mt-1 font-medium text-stone-900">{(ownerUser.role || 'admin').toUpperCase()}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <CardTitle>Usuários Internos</CardTitle>
-              <CardDescription>Lista de todos os funcionários cadastrados.</CardDescription>
+              <CardTitle>Usuários internos gerenciáveis</CardTitle>
+              <CardDescription>Funcionários e operadores que podem ser editados, bloqueados ou removidos.</CardDescription>
             </div>
             <div className="relative w-full sm:w-72">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-stone-500" />
@@ -358,7 +441,7 @@ function UsuariosPage() {
                   {filteredUsuarios.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} className="h-24 text-center text-stone-500">
-                        {usuarios.length === 0 ? "Nenhum usuário cadastrado." : "Nenhum usuário encontado com a busca atual."}
+                        {managedUsuarios.length === 0 ? "Nenhum usuário interno cadastrado." : "Nenhum usuário encontrado com a busca atual."}
                       </TableCell>
                     </TableRow>
                   )}

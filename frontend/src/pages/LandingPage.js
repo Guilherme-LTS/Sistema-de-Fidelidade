@@ -41,6 +41,31 @@ const getPartnerInitials = (name) => {
   return words.map((word) => word.charAt(0).toUpperCase()).join('');
 };
 
+const getPartnerStatus = (partner) => {
+  const expiringPoints = Number(partner?.pontos_expirando || 0);
+  const pendingPoints = Number(partner?.pontos_pendentes || 0);
+  const redemptions = Number(partner?.total_resgates || 0);
+  const transactions = Number(partner?.total_transacoes || 0);
+
+  if (expiringPoints > 0) {
+    return `${formatPoints(expiringPoints)} pontos vencem em ${formatDate(partner.data_proxima_expiracao)}`;
+  }
+
+  if (pendingPoints > 0) {
+    return `${formatPoints(pendingPoints)} pontos pendentes`;
+  }
+
+  if (redemptions > 0) {
+    return `${redemptions} resgate${redemptions === 1 ? '' : 's'} realizado${redemptions === 1 ? '' : 's'}`;
+  }
+
+  if (transactions > 0) {
+    return `${transactions} compra${transactions === 1 ? '' : 's'} registrada${transactions === 1 ? '' : 's'}`;
+  }
+
+  return 'Cadastro ativo neste restaurante';
+};
+
 const readCustomerSession = () => {
   try {
     const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
@@ -59,6 +84,7 @@ const readCustomerSession = () => {
 function LandingPage() {
   const { tenantSlug } = useParams();
   const apiBase = process.env.REACT_APP_API_URL;
+  const publicTenantIdFromEnv = process.env.REACT_APP_PUBLIC_TENANT_ID || '';
 
   const [customerSession, setCustomerSession] = useState(() => readCustomerSession());
   const [authMode, setAuthMode] = useState('login');
@@ -80,6 +106,7 @@ function LandingPage() {
   const [tenantResolving, setTenantResolving] = useState(Boolean(tenantSlug));
   const [resolvedTenantId, setResolvedTenantId] = useState('');
   const [tenantResolveError, setTenantResolveError] = useState('');
+  const activePublicTenantId = resolvedTenantId || publicTenantIdFromEnv;
 
   const filteredBalances = useMemo(() => {
     if (!searchTerm.trim()) return balances;
@@ -97,7 +124,20 @@ function LandingPage() {
     try {
       setLoadingBalances(true);
       setBalancesError('');
-      const response = await fetch(`${apiBase}/public/pontos/${session.document}`);
+      const queryParams = new URLSearchParams();
+      const publicTenantId = preferredTenantId || publicTenantIdFromEnv;
+      let endpoint = `${apiBase}/public/pontos/${session.document}/restaurantes`;
+
+      if (publicTenantId) {
+        queryParams.set('tenant_id', publicTenantId);
+        endpoint = `${apiBase}/public/pontos/${session.document}`;
+      } else if (tenantSlug) {
+        queryParams.set('tenant_slug', tenantSlug);
+        endpoint = `${apiBase}/public/pontos/${session.document}`;
+      }
+
+      const query = queryParams.toString();
+      const response = await fetch(query ? `${endpoint}?${query}` : endpoint);
 
       if (response.status === 404) {
         setBalances([]);
@@ -117,7 +157,7 @@ function LandingPage() {
           : [];
       setBalances(nextBalances);
 
-      if (nextBalances.length === 1 && !preferredTenantId) {
+      if (nextBalances.length === 1 && (preferredTenantId || tenantSlug || publicTenantIdFromEnv)) {
         setSelectedPartner(nextBalances[0]);
       } else if (preferredTenantId && nextBalances.length > 0) {
         const preferred = nextBalances.find((item) => item.tenant_id === preferredTenantId);
@@ -130,12 +170,12 @@ function LandingPage() {
     } finally {
       setLoadingBalances(false);
     }
-  }, [apiBase]);
+  }, [apiBase, tenantSlug, publicTenantIdFromEnv]);
 
   useEffect(() => {
     if (!customerSession) return;
-    loadBalances(customerSession, resolvedTenantId);
-  }, [customerSession, resolvedTenantId, loadBalances]);
+    loadBalances(customerSession, activePublicTenantId);
+  }, [customerSession, activePublicTenantId, loadBalances]);
 
   useEffect(() => {
     if (!tenantSlug) {
@@ -191,7 +231,7 @@ function LandingPage() {
       setStatement([]);
       setRewards([]);
       setSearchTerm('');
-      void loadBalances(session, resolvedTenantId);
+      void loadBalances(session, activePublicTenantId);
       if (authMode === 'cadastro') {
         toast.success('Cadastro concluído. Bem-vindo ao Fidelizi!');
       }
@@ -353,7 +393,7 @@ function LandingPage() {
           <section className={styles.listScreen}>
             <div className={styles.titleBlock}>
               <h1>
-                Olá <span>{customerSession.name.toUpperCase()}</span>! Escolha um estabelecimento para continuar:
+                Olá <span>{customerSession.name.toUpperCase()}</span>! Seus pontos por restaurante:
               </h1>
               <p>Aqui aparecem apenas os restaurantes onde você já acumulou pontos.</p>
               {tenantResolving && <p className={styles.infoText}>Identificando estabelecimento do link...</p>}
@@ -388,7 +428,7 @@ function LandingPage() {
                 <button
                   type="button"
                   className={styles.secondaryButton}
-                  onClick={() => loadBalances(customerSession, resolvedTenantId)}
+                  onClick={() => loadBalances(customerSession, activePublicTenantId)}
                 >
                   Tentar novamente
                 </button>
@@ -411,8 +451,12 @@ function LandingPage() {
                     <div className={styles.partnerInfo}>
                       <strong>{partner.tenant_name}</strong>
                       <span>{formatPoints(partner.pontos_disponiveis)} pontos disponíveis</span>
+                      <small>{getPartnerStatus(partner)}</small>
                     </div>
-                    <div className={styles.partnerPoints}>{formatPoints(partner.pontos_disponiveis)}</div>
+                    <div className={styles.partnerAction}>
+                      <strong>{formatPoints(partner.pontos_disponiveis)}</strong>
+                      <span>Ver detalhes</span>
+                    </div>
                   </button>
                 ))}
               </div>

@@ -1,11 +1,10 @@
-﻿import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import verificaToken from '../../shared/middlewares/autenticacao';
+import { usuarioAtualController } from './usuarios.controller';
 
 const router = Router();
 
 // GET /usuarios/me - Retorna dados atuais do usuario autenticado
-router.get('/me', verificaToken, (req: any, res: Response) => {
-  res.status(200).json(req.usuario);
-});
+router.get('/me', verificaToken, usuarioAtualController);
 
 export default router;

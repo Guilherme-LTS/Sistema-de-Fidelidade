@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import api from "../../services/api";
+import { cadastrarTenant } from "./auth.api";
+import { getErrorMessage } from "../../shared/utils/errors";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../components/ui/card";
@@ -32,20 +33,13 @@ function CadastroPage() {
     setCarregando(true);
 
     try {
-      // Chama nosso novo endpoint transacional B2B de provisionamento atômico
-      await api.post("/auth/register-tenant", {
-        tenant_name: tenantName,
-        admin_name: adminName,
-        email: email,
-        password: password,
-        document: document || null
-      });
+      await cadastrarTenant({ tenantName, adminName, email, password, document });
 
       toast.success("Restaurante cadastrado com sucesso! Faça login para continuar.");
       navigate("/login");
     } catch (error: any) {
       console.error(error);
-      toast.error(error.response?.data?.error || "Erro ao criar sua conta. Tente novamente.");
+      toast.error(getErrorMessage(error, "Erro ao criar sua conta. Tente novamente."));
     } finally {
       setCarregando(false);
     }

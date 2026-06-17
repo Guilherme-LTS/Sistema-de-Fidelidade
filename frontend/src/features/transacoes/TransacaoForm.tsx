@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import useDebounce from '../../hooks/useDebounce';
-import api from '../../services/api';
+import { consultarClientePorCpf } from '../clientes/clientes.api';
+import { lancarPontos } from './transacoes.api';
+import { getErrorMessage } from '../../shared/utils/errors';
 import {
   Card,
   CardContent,
@@ -37,11 +39,10 @@ function TransacaoForm() {
       setBuscandoCliente(true);
       setClienteInfo(null);
       try {
-        const response = await api.get(`/clientes/${cpfLimpo}`);
-        setClienteInfo(response.data);
+        setClienteInfo(await consultarClientePorCpf(cpfLimpo));
       } catch (error: any) {
         if (error.response?.status === 404) {
-          setClienteInfo({ isNew: true, error: 'Novo cliente será cadastrado' });
+          setClienteInfo({ isNew: true, error: 'Cliente não encontrado. Informe o nome para cadastrar e lançar pontos.' });
         } else {
           setClienteInfo({ error: 'Erro ao buscar cliente' });
         }
@@ -72,23 +73,14 @@ function TransacaoForm() {
     event.preventDefault();
     setCarregando(true);
     try {
-      const document = cpf.replace(/\D/g, '');
-      const response = await api.post('/transacoes', { 
-        // Compatibilidade: backend novo usa `document`, legado usa `cpf`.
-        document,
-        cpf: document,
-        valor: parseFloat(valor), 
-        nome 
-      });
-
-      const data = response.data;
+      const data = await lancarPontos({ cpf, valor, nome });
       toast.success(`Pontos registrados com sucesso! Pontos ganhos: ${data.pontosGanhos}`);
       setCpf('');
       setValor('');
       setNome('');
       setClienteInfo(null);
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao processar transação');
+      toast.error(getErrorMessage(error, 'Erro ao processar transacao'));
     } finally {
       setCarregando(false);
     }

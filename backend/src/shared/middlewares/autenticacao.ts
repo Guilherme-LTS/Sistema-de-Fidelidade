@@ -30,7 +30,16 @@ const verificaToken = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const { rows } = await adminDb.query(
-      'SELECT id, name, role, tenant_id FROM tenant_users WHERE user_id = $1 LIMIT 1',
+      `
+        SELECT tu.id, tu.name, tu.role, tu.tenant_id
+        FROM tenant_users tu
+        INNER JOIN tenants t ON t.id = tu.tenant_id
+        WHERE tu.user_id = $1
+          AND tu.is_active = true
+          AND tu.deleted_at IS NULL
+          AND t.is_active = true
+        LIMIT 1
+      `,
       [user.id]
     );
 

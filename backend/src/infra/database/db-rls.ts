@@ -1,6 +1,7 @@
 import { Request } from 'express';
 import { PoolClient } from 'pg';
 import pool from './db';
+import { getAppNowOverride } from '../../shared/time/app-clock';
 
 /**
  * Interface que representa os dados retornados no JWT do Auth do Supabase.
@@ -56,6 +57,11 @@ export const setRlsClaims = async (client: PoolClient, req: AuthenticatedRequest
     if (tenantId) {
       await client.query(`SET LOCAL app.current_tenant = '${tenantId}'`);
     }
+
+    const fakeNow = getAppNowOverride();
+    if (fakeNow) {
+      await client.query("SELECT set_config('app.fake_now', $1, true)", [fakeNow.toISOString()]);
+    }
   } catch (err: any) {
     console.error('Erro ao configurar claims de RLS:', err.message);
     throw err;
@@ -64,6 +70,29 @@ export const setRlsClaims = async (client: PoolClient, req: AuthenticatedRequest
 
 export const resetRlsClaims = async (client: PoolClient) => {
   await client.query('RESET request.jwt.claims');
+};
+
+export const withRlsTransaction = async <T>(
+  req: AuthenticatedRequest,
+  handler: (client: PoolClient) => Promise<T>
+): Promise<T> => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    await setRlsClaims(client, req);
+
+    const result = await handler(client);
+
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    await resetRlsClaims(client).catch(() => {});
+    client.release();
+  }
 };
 
 /**
@@ -87,15 +116,20 @@ export const queryWithRLS = async (req: AuthenticatedRequest, queryStr: string, 
 
     // 2. Montar as claims seguras para injeção (Garante que se não houver tenant_id, não vaza dados)
     const jwtClaims = JSON.stringify({
-      sub: req.user?.id || null,     // Subject
-      tenant_id: req.user?.tenant_id || null, // O metadado Custom (Isolador Multi-tenant)
-      role: req.user?.role || 'anon' // Papel no sistema
+      sub: req.user?.id || req.usuario?.id || null,     // Subject
+      tenant_id: req.user?.tenant_id || req.usuario?.tenant_id || null, // O metadado Custom (Isolador Multi-tenant)
+      role: req.user?.role || req.usuario?.role || 'anon' // Papel no sistema
     });
 
     // 3. Forçar as claims na sessão atual da conexão. Configura RLS!
     // SEGURO: Escapamos a string JSON para evitar SQL injection via aspas
     const sanitizedClaims = sanitizeJsonForSQL(jwtClaims);
     await client.query(`SET LOCAL request.jwt.claims = '${sanitizedClaims}'`);
+
+    const fakeNow = getAppNowOverride();
+    if (fakeNow) {
+      await client.query("SELECT set_config('app.fake_now', $1, true)", [fakeNow.toISOString()]);
+    }
 
     // 4. Executar a query verdadeira e limpa (ex: "SELECT * FROM customers")
     const result = await client.query(queryStr, params);

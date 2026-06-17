@@ -1,9 +1,6 @@
-import { cpf as cpfValidator } from 'cpf-cnpj-validator';
-
 /**
- * Valida e limpa um CPF
- * @param document CPF bruto (com ou sem formatação)
- * @returns { isValid: boolean; cleaned: string; error?: string }
+ * Valida e limpa um CPF.
+ * @param document CPF bruto, com ou sem formatação.
  */
 export function validateAndCleanCPF(document: string): { isValid: boolean; cleaned: string; error?: string } {
   if (!document || typeof document !== 'string') {
@@ -13,20 +10,37 @@ export function validateAndCleanCPF(document: string): { isValid: boolean; clean
   const cleaned = document.replace(/\D/g, '');
 
   if (cleaned.length !== 11) {
-    return { isValid: false, cleaned: '', error: 'CPF deve conter 11 dígitos.' };
+    return { isValid: false, cleaned, error: 'CPF deve conter 11 dígitos.' };
   }
 
-  if (!cpfValidator.isValid(cleaned)) {
-    return { isValid: false, cleaned: '', error: 'O CPF informado é inválido.' };
+  if (!isValidCpf(cleaned)) {
+    return { isValid: false, cleaned, error: 'CPF inválido.' };
   }
 
   return { isValid: true, cleaned };
 }
 
-/**
- * Valida requisição contém CPF válido no body
- * Sou usado como método utilitário para request validation
- */
+export function isValidCpf(cleaned: string) {
+  if (!/^\d{11}$/.test(cleaned)) {
+    return false;
+  }
+
+  if (/^(\d)\1{10}$/.test(cleaned)) {
+    return false;
+  }
+
+  const digits = cleaned.split('').map(Number);
+  const calculateCheckDigit = (baseLength: number) => {
+    const sum = digits
+      .slice(0, baseLength)
+      .reduce((total, digit, index) => total + digit * (baseLength + 1 - index), 0);
+    const remainder = (sum * 10) % 11;
+    return remainder === 10 ? 0 : remainder;
+  };
+
+  return calculateCheckDigit(9) === digits[9] && calculateCheckDigit(10) === digits[10];
+}
+
 export function extractAndValidateCPF(body: any): { valid: boolean; cpf: string; error?: string } {
   const result = validateAndCleanCPF(body?.document);
   if (!result.isValid) {

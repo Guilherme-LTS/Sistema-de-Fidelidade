@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import api from '../../services/api';
+import { consultarClientePorCpf } from './clientes.api';
+import { getErrorMessage } from '../../shared/utils/errors';
 import {
   Card,
   CardContent,
@@ -18,6 +19,8 @@ const formatarData = (dataISO: string) => {
   const data = new Date(dataISO);
   return new Date(data.getTime() + data.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
+
+const CUSTOMER_NOT_FOUND_MESSAGE = 'Cliente não encontrado. Cadastre o cliente antes de lançar pontos.';
 
 interface ConsultaSaldoProps {
   onConsulta?: (saldo: number | null) => void;
@@ -46,8 +49,7 @@ function ConsultaSaldo({ onConsulta, onNotFound }: ConsultaSaldoProps) {
     const cpfLimpo = cpf.replace(/\D/g, '');
 
     try {
-      const response = await api.get('/clientes/' + cpfLimpo);
-      const data = response.data;
+      const data = await consultarClientePorCpf(cpfLimpo);
       setCliente(data);
       if (onConsulta) {
         onConsulta(data.pontosDisponiveis);
@@ -58,10 +60,10 @@ function ConsultaSaldo({ onConsulta, onNotFound }: ConsultaSaldoProps) {
         if (onNotFound) {
           onNotFound();
         } else {
-          toast.error('Cliente não encontrado.');
+          toast.error(CUSTOMER_NOT_FOUND_MESSAGE);
         }
       } else {
-        toast.error(error.response?.data?.error || error.message);
+        toast.error(getErrorMessage(error));
       }
     } finally {
       setCarregando(false);

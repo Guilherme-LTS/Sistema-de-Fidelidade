@@ -17,6 +17,7 @@ import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import resgatesRoutes from './modules/resgates/resgates.routes';
 import authRoutes from './modules/auth/auth.routes';
 import publicRoutes from './modules/public/public.routes';
+import { errorHandler } from './shared/middlewares/error-handler';
 
 dotenv.config();
 
@@ -65,5 +66,7 @@ app.use('/resgates', resgatesRoutes);
 app.use('/usuarios', usuariosRoutes);
 app.use('/admin', adminRoutes);
 app.use('/dashboard', dashboardRoutes);
+
+app.use(errorHandler);
 
 export default app;

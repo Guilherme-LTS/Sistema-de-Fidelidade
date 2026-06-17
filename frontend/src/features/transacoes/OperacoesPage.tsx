@@ -3,12 +3,9 @@ import React from 'react';
 import TransacaoForm from './TransacaoForm';
 import ConsultaSaldo from '../clientes/ConsultaSaldo';
 import ResgateRecompensa from '../recompensas/ResgateRecompensa';
-import { getUser } from '../auth/auth';
 import { Settings2 } from 'lucide-react';
 
 function OperacoesPage() {
-  const usuario = getUser() as any;
-
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
@@ -26,13 +23,11 @@ function OperacoesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
-        {usuario && usuario.role === 'admin' && (
-          <div className="flex flex-col gap-6">
-            <TransacaoForm />
-          </div>
-        )}
         <div className="flex flex-col gap-6">
-          <ConsultaSaldo onConsulta={() => {}} onNotFound={() => {}} />
+          <TransacaoForm />
+        </div>
+        <div className="flex flex-col gap-6">
+          <ConsultaSaldo onConsulta={() => {}} />
         </div>
         <div className="flex flex-col gap-6">
           <ResgateRecompensa />

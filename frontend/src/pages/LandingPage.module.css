@@ -55,7 +55,7 @@
 .brandName {
   font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .brandAccent {
@@ -132,7 +132,7 @@
 .detailHero h1,
 .titleBlock h1 {
   margin: 0;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .authBox h1 {
@@ -350,6 +350,8 @@
 .partnerInfo {
   display: grid;
   gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .partnerInfo strong,
@@ -365,9 +367,25 @@
   font-size: 1.05rem;
 }
 
-.partnerPoints {
+.partnerInfo small {
+  color: var(--muted);
+}
+
+.partnerAction {
   margin-left: auto;
+  display: grid;
+  gap: 0.15rem;
+  text-align: right;
+  color: var(--primary);
+}
+
+.partnerAction strong {
   font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.partnerAction span {
+  font-size: 0.78rem;
   font-weight: 800;
   color: var(--primary);
 }
@@ -423,7 +441,7 @@
 .metricCard strong {
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   color: var(--primary);
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .detailLayout {
@@ -570,8 +588,9 @@
     align-items: flex-start;
   }
 
-  .partnerPoints {
+  .partnerAction {
     margin-left: 0;
+    text-align: left;
   }
 
   .partnerIdentity {
