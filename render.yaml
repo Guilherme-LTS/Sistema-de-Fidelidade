@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: backend
+    env: node
+    region: sao-paulo
+    plan: free
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        sync: false
