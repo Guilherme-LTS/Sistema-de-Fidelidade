@@ -1,110 +1,562 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import ConsultaSaldo from '../components/ConsultaSaldo';
 import styles from './LandingPage.module.css';
 
+const CUSTOMER_SESSION_KEY = 'fidelizi.customer.session.v1';
+
+const normalizeDocument = (value) => value.replace(/\D/g, '').slice(0, 11);
+
+const formatDocument = (value) =>
+  normalizeDocument(value)
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+
+const formatPoints = (value) => Number(value || 0).toLocaleString('pt-BR');
+
+const formatDate = (dateValue) => {
+  if (!dateValue) return '--';
+  return new Date(dateValue).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
+const formatDateTime = (dateValue) => {
+  if (!dateValue) return '--';
+  return new Date(dateValue).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getPartnerInitials = (name) => {
+  if (!name) return 'PT';
+  const words = name.trim().split(/\s+/).slice(0, 2);
+  return words.map((word) => word.charAt(0).toUpperCase()).join('');
+};
+
+const getPartnerStatus = (partner) => {
+  const expiringPoints = Number(partner?.pontos_expirando || 0);
+  const pendingPoints = Number(partner?.pontos_pendentes || 0);
+  const redemptions = Number(partner?.total_resgates || 0);
+  const transactions = Number(partner?.total_transacoes || 0);
+
+  if (expiringPoints > 0) {
+    return `${formatPoints(expiringPoints)} pontos vencem em ${formatDate(partner.data_proxima_expiracao)}`;
+  }
+
+  if (pendingPoints > 0) {
+    return `${formatPoints(pendingPoints)} pontos pendentes`;
+  }
+
+  if (redemptions > 0) {
+    return `${redemptions} resgate${redemptions === 1 ? '' : 's'} realizado${redemptions === 1 ? '' : 's'}`;
+  }
+
+  if (transactions > 0) {
+    return `${transactions} compra${transactions === 1 ? '' : 's'} registrada${transactions === 1 ? '' : 's'}`;
+  }
+
+  return 'Cadastro ativo neste restaurante';
+};
+
+const readCustomerSession = () => {
+  try {
+    const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.document) return null;
+    return {
+      document: normalizeDocument(parsed.document),
+      name: (parsed.name || 'Cliente').trim() || 'Cliente',
+    };
+  } catch {
+    return null;
+  }
+};
+
 function LandingPage() {
-  const [view, setView] = useState('escolha');
-  const navigate = useNavigate();
+  const { tenantSlug } = useParams();
+  const apiBase = process.env.REACT_APP_API_URL;
+  const publicTenantIdFromEnv = process.env.REACT_APP_PUBLIC_TENANT_ID || '';
 
-  // Estados para a lista de recompensas e o saldo do cliente
-  const [recompensas, setRecompensas] = useState([]);
-  const [loadingRecompensas, setLoadingRecompensas] = useState(true);
-  const [saldoCliente, setSaldoCliente] = useState(null);
+  const [customerSession, setCustomerSession] = useState(() => readCustomerSession());
+  const [authMode, setAuthMode] = useState('login');
+  const [documentInput, setDocumentInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
-  // Efeito para buscar as recompensas uma vez, quando a página carrega
+  const [balances, setBalances] = useState([]);
+  const [loadingBalances, setLoadingBalances] = useState(false);
+  const [balancesError, setBalancesError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [selectedPartner, setSelectedPartner] = useState(null);
+  const [statement, setStatement] = useState([]);
+  const [rewards, setRewards] = useState([]);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [detailError, setDetailError] = useState('');
+
+  const [tenantResolving, setTenantResolving] = useState(Boolean(tenantSlug));
+  const [resolvedTenantId, setResolvedTenantId] = useState('');
+  const [tenantResolveError, setTenantResolveError] = useState('');
+  const activePublicTenantId = resolvedTenantId || publicTenantIdFromEnv;
+
+  const filteredBalances = useMemo(() => {
+    if (!searchTerm.trim()) return balances;
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    return balances.filter((item) =>
+      String(item.tenant_name || '')
+        .toLowerCase()
+        .includes(normalizedSearch)
+    );
+  }, [balances, searchTerm]);
+
+  const loadBalances = useCallback(async (session, preferredTenantId = '') => {
+    if (!session?.document) return;
+
+    try {
+      setLoadingBalances(true);
+      setBalancesError('');
+      const queryParams = new URLSearchParams();
+      const publicTenantId = preferredTenantId || publicTenantIdFromEnv;
+      let endpoint = `${apiBase}/public/pontos/${session.document}/restaurantes`;
+
+      if (publicTenantId) {
+        queryParams.set('tenant_id', publicTenantId);
+        endpoint = `${apiBase}/public/pontos/${session.document}`;
+      } else if (tenantSlug) {
+        queryParams.set('tenant_slug', tenantSlug);
+        endpoint = `${apiBase}/public/pontos/${session.document}`;
+      }
+
+      const query = queryParams.toString();
+      const response = await fetch(query ? `${endpoint}?${query}` : endpoint);
+
+      if (response.status === 404) {
+        setBalances([]);
+        setSelectedPartner(null);
+        setStatement([]);
+        setRewards([]);
+        return;
+      }
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao carregar seus pontos.');
+
+      const nextBalances = Array.isArray(data.saldos)
+        ? data.saldos
+        : Array.isArray(data.balances)
+          ? data.balances
+          : [];
+      setBalances(nextBalances);
+
+      if (nextBalances.length === 1 && (preferredTenantId || tenantSlug || publicTenantIdFromEnv)) {
+        setSelectedPartner(nextBalances[0]);
+      } else if (preferredTenantId && nextBalances.length > 0) {
+        const preferred = nextBalances.find((item) => item.tenant_id === preferredTenantId);
+        if (preferred) {
+          setSelectedPartner(preferred);
+        }
+      }
+    } catch (error) {
+      setBalancesError(error.message || 'Erro ao carregar seus pontos.');
+    } finally {
+      setLoadingBalances(false);
+    }
+  }, [apiBase, tenantSlug, publicTenantIdFromEnv]);
+
   useEffect(() => {
-    const fetchRecompensas = async () => {
+    if (!customerSession) return;
+    loadBalances(customerSession, activePublicTenantId);
+  }, [customerSession, activePublicTenantId, loadBalances]);
+
+  useEffect(() => {
+    if (!tenantSlug) {
+      setTenantResolving(false);
+      setResolvedTenantId('');
+      setTenantResolveError('');
+      return;
+    }
+
+    const resolveTenant = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/recompensas/publica`);
+        setTenantResolving(true);
+        setResolvedTenantId('');
+        setTenantResolveError('');
+        const response = await fetch(`${apiBase}/public/tenants/${encodeURIComponent(tenantSlug)}`);
         const data = await response.json();
-        if (!response.ok) throw new Error('Não foi possível carregar as recompensas.');
-        setRecompensas(data);
+        if (!response.ok) throw new Error(data.error || 'Não foi possível resolver o tenant.');
+        setResolvedTenantId(data.tenant_id || '');
       } catch (error) {
-        console.error(error);
+        setTenantResolveError('Não foi possível identificar o estabelecimento desta URL.');
       } finally {
-        setLoadingRecompensas(false);
+        setTenantResolving(false);
       }
     };
-    fetchRecompensas();
-  }, []);
 
-  const handleClienteNaoEncontrado = () => {
-    toast.info("CPF não encontrado. Por favor, faça seu cadastro para começar!");
-    navigate('/cadastro');
+    resolveTenant();
+  }, [tenantSlug, apiBase]);
+
+  const handleAuthenticate = async (event) => {
+    event.preventDefault();
+
+    const normalizedDocument = normalizeDocument(documentInput);
+    if (normalizedDocument.length !== 11) {
+      toast.warning('Informe um CPF válido para acessar seus pontos.');
+      return;
+    }
+
+    if (authMode === 'cadastro' && nameInput.trim().length < 2) {
+      toast.warning('Informe seu nome para concluir o cadastro.');
+      return;
+    }
+
+    setAuthLoading(true);
+    const session = {
+      document: normalizedDocument,
+      name: (nameInput.trim() || customerSession?.name || 'Cliente'),
+    };
+
+    try {
+      localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(session));
+      setCustomerSession(session);
+      setSelectedPartner(null);
+      setStatement([]);
+      setRewards([]);
+      setSearchTerm('');
+      void loadBalances(session, activePublicTenantId);
+      if (authMode === 'cadastro') {
+        toast.success('Cadastro concluído. Bem-vindo ao Fidelizi!');
+      }
+    } catch {
+      toast.error('Não foi possível salvar sua sessão local.');
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
-  // Função para receber o saldo do componente ConsultaSaldo
-  const handleConsulta = (saldo) => {
-    setSaldoCliente(saldo);
+  const handleLogout = () => {
+    localStorage.removeItem(CUSTOMER_SESSION_KEY);
+    setCustomerSession(null);
+    setDocumentInput('');
+    setNameInput('');
+    setBalances([]);
+    setSelectedPartner(null);
+    setStatement([]);
+    setRewards([]);
+    setBalancesError('');
+    setDetailError('');
   };
 
-  const handleVoltar = () => {
-    setSaldoCliente(null);
-    setView('escolha');
+  const handleOpenPartner = useCallback(
+    async (partner) => {
+      if (!partner?.tenant_id || !customerSession?.document) return;
+
+      setSelectedPartner(partner);
+      setLoadingDetail(true);
+      setDetailError('');
+      setStatement([]);
+      setRewards([]);
+
+      try {
+        const [statementRes, rewardsRes] = await Promise.all([
+          fetch(`${apiBase}/public/extrato/${customerSession.document}?tenant_id=${encodeURIComponent(partner.tenant_id)}`),
+          fetch(`${apiBase}/public/rewards?tenant_id=${encodeURIComponent(partner.tenant_id)}`),
+        ]);
+
+        const statementData = await statementRes.json();
+        const rewardsData = await rewardsRes.json();
+
+        if (!statementRes.ok && statementRes.status !== 404) {
+          throw new Error(statementData.error || 'Erro ao carregar extrato.');
+        }
+        if (!rewardsRes.ok) {
+          throw new Error(rewardsData.error || 'Erro ao carregar recompensas.');
+        }
+
+        setStatement(Array.isArray(statementData.statement) ? statementData.statement : []);
+        setRewards(Array.isArray(rewardsData.rewards) ? rewardsData.rewards : []);
+      } catch (error) {
+        setDetailError(error.message || 'Erro ao carregar detalhes do restaurante.');
+      } finally {
+        setLoadingDetail(false);
+      }
+    },
+    [apiBase, customerSession]
+  );
+
+  useEffect(() => {
+    if (!selectedPartner) return;
+    handleOpenPartner(selectedPartner);
+  }, [selectedPartner, handleOpenPartner]);
+
+  const handleBackToList = () => {
+    setSelectedPartner(null);
+    setStatement([]);
+    setRewards([]);
+    setDetailError('');
   };
+
+  const isAuthenticated = Boolean(customerSession?.document);
+
+  const selectedAvailablePoints = Number(selectedPartner?.pontos_disponiveis || 0);
+
+  const nextExpiringPoints = Number(selectedPartner?.pontos_expirando || 0);
+
+  const partnerSubtitle =
+    nextExpiringPoints > 0
+      ? `${formatPoints(nextExpiringPoints)} pontos vencem em ${formatDate(selectedPartner?.data_proxima_expiracao)}`
+      : 'Sem pontos próximos do vencimento';
 
   return (
     <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <h1>Bem-vindo ao Programa de Fidelidade!</h1>
-        <p>Participe do nosso programa de pontos e troque por prêmios incríveis.</p>
+      <header className={styles.topBar}>
+        <div className={styles.brandBlock}>
+          <img src="/logo192.png" alt="Logo Fidelidade" className={styles.brandLogo} />
+          <span className={styles.brandName}>Fidelidade</span>
+          <span className={styles.brandAccent}>Pro</span>
+        </div>
+        <div className={styles.topActions}>
+          {isAuthenticated && (
+            <button type="button" className={styles.logoutButton} onClick={handleLogout}>
+              Sair
+            </button>
+          )}
+          <Link to="/login" className={styles.operatorLink}>
+            Área do operador
+          </Link>
+        </div>
       </header>
-      
+
       <main className={styles.mainContent}>
-        {view === 'escolha' && (
-          <div className={styles.escolhaContainer}>
-            <Link to="/cadastro" className={`${styles.btn} ${styles.btnPrimario}`}>
-              Quero Fazer Meu Cadastro
-            </Link>
-            <button onClick={() => setView('consulta')} className={`${styles.btn} ${styles.btnSecundario}`}>
-              Já Tenho Cadastro
-            </button>
-          </div>
-        )}
+        {!isAuthenticated ? (
+          <section className={styles.authPanel}>
+            <div className={styles.authBox}>
+              <h1>Entre para ver seus pontos</h1>
+              <p>
+                Consulte seu saldo em todos os restaurantes parceiros e acompanhe ganhos e resgates em um só lugar.
+              </p>
 
-        {view === 'consulta' && (
-          <div className={styles.consultaSection}>
-            <div className={styles.consultaSaldoWrapper}>
-              <ConsultaSaldo onNotFound={handleClienteNaoEncontrado} onConsulta={handleConsulta} />
+              <div className={styles.authTabs}>
+                <button
+                  type="button"
+                  className={`${styles.authTab} ${authMode === 'login' ? styles.authTabActive : ''}`}
+                  onClick={() => setAuthMode('login')}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.authTab} ${authMode === 'cadastro' ? styles.authTabActive : ''}`}
+                  onClick={() => setAuthMode('cadastro')}
+                >
+                  Cadastro
+                </button>
+              </div>
+
+              <form className={styles.authForm} onSubmit={handleAuthenticate}>
+                {authMode === 'cadastro' && (
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="Seu nome"
+                    value={nameInput}
+                    onChange={(event) => setNameInput(event.target.value)}
+                  />
+                )}
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="CPF"
+                  maxLength={14}
+                  value={documentInput}
+                  onChange={(event) => setDocumentInput(formatDocument(event.target.value))}
+                />
+                <button type="submit" className={styles.primaryButton} disabled={authLoading}>
+                  {authLoading ? 'Acessando...' : authMode === 'cadastro' ? 'Criar conta' : 'Entrar'}
+                </button>
+              </form>
+
+              <small className={styles.helperText}>
+                Ao continuar, você confirma que deseja acessar seu histórico do programa de fidelidade.
+              </small>
             </div>
-            
-            {/* Seção de recompensas, agora dentro da visão de consulta */}
-            <section className={styles.recompensasSection} aria-live="polite">
-              <h2>Nossos Prêmios</h2>
-              {loadingRecompensas ? (
-                <p className={styles.infoText}>Carregando premios disponiveis...</p>
-              ) : recompensas.length === 0 ? (
-                <p className={styles.infoText}>No momento nao ha premios ativos. Consulte novamente em breve.</p>
-              ) : (
-                <ul className={styles.recompensasList}>
-                  {recompensas.map((rec, index) => {
-                    const podeResgatar = saldoCliente !== null && saldoCliente >= rec.custo_pontos;
-                    const itemClass = `${styles.recompensaItem} ${podeResgatar ? styles.resgatavel : ''}`;
-                    return (
-                      <li key={index} className={itemClass}>
-                        <span className={styles.recompensaNome}>{rec.nome}</span>
-                        <span className={styles.recompensaPontos}>{rec.custo_pontos} pts</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
+          </section>
+        ) : !selectedPartner ? (
+          <section className={styles.listScreen}>
+            <div className={styles.titleBlock}>
+              <h1>
+                Olá <span>{customerSession.name.toUpperCase()}</span>! Seus pontos por restaurante:
+              </h1>
+              <p>Aqui aparecem apenas os restaurantes onde você já acumulou pontos.</p>
+              {tenantResolving && <p className={styles.infoText}>Identificando estabelecimento do link...</p>}
+              {tenantResolveError && <p className={styles.errorText}>{tenantResolveError}</p>}
+            </div>
 
-            <button onClick={handleVoltar} className={styles.backLink}>
-              &larr; Voltar
-            </button>
-          </div>
+            <div className={styles.searchWrap}>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="Buscar estabelecimento..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
+
+            {loadingBalances ? (
+              <div className={styles.cardList}>
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={`loading-${index}`} className={`${styles.restaurantCard} ${styles.loadingCard}`}>
+                    <div className={styles.logoSkeleton} />
+                    <div className={styles.contentSkeleton}>
+                      <span />
+                      <span />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : balancesError ? (
+              <div className={styles.feedbackBox}>
+                <p>{balancesError}</p>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => loadBalances(customerSession, activePublicTenantId)}
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            ) : filteredBalances.length === 0 ? (
+              <div className={styles.feedbackBox}>
+                <h2>Você ainda não possui pontos em nenhum restaurante.</h2>
+                <p>Faça uma compra em um parceiro Fidelizi e volte para acompanhar seu saldo.</p>
+              </div>
+            ) : (
+              <div className={styles.cardList}>
+                {filteredBalances.map((partner) => (
+                  <button
+                    type="button"
+                    key={partner.tenant_id}
+                    className={styles.restaurantCard}
+                    onClick={() => setSelectedPartner(partner)}
+                  >
+                    <div className={styles.partnerLogo}>{getPartnerInitials(partner.tenant_name)}</div>
+                    <div className={styles.partnerInfo}>
+                      <strong>{partner.tenant_name}</strong>
+                      <span>{formatPoints(partner.pontos_disponiveis)} pontos disponíveis</span>
+                      <small>{getPartnerStatus(partner)}</small>
+                    </div>
+                    <div className={styles.partnerAction}>
+                      <strong>{formatPoints(partner.pontos_disponiveis)}</strong>
+                      <span>Ver detalhes</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        ) : (
+          <section className={styles.detailScreen}>
+            <div className={styles.detailHero}>
+              <button type="button" className={styles.backButton} onClick={handleBackToList}>
+                Voltar para lista
+              </button>
+              <div className={styles.partnerIdentity}>
+                <div className={styles.partnerLogoLarge}>{getPartnerInitials(selectedPartner.tenant_name)}</div>
+                <div>
+                  <h1>{selectedPartner.tenant_name}</h1>
+                  <p>{partnerSubtitle}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.metricsGrid}>
+              <article className={styles.metricCard}>
+                <h2>Saldo</h2>
+                <strong>{formatPoints(selectedAvailablePoints)} pontos</strong>
+                <span>+{formatPoints(selectedPartner.pontos_pendentes || 0)} pendentes</span>
+              </article>
+              <article className={styles.metricCard}>
+                <h2>Próximo Vencimento</h2>
+                <strong>{formatPoints(nextExpiringPoints)} pontos</strong>
+                <span>{formatDate(selectedPartner.data_proxima_expiracao)}</span>
+              </article>
+            </div>
+
+            {loadingDetail ? (
+              <div className={styles.feedbackBox}>
+                <p>Carregando extrato e recompensas...</p>
+              </div>
+            ) : detailError ? (
+              <div className={styles.feedbackBox}>
+                <p>{detailError}</p>
+                <button type="button" className={styles.secondaryButton} onClick={() => handleOpenPartner(selectedPartner)}>
+                  Recarregar detalhes
+                </button>
+              </div>
+            ) : (
+              <div className={styles.detailLayout}>
+                <section className={styles.statementPanel}>
+                  <h2>Extrato</h2>
+                  {statement.length === 0 ? (
+                    <p className={styles.emptyText}>Ainda não há movimentações para este restaurante.</p>
+                  ) : (
+                    <ul className={styles.statementList}>
+                      {statement.map((item, index) => (
+                        <li key={`${item.data}-${index}`} className={styles.statementItem}>
+                          <div>
+                            <strong>{item.descricao}</strong>
+                            <small>{formatDateTime(item.data)}</small>
+                          </div>
+                          <span className={item.tipo === 'credito' ? styles.credit : styles.debit}>
+                            {item.tipo === 'credito' ? '+' : '-'}{formatPoints(item.pontos)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+
+                <aside className={styles.redeemPanel}>
+                  <h2>Opções de Resgate</h2>
+                  {rewards.length === 0 ? (
+                    <p className={styles.emptyText}>Este restaurante ainda não publicou prêmios.</p>
+                  ) : (
+                    <ul className={styles.rewardsList}>
+                      {rewards.map((reward) => {
+                        const cost = Number(reward.points_cost || 0);
+                        const canRedeem = selectedAvailablePoints >= cost;
+
+                        return (
+                          <li key={reward.id} className={styles.rewardItem}>
+                            <div>
+                              <strong>{reward.name}</strong>
+                              <p>{reward.description || 'Recompensa sem descrição.'}</p>
+                              <small>{formatPoints(cost)} pontos</small>
+                            </div>
+                            <button type="button" className={styles.redeemButton} disabled={!canRedeem}>
+                              {canRedeem ? 'Disponível' : 'Pontos insuficientes'}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </aside>
+              </div>
+            )}
+          </section>
         )}
       </main>
 
-      <footer className={styles.footer}>
-        <Link to="/login" className={styles.adminLink}>
-          Acesso do Operador
-        </Link>
-      </footer>
+      <footer className={styles.footer}>fidelizi 2026 • Todos os direitos reservados</footer>
     </div>
   );
 }

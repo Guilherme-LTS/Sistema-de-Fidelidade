@@ -1,16 +1,15 @@
+import { CalendarClock, Info } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import styles from './ConsultaSaldo.module.css';
 
-// 1. A função formatarData foi movida para fora para melhor organização
 const formatarData = (dataISO) => {
   if (!dataISO) return '';
   const data = new Date(dataISO);
-  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return new Date(data.getTime() + data.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-// 2. Aceitamos a nova propriedade 'onNotFound'
-function ConsultaSaldo({ onConsulta, onNotFound }) {
+function ConsultaSaldo({ onConsulta, onNotFound, tenantId, tenantSlug }) {
   const [cpf, setCpf] = useState('');
   const [cliente, setCliente] = useState(null);
   const [carregando, setCarregando] = useState(false);
@@ -30,18 +29,27 @@ function ConsultaSaldo({ onConsulta, onNotFound }) {
     if (onConsulta) onConsulta(null);
 
     const cpfLimpo = cpf.replace(/\D/g, '');
+    const publicTenantId = tenantId || process.env.REACT_APP_PUBLIC_TENANT_ID;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/clientes/${cpfLimpo}`);
+      let endpoint = `${process.env.REACT_APP_API_URL}/public/pontos/${cpfLimpo}`;
+      const queryParams = new URLSearchParams();
+      if (publicTenantId) {
+        queryParams.set('tenant_id', publicTenantId);
+      } else if (tenantSlug) {
+        queryParams.set('tenant_slug', tenantSlug);
+      }
+      const query = queryParams.toString();
+      if (query) endpoint = `${endpoint}?${query}`;
+
+      const response = await fetch(endpoint);
       
-      // 3. Verificamos especificamente se o cliente não foi encontrado (status 404)
       if (response.status === 404) {
-        // Se for 404, chamamos a função onNotFound que veio da LandingPage
         if (onNotFound) {
           onNotFound();
         }
         setCarregando(false);
-        return; // Interrompemos a execução para não dar erro de JSON
+        return; 
       }
 
       const data = await response.json();
@@ -49,9 +57,23 @@ function ConsultaSaldo({ onConsulta, onNotFound }) {
         throw new Error(data.error);
       }
 
-      setCliente(data);
+      const saldo = Array.isArray(data.saldos) && data.saldos.length > 0 ? data.saldos[0] : null;
+      if (!saldo) {
+        throw new Error('Nenhum saldo encontrado para este documento.');
+      }
+
+      const clienteNormalizado = {
+        nome: saldo.customer_name,
+        pontosDisponiveis: saldo.pontos_disponiveis || 0,
+        pontosPendentes: saldo.pontos_pendentes || 0,
+        dataProximaLiberacao: saldo.data_proxima_liberacao || null,
+        pontosExpirando: saldo.pontos_expirando || 0,
+        dataProximaExpiracao: saldo.data_proxima_expiracao || null,
+      };
+
+      setCliente(clienteNormalizado);
       if (onConsulta) {
-        onConsulta(data.pontosDisponiveis);
+        onConsulta(clienteNormalizado.pontosDisponiveis);
       }
     } catch (error) {
       setCliente(null);
@@ -61,7 +83,6 @@ function ConsultaSaldo({ onConsulta, onNotFound }) {
     }
   };
 
-  // O JSX do componente permanece o mesmo
   return (
     <div className={styles.formContainer}>
       <h2 className={styles.heading}>Consulte seus Pontos</h2>
@@ -82,8 +103,38 @@ function ConsultaSaldo({ onConsulta, onNotFound }) {
             <span className={styles.pointsLabel}>Pontos Disponíveis</span>
             <span className={styles.pointsValue}>{cliente.pontosDisponiveis}</span>
           </div>
-          {cliente.pontosPendentes > 0 && <p className={styles.infoMessage}>Você tem <strong>{cliente.pontosPendentes} pontos</strong> a serem liberados em breve.</p>}
-          {cliente.proximoVencimento && <p className={styles.warningMessage}>Atenção: Parte dos seus pontos expira em <strong>{formatarData(cliente.proximoVencimento)}</strong>. Aproveite!</p>}
+
+          {cliente.pontosPendentes > 0 && (
+            <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-start gap-3 mt-4 text-left">
+              <Info className="h-5 w-5 text-slate-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-slate-800 font-medium">
+                  {cliente.pontosPendentes} pontos pendentes
+                </p>
+                {cliente.dataProximaLiberacao && (
+                  <p className="text-xs text-slate-600 mt-1">
+                    Próxima liberação em: {formatarData(cliente.dataProximaLiberacao)}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {cliente.pontosExpirando > 0 && (
+            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-start gap-3 mt-4 text-left">
+              <CalendarClock className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5 animate-pulse" />
+              <div>
+                <p className="text-sm text-emerald-900 font-bold">
+                  Atenção: {cliente.pontosExpirando} pontos expiram em breve!
+                </p>
+                {cliente.dataProximaExpiracao && (
+                  <p className="text-xs text-emerald-800 mt-1">
+                    Data mais urgente: {formatarData(cliente.dataProximaExpiracao)}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -91,4 +142,3 @@ function ConsultaSaldo({ onConsulta, onNotFound }) {
 }
 
 export default ConsultaSaldo;
-

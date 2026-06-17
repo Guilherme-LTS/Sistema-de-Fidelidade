@@ -1,383 +1,599 @@
-
-
-/* ===== FUNDAÇÃO E VARIÁVEIS ===== */
-:root {
-  --preto: #0d0d0d;
-  --amarelo-principal: #F4C542;
-  --dourado-detalhe: #D18F28;
-  --branco: #FFFFFF;
-  --cinza-texto: #c7c7c7;
-  --fundo-card: #1a1a1a;
-  --borda-suave: rgba(244, 197, 66, 0.2);
-  --input-fundo: #252525;
-}
-
-/* ===== ESTRUTURA DA PÁGINA ===== */
 .pageContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  --primary: var(--color-primary);
+  --primary-dark: var(--color-primary-dark);
+  --primary-soft: var(--color-primary-light);
+  --border: var(--color-border);
+  --text: var(--color-text);
+  --muted: var(--color-text-secondary);
+  --surface: var(--color-surface);
+  --surface-alt: var(--color-surface-alt);
+  --danger: var(--color-danger);
+  --success: var(--color-success);
+
   min-height: 100vh;
-  padding: 2rem 1rem;
-  background-color: var(--preto);
-  /* Efeito de luz sutil no fundo */
-  background-image: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.05) 0%, var(--preto) 60%);
-  color: var(--branco);
-  font-family: 'Montserrat', sans-serif;
-  text-align: center;
-  overflow-x: hidden;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 30%),
+    radial-gradient(circle at top right, rgba(244, 197, 66, 0.10), transparent 26%),
+    var(--color-bg);
 }
 
-/* ===== CARD PRINCIPAL ===== */
-.mainContent {
-  width: 100%;
-  max-width: 600px;
-  background: var(--fundo-card);
-  border: 1px solid var(--borda-suave);
-  border-radius: 16px;
-  padding: clamp(1.5rem, 5vw, 3rem);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
-  animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-}
-
-/* ===== CABEÇALHO ===== */
-.header h1 {
-  font-size: clamp(2rem, 6vw, 3rem);
-  font-weight: 700;
-  color: var(--amarelo-principal);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 0 8px rgba(244, 197, 66, 0.3);
-}
-
-.header p {
-  font-size: 1rem;
-  color: var(--cinza-texto);
-  margin-bottom: 2.5rem;
-  max-width: 450px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* ===== BOTÕES DE ESCOLHA ===== */
-.escolhaContainer {
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  align-items: center;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(215, 222, 234, 0.8);
 }
 
-.btn {
+.brandBlock,
+.topActions,
+.partnerIdentity {
   display: flex;
-  justify-content: center;
   align-items: center;
-  width: 100%;
-  max-width: 380px;
-  padding: 1rem 2rem;
+}
+
+.brandBlock {
+  gap: 0.65rem;
+}
+
+.brandLogo {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 14px;
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.brandName {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.brandAccent {
+  font-size: 1.05rem;
   font-weight: 700;
-  text-decoration: none;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  border: 2px solid transparent;
+  color: var(--primary);
+}
+
+.topActions {
+  gap: 0.75rem;
+}
+
+.operatorLink,
+.logoutButton,
+.secondaryButton,
+.backButton,
+.redeemButton,
+.primaryButton {
+  border: 0;
+  border-radius: 14px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
 }
 
-.btnPrimario {
-  background-color: var(--amarelo-principal);
-  color: var(--preto);
-  box-shadow: 0 8px 20px rgba(244, 197, 66, 0.24);
+.operatorLink,
+.logoutButton,
+.secondaryButton,
+.backButton {
+  padding: 0.8rem 1rem;
+  background: var(--surface);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
-.btnPrimario:hover {
-  transform: translateY(-4px) scale(1.03);
-  background-color: var(--dourado-detalhe);
-  box-shadow: 0 8px 25px rgba(209, 143, 40, 0.3);
+.logoutButton {
+  color: var(--danger);
 }
 
-.btnSecundario {
-  background-color: transparent;
-  color: var(--amarelo-principal);
-  border-color: var(--amarelo-principal);
+.mainContent {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 0 3rem;
 }
 
-.btnSecundario:hover {
-  background-color: var(--amarelo-principal);
-  color: var(--preto);
-  transform: translateY(-4px);
+.authPanel {
+  min-height: calc(100vh - 170px);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 0;
+}
+
+.authBox,
+.detailHero,
+.feedbackBox,
+.metricCard,
+.statementPanel,
+.redeemPanel,
+.restaurantCard,
+.loadingCard {
+  background: var(--surface);
+  border: 1px solid rgba(215, 222, 234, 0.85);
+  box-shadow: var(--shadow-md);
+}
+
+.authBox {
+  width: min(100%, 460px);
+  border-radius: 28px;
+  padding: 2.5rem;
+  animation: slideUp 0.45s ease-out both;
+}
+
+.authBox h1,
+.detailHero h1,
+.titleBlock h1 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.authBox h1 {
+  font-size: clamp(2rem, 4vw, 2.6rem);
+}
+
+.authBox p,
+.titleBlock p,
+.feedbackBox p,
+.metricCard span,
+.statementItem small,
+.rewardItem p,
+.redeemPanel p,
+.emptyText,
+.helperText,
+.infoText,
+.errorText,
+.footer {
+  color: var(--muted);
+}
+
+.authTabs {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--surface-alt);
+  padding: 0.4rem;
+  border-radius: 16px;
+  margin: 1.5rem 0;
+}
+
+.authTab {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  background: transparent;
+  color: var(--muted);
+}
+
+.authTabActive {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.authForm,
+.searchWrap {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 1rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 1rem;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.primaryButton {
+  min-height: 52px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.18);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.redeemButton:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled),
+.logoutButton:hover,
+.backButton:hover,
+.operatorLink:hover {
+  transform: translateY(-1px);
+}
+
+.listScreen,
+.detailScreen {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.titleBlock {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.titleBlock h1 {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
+
+.titleBlock h1 span {
+  color: var(--primary);
 }
 
 .infoText {
   margin: 0;
-  color: var(--cinza-texto);
-  text-align: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px dashed rgba(244, 197, 66, 0.28);
-  border-radius: 8px;
-  padding: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.14);
 }
 
-/* ===== SEÇÃO DE CONSULTA E RECOMPENSAS ===== */
-.consultaSection {
-  width: 100%;
-  animation: fadeIn 0.5s ease-out;
-}
-
-.consultaSaldoWrapper {
-  margin-bottom: 2.5rem;
-}
-
-.consultaSaldoWrapper > div:first-child {
-  padding: 0;
-  border: none;
-  background-color: transparent;
-  box-shadow: none;
-}
-
-.consultaSaldoWrapper h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: var(--branco);
-}
-
-.consultaSaldoWrapper label {
-  color: var(--cinza-texto);
-  text-align: left;
-}
-
-.consultaSaldoWrapper input {
-  width: 100%;
-  padding: 0.9rem 1rem;
-  background-color: var(--input-fundo);
-  border: 1px solid #444;
-  border-radius: 8px;
-  font-size: 1rem;
-  color: var(--branco);
-  transition: all 0.3s ease;
-}
-
-.consultaSaldoWrapper input:focus {
-  outline: none;
-  border-color: var(--amarelo-principal);
-  box-shadow: 0 0 10px rgba(244, 197, 66, 0.2);
-}
-
-.consultaSaldoWrapper button {
-  /* Reutiliza a aparência do botão primário */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 1rem;
-  font-weight: 700;
-  text-decoration: none;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  background-color: var(--amarelo-principal);
-  color: var(--preto);
-  box-shadow: 0 4px 15px rgba(244, 197, 66, 0.2);
-  margin-top: 1rem;
-}
-
-.consultaSaldoWrapper button:hover {
-  transform: translateY(-4px) scale(1.03);
-  background-color: var(--dourado-detalhe);
-  box-shadow: 0 8px 25px rgba(209, 143, 40, 0.3);
-}
-
-.consultaSaldoWrapper button:disabled {
-  background-color: #555;
-  color: #999;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Estilos para a área de resultado da consulta */
-.consultaSaldoWrapper > div > div:last-child {
-  margin-top: 2rem;
-  border-top: 1px solid var(--borda-suave);
-  padding-top: 2rem;
-}
-
-.consultaSaldoWrapper p:first-child { /* welcomeMessage */
-  color: var(--cinza-texto);
-}
-
-.consultaSaldoWrapper div[class*="pointsDisplay"] {
-  background-color: rgba(0,0,0,0.2);
-  border: 1px solid var(--borda-suave);
-  color: var(--branco);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.consultaSaldoWrapper span[class*="pointsLabel"] {
-  color: var(--amarelo-principal);
-  opacity: 1;
-}
-
-.consultaSaldoWrapper span[class*="pointsValue"] {
-  font-size: 3rem;
-  font-weight: bold;
-  line-height: 1;
-  color: var(--branco);
-}
-
-.consultaSaldoWrapper p[class*="infoMessage"] {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: var(--cinza-texto);
-}
-
-.consultaSaldoWrapper p[class*="warningMessage"] {
-  background-color: rgba(209, 143, 40, 0.2);
-  color: var(--amarelo-principal);
-  border: 1px solid rgba(209, 143, 40, 0.5);
-}
-
-
-/* ===== SEÇÃO DE RECOMPENSAS ===== */
-.recompensasSection {
-  margin-top: 2rem;
-  text-align: left;
-}
-
-.recompensasSection h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: var(--amarelo-principal);
-  text-transform: uppercase;
-}
-
-.recompensasList {
-  list-style: none;
-  padding: 0;
+.errorText {
   margin: 0;
-  max-height: 250px;
-  overflow-y: auto;
-  padding-right: 10px; /* Espaço para a barra de rolagem */
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(198, 40, 40, 0.08);
+  border: 1px solid rgba(198, 40, 40, 0.18);
+  color: var(--danger);
 }
 
-.recompensaItem {
+.cardList,
+.metricsGrid,
+.detailLayout,
+.rewardsList {
+  display: grid;
+  gap: 1rem;
+}
+
+.cardList {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.restaurantCard {
+  width: 100%;
+  text-align: left;
+  padding: 1.15rem;
+  border-radius: 22px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.8rem 1rem;
-  border-bottom: 1px solid #333;
-  transition: all 0.3s ease;
-  opacity: 0;
-  transform: translateX(-20px);
-  animation: slideIn 0.5s forwards;
+  gap: 1rem;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
-.recompensaItem:last-child {
-  border-bottom: none;
+.restaurantCard:hover {
+  transform: translateY(-3px);
+  border-color: rgba(15, 118, 110, 0.35);
+  box-shadow: var(--shadow-lg);
 }
 
-.recompensaNome {
-  color: var(--cinza-texto);
+.loadingCard {
+  min-height: 96px;
+  border-radius: 22px;
+  overflow: hidden;
 }
 
-.recompensaPontos {
-  font-weight: bold;
-  color: var(--amarelo-principal);
-  background-color: #2a2a2a;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
+.logoSkeleton,
+.contentSkeleton span {
+  background: linear-gradient(90deg, rgba(215, 222, 234, 0.7), rgba(248, 250, 252, 0.95), rgba(215, 222, 234, 0.7));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
 }
 
-/* ===== ESTILO PARA ITEM RESGATÁVEL (A CORREÇÃO) ===== */
-.resgatavel {
-  background-color: rgba(244, 197, 66, 0.1);
-  border-left: 3px solid var(--amarelo-principal);
-  transform: scale(1.02);
-  border-radius: 4px;
+.logoSkeleton {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  flex-shrink: 0;
 }
 
-.resgatavel .recompensaNome {
-  color: var(--branco);
-  font-weight: 600;
+.contentSkeleton {
+  flex: 1;
+  display: grid;
+  gap: 0.6rem;
 }
 
-.resgatavel .recompensaPontos {
-  background-color: var(--amarelo-principal);
-  color: var(--preto);
-  box-shadow: 0 0 10px rgba(244, 197, 66, 0.4);
+.contentSkeleton span {
+  display: block;
+  height: 14px;
+  border-radius: 999px;
 }
 
-
-/* ===== RODAPÉ E LINKS ===== */
-.backLink, .footer {
-  margin-top: 2rem;
+.contentSkeleton span:last-child {
+  width: 62%;
 }
 
-.backLink, .adminLink {
-  color: var(--cinza-texto);
-  font-size: 0.9rem;
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  transition: color 0.3s ease;
+.partnerLogo,
+.partnerLogoLarge {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-weight: 800;
+  color: var(--primary);
+  background: var(--primary-soft);
 }
 
-.backLink:hover, .adminLink:hover {
-  color: var(--amarelo-principal);
+.partnerLogo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  font-size: 1.25rem;
+}
+
+.partnerLogoLarge {
+  width: 78px;
+  height: 78px;
+  border-radius: 22px;
+  font-size: 1.35rem;
+}
+
+.partnerInfo {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.partnerInfo strong,
+.metricCard h2,
+.statementPanel h2,
+.redeemPanel h2,
+.feedbackBox h2,
+.rewardItem strong {
+  color: var(--text);
+}
+
+.partnerInfo strong {
+  font-size: 1.05rem;
+}
+
+.partnerInfo small {
+  color: var(--muted);
+}
+
+.partnerAction {
+  margin-left: auto;
+  display: grid;
+  gap: 0.15rem;
+  text-align: right;
+  color: var(--primary);
+}
+
+.partnerAction strong {
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.partnerAction span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.feedbackBox {
+  padding: 1.25rem;
+  border-radius: 22px;
+}
+
+.secondaryButton {
+  min-height: 44px;
+  background: var(--surface-alt);
+}
+
+.detailHero {
+  border-radius: 28px;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.backButton {
+  width: fit-content;
+}
+
+.partnerIdentity {
+  gap: 1rem;
+}
+
+.partnerIdentity h1 {
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+}
+
+.metricsGrid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.metricCard {
+  border-radius: 22px;
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.metricCard h2,
+.statementPanel h2,
+.redeemPanel h2,
+.feedbackBox h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.metricCard strong {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  color: var(--primary);
+  letter-spacing: 0;
+}
+
+.detailLayout {
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.95fr);
+}
+
+.statementPanel,
+.redeemPanel {
+  border-radius: 24px;
+  padding: 1.25rem;
+}
+
+.statementList,
+.rewardsList {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.statementList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.statementItem,
+.rewardItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 18px;
+  padding: 1rem;
+  background: var(--surface-alt);
+  border: 1px solid rgba(215, 222, 234, 0.9);
+}
+
+.statementItem strong,
+.rewardItem strong {
+  display: block;
+}
+
+.statementItem small {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.credit {
+  color: var(--success);
+  font-weight: 800;
+}
+
+.debit {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.rewardItem {
+  align-items: flex-start;
+}
+
+.rewardItem p {
+  margin: 0.35rem 0 0.25rem;
+}
+
+.redeemButton {
+  min-height: 42px;
+  padding: 0.65rem 0.95rem;
+  background: rgba(15, 118, 110, 0.10);
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.emptyText,
+.helperText {
+  margin: 0;
 }
 
 .footer {
-  width: 100%;
+  padding: 2rem 1.5rem 3rem;
   text-align: center;
+  font-size: 0.875rem;
 }
 
-/* ===== ANIMAÇÕES ===== */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideIn {
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
 }
 
-/* ===== BARRA DE ROLAGEM CUSTOMIZADA ===== */
-.recompensasList::-webkit-scrollbar {
-  width: 6px;
-}
-.recompensasList::-webkit-scrollbar-track {
-  background: #222;
-  border-radius: 10px;
-}
-.recompensasList::-webkit-scrollbar-thumb {
-  background: var(--dourado-detalhe);
-  border-radius: 10px;
-}
-.recompensasList::-webkit-scrollbar-thumb:hover {
-  background: var(--amarelo-principal);
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 
+@media (max-width: 900px) {
+  .detailLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .topBar {
+    padding: 0.9rem 1rem;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topActions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .authBox {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .mainContent {
+    width: min(100% - 1rem, 1180px);
+    padding-top: 1rem;
+  }
+
+  .authTabs {
+    flex-direction: column;
+  }
+
+  .cardList,
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .restaurantCard,
+  .statementItem,
+  .rewardItem {
+    align-items: flex-start;
+  }
+
+  .partnerAction {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .partnerIdentity {
+    align-items: flex-start;
+  }
+}
