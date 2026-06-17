@@ -38,20 +38,34 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+const envOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
+
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://sistema-fidelidade-flax.vercel.app'
+  'http://localhost:3004',
+  'https://sistema-fidelidade-flax.vercel.app',
+  ...envOrigins
 ];
 
 app.use(cors({
   origin: function (origin: any, callback: any) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      /^https:\/\/sistema-fidelidade-.*\.vercel\.app$/.test(origin);
+                      
+    if (isAllowed) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false); // Retorna false em vez de lançar erro para evitar crashes no Express
     }
   },
   credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 app.use(express.json());
