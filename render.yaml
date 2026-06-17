@@ -4,9 +4,6 @@ services:
     env: node
     region: sao-paulo
     plan: free
-    buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && npm start
+    buildCommand: cd backend && npm install --include=dev && npm run build
+    startCommand: cd backend && NODE_ENV=production npm start
     healthCheckPath: /
-    envVars:
-      - key: NODE_ENV
-        sync: false
