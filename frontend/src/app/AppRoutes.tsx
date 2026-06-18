@@ -14,7 +14,7 @@ import RegulamentoPage from '../features/RegulamentoPage';
 import CadastroPage from '../features/auth/CadastroPage';
 import AlterarSenhaPage from '../features/auth/AlterarSenhaPage';
 import UsuariosPage from '../features/usuarios/UsuariosPage';
-import ConfiguracoesPage from '../features/ConfiguracoesPage';
+import ConfiguracoesContainer from '../features/configuracoes/ConfiguracoesContainer';
 import AdminRoute from '../features/auth/AdminRoute';
 
 export default function AppRoutes() {
@@ -35,7 +35,7 @@ export default function AppRoutes() {
         <Route path="premios" element={<AdminRoute><PremiosPage /></AdminRoute>} />
         <Route path="auditoria" element={<AdminRoute><AuditoriaPage /></AdminRoute>} />
         <Route path="usuarios" element={<AdminRoute><UsuariosPage /></AdminRoute>} />
-        <Route path="configuracoes" element={<AdminRoute><ConfiguracoesPage /></AdminRoute>} />
+        <Route path="configuracoes" element={<AdminRoute><ConfiguracoesContainer /></AdminRoute>} />
         <Route path="operacoes" element={<OperacoesPage />} />
         <Route path="clientes" element={<ClientesPage />} />
         <Route path="alterar-senha" element={<AlterarSenhaPage />} />

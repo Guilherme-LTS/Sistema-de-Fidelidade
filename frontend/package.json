@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
     "@supabase/supabase-js": "^2.100.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/dom": "^10.4.0",

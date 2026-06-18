@@ -44,8 +44,18 @@ api.interceptors.response.use(
     const status = error.response.status;
     const data = error.response.data;
 
-    // Se a API backend estiver padronizada, ela envia a mensagem em "data.error" ou "data.message"
-    const errorMessage = data?.error || data?.message || 'Ocorreu um erro inesperado.';
+    // Se a resposta for HTML (ex: Render 404), data será uma string, o que quebra "data?.error".
+    let errorMessage = 'Ocorreu um erro inesperado.';
+    
+    if (typeof data === 'string') {
+      if (status === 404) {
+        errorMessage = 'Recurso não encontrado no servidor. Verifique se a última versão foi deployada (Erro 404).';
+      } else {
+        errorMessage = `Erro no servidor (Status ${status}).`;
+      }
+    } else {
+      errorMessage = data?.error || data?.message || errorMessage;
+    }
 
     // 401: Token expirado ou inválido
     if (status === 401) {

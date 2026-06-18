@@ -110,9 +110,110 @@ const updateTenantSettingsHandler = async (req: Request, res: Response) => {
   }
 };
 
+const getTenantProfileHandler = async (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest;
+  if (!ensureAdmin(authReq, res, 'Acesso negado.')) return;
+  const tenantId = requireTenantId(authReq, res);
+  if (!tenantId) return;
+
+  try {
+    const result = await queryWithRLS(
+      authReq,
+      `SELECT name, document, address_street, address_number, address_neighborhood, 
+              address_city, address_state, address_zip, latitude, longitude, 
+              whatsapp, instagram, facebook, tiktok, logo_url 
+       FROM tenants WHERE id = $1`,
+      [tenantId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Tenant não encontrado.' });
+    }
+    return res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao buscar perfil do tenant:', error);
+    return res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
+  }
+};
+
+const updateTenantProfileHandler = async (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest;
+  if (!ensureAdmin(authReq, res, 'Acesso negado.')) return;
+  const tenantId = requireTenantId(authReq, res);
+  if (!tenantId) return;
+
+  const { 
+    name, document, address_street, address_number, address_neighborhood, 
+    address_city, address_state, address_zip, latitude, longitude, 
+    whatsapp, instagram, facebook, tiktok, logo_url
+  } = req.body;
+
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'O nome do restaurante é obrigatório.' });
+  }
+
+  const sanitizeUrl = (url: string) => {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (trimmed === '') return null;
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
+  };
+
+  const sanitizePhone = (phone: string) => {
+    if (!phone) return null;
+    return phone.replace(/\D/g, '');
+  };
+
+  const cleanWhatsapp = sanitizePhone(whatsapp);
+  const cleanInstagram = sanitizeUrl(instagram);
+  const cleanFacebook = sanitizeUrl(facebook);
+  const cleanTiktok = sanitizeUrl(tiktok);
+
+  try {
+    await withRlsTransaction(authReq, async (client) => {
+      await client.query(`
+        UPDATE tenants 
+        SET name = $1, document = $2, address_street = $3, address_number = $4,
+            address_neighborhood = $5, address_city = $6, address_state = $7,
+            address_zip = $8, latitude = $9, longitude = $10,
+            whatsapp = $11, instagram = $12, facebook = $13, tiktok = $14,
+            logo_url = $15, updated_at = NOW()
+        WHERE id = $16
+      `, [
+        name, document, address_street, address_number, address_neighborhood,
+        address_city, address_state, address_zip, latitude, longitude,
+        cleanWhatsapp, cleanInstagram, cleanFacebook, cleanTiktok, logo_url, tenantId
+      ]);
+
+      await logAuditEvent({
+        req,
+        client,
+        tenantId,
+        operatorId: authReq.usuario?.id || null,
+        action: 'ALTERACAO_PERFIL_RESTAURANTE',
+        details: `Perfil atualizado: Nome=${name}, Documento=${document}`,
+        targetLabel: 'Perfil da Empresa',
+        impactLabel: `Nome: ${name}`,
+        status: 'SUCESSO',
+        entityType: 'tenants',
+      });
+    });
+
+    return res.status(200).json({ message: 'Perfil atualizado com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao atualizar perfil do tenant:', error);
+    return res.status(500).json({ error: 'Ocorreu um erro ao salvar o perfil.' });
+  }
+};
+
 router.get('/tenant_settings', verificaToken, getTenantSettingsHandler);
 router.get('/configuracoes', verificaToken, getTenantSettingsHandler);
 router.put('/tenant_settings', verificaToken, updateTenantSettingsHandler);
 router.put('/configuracoes', verificaToken, updateTenantSettingsHandler);
+
+router.get('/profile', verificaToken, getTenantProfileHandler);
+router.put('/profile', verificaToken, updateTenantProfileHandler);
 
 export default router;

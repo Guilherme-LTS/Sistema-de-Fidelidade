@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Sliders, Clock, History, Check } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import { Clock, History, Check } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import { toast } from "react-toastify";
-import { carregarConfiguracoesTenant, salvarConfiguracoesTenant } from "./configuracoes/configuracoes.api";
+import { carregarConfiguracoesTenant, salvarConfiguracoesTenant } from "./configuracoes.api";
 
-const ConfiguracoesPage = () => {
+const RegrasFidelidadeTab = () => {
   const [carenciaInput, setCarenciaInput] = useState<string>('0');
   const [expiracaoInput, setExpiracaoInput] = useState<string>('180');
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
@@ -71,17 +71,7 @@ const ConfiguracoesPage = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-          <Sliders className="h-8 w-8 text-indigo-600" />
-          Configurações de Regras
-        </h2>
-        <p className="text-slate-500 mt-1">
-          Gerencie as regras de validade e liberação de pontos para os clientes.
-        </p>
-      </div>
-
+    <div className="space-y-6">
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">
           <CardTitle className="text-lg font-semibold text-slate-800">Estados de Pontos</CardTitle>
@@ -203,4 +193,4 @@ const ConfiguracoesPage = () => {
   );
 };
 
-export default ConfiguracoesPage;
+export default RegrasFidelidadeTab;
