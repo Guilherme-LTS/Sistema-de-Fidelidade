@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { adminPool } from '../../infra/database/db';
-import { AuthenticatedRequest, withRlsTransaction } from '../../infra/database/db-rls';
+import { AuthenticatedRequest, withRlsTransaction, queryPublicWithRLS } from '../../infra/database/db-rls';
 import { requireTenantId, requireUserRole } from '../../shared/request-context';
 import { RecompensasRepository } from './recompensas.repository';
 import { RecompensasService } from './recompensas.service';
@@ -41,7 +41,8 @@ export async function listarRecompensasPublicasPorTenantController(req: Request,
     return res.status(400).json({ error: 'tenant_id invalido.' });
   }
 
-  const { rows } = await adminPool.query(
+  const { rows } = await queryPublicWithRLS(
+    tenantId,
     `
       SELECT r.id, r.name, r.description, r.points_cost
       FROM rewards r

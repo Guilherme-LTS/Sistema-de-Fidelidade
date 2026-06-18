@@ -148,3 +148,42 @@ export const queryWithRLS = async (req: AuthenticatedRequest, queryStr: string, 
     client.release();
   }
 };
+
+/**
+ * Wrapper de Transação para consultas públicas (unauthenticated).
+ * Ele utiliza o pool restrito (fidelidade_app) e injeta a claim do tenant_id 
+ * fornecido para garantir que o RLS filtre as linhas no banco de dados.
+ */
+export const queryPublicWithRLS = async (tenantId: string, queryStr: string, params: any[] = []) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const jwtClaims = JSON.stringify({
+      sub: null,
+      tenant_id: tenantId,
+      role: 'anon'
+    });
+
+    const sanitizedClaims = sanitizeJsonForSQL(jwtClaims);
+    await client.query(`SET LOCAL request.jwt.claims = '${sanitizedClaims}'`);
+
+    const fakeNow = getAppNowOverride();
+    if (fakeNow) {
+      await client.query("SELECT set_config('app.fake_now', $1, true)", [fakeNow.toISOString()]);
+    }
+
+    const result = await client.query(queryStr, params);
+    await client.query('COMMIT');
+    
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    await client.query("RESET request.jwt.claims").catch(() => {});
+    client.release();
+  }
+};
+

@@ -31,12 +31,20 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 1000, // Elevado para evitar falso-positivos em operadores ativos
   message: { error: 'Muitas requisicoes originadas deste IP, por favor tente novamente mais tarde.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use(limiter);
+
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30, // Limite rígido de 30 requisições por 15 minutos para segurança
+  message: { error: 'Muitas tentativas de consulta ou acesso deste IP. Por favor tente novamente mais tarde.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const envOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
@@ -71,8 +79,8 @@ app.use(cors({
 app.use(express.json());
 
 // Registro de rotas
-app.use('/auth', authRoutes);
-app.use('/public', publicRoutes);
+app.use('/auth', strictLimiter, authRoutes);
+app.use('/public', strictLimiter, publicRoutes);
 app.use('/clientes', clientesRoutes);
 app.use('/transacoes', transacoesRoutes); 
 app.use('/recompensas', recompensasRoutes);

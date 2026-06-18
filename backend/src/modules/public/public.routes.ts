@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { adminPool as pool } from '../../infra/database/db';
 import { getAppNow } from '../../shared/time/app-clock';
+import { queryPublicWithRLS } from '../../infra/database/db-rls';
 
 const router = Router();
 
@@ -55,7 +56,8 @@ router.get('/rewards', async (req: Request, res: Response) => {
   }
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await queryPublicWithRLS(
+      tenantId,
       `
         SELECT r.id, r.name, r.description, r.points_cost
         FROM rewards r
@@ -183,7 +185,26 @@ router.get('/pontos/:document', async (req: Request, res: Response) => {
 
   try {
     const appNow = getAppNow();
-    const { rows } = await pool.query(
+    let resolvedTenantId = tenantId;
+
+    if (!resolvedTenantId && tenantSlug) {
+      const tenantRes = await pool.query(
+        `SELECT id::text FROM tenants t WHERE t.is_active = true AND ${normalizeSlugSql} = lower(trim(both '-' from $1)) LIMIT 1`,
+        [tenantSlug]
+      );
+      if (tenantRes.rows.length > 0) {
+        resolvedTenantId = tenantRes.rows[0].id;
+      } else {
+        return res.status(404).json({ error: 'Nenhum ponto encontrado para este documento.' });
+      }
+    }
+
+    if (!resolvedTenantId) {
+      return res.status(400).json({ error: 'Nao foi possivel identificar o restaurante.' });
+    }
+
+    const { rows } = await queryPublicWithRLS(
+      resolvedTenantId,
       `
         WITH app_clock AS (SELECT $4::timestamptz AS now_at)
         SELECT
@@ -231,7 +252,7 @@ router.get('/pontos/:document', async (req: Request, res: Response) => {
         GROUP BY t.id, t.name, COALESCE(c.name, cp.name)
         LIMIT 1
       `,
-      [cpfLimpo, tenantId || null, tenantSlug || null, appNow],
+      [cpfLimpo, resolvedTenantId, tenantSlug || null, appNow],
     );
 
     if (rows.length === 0) {
@@ -264,7 +285,8 @@ router.get('/extrato/:document', async (req: Request, res: Response) => {
   }
 
   try {
-    const customerResult = await pool.query(
+    const customerResult = await queryPublicWithRLS(
+      tenantId,
       `
         SELECT c.id, COALESCE(c.name, cp.name) AS name
         FROM customers c
@@ -285,7 +307,8 @@ router.get('/extrato/:document', async (req: Request, res: Response) => {
     }
 
     const customerId = customerResult.rows[0].id;
-    const statementResult = await pool.query(
+    const statementResult = await queryPublicWithRLS(
+      tenantId,
       `
         SELECT * FROM (
           SELECT
