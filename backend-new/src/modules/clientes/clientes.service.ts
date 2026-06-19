@@ -1,6 +1,6 @@
-import { eq, and, or, ilike, desc, count } from "drizzle-orm";
+import { eq, and, or, ilike, desc, count, sql } from "drizzle-orm";
 import { db } from "../../infra/database/db.js";
-import { customers } from "../../infra/database/schema.js";
+import { customers, consumerProfiles } from "../../infra/database/schema.js";
 import { validateAndCleanCPF } from "../../shared/validators/cpf.js";
 import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
 
@@ -51,6 +51,29 @@ export class ClientesService {
     };
   }
 
+  async buscarPorCpf(tenantId: string, document: string) {
+    const cpfValidation = validateAndCleanCPF(document);
+    if (!cpfValidation.isValid) {
+      throw new AppError(cpfValidation.error || "CPF inválido.");
+    }
+
+    const cliente = await db.query.customers.findFirst({
+      where: (c, { eq, and }) => and(
+        eq(c.tenantId, tenantId),
+        eq(c.document, cpfValidation.cleaned)
+      )
+    });
+
+    if (!cliente) return null;
+
+    return {
+      id: cliente.id,
+      document: cliente.document,
+      nome: cliente.name,
+      totalPoints: cliente.totalPoints,
+    };
+  }
+
   async cadastrarCliente(tenantId: string, input: { nome: string; document: string; lgpdConsentimento: boolean }) {
     if (!input.nome || !input.document) {
       throw new AppError("Nome e CPF são obrigatórios.");
@@ -65,16 +88,16 @@ export class ClientesService {
       throw new AppError(cpfValidation.error || "CPF inválido.");
     }
 
-    // Upsert equivalent: check if exists, update or insert. Or just insert.
-    // Drizzle has onConflictDoUpdate
-    const result = await db.insert(customers).values({
-      tenantId,
-      document: cpfValidation.cleaned,
+    const cleanedDoc = cpfValidation.cleaned;
+
+    // 1. Criar ou atualizar consumer_profile
+    let [profile] = await db.insert(consumerProfiles).values({
+      document: cleanedDoc,
       name: input.nome,
       lgpdConsent: input.lgpdConsentimento,
       consentDate: new Date().toISOString(),
     }).onConflictDoUpdate({
-      target: [customers.tenantId, customers.document], // Wait, is there a unique constraint on (tenant_id, document)? Yes, in migration 004!
+      target: [consumerProfiles.document],
       set: {
         name: input.nome,
         lgpdConsent: input.lgpdConsentimento,
@@ -83,7 +106,25 @@ export class ClientesService {
       }
     }).returning();
 
-    return result[0];
+    // 2. Criar ou atualizar customer
+    const [cliente] = await db.insert(customers).values({
+      tenantId,
+      consumerProfileId: profile.id,
+      document: cleanedDoc,
+      name: input.nome,
+      lgpdConsent: input.lgpdConsentimento,
+      consentDate: new Date().toISOString(),
+    }).onConflictDoUpdate({
+      target: [customers.tenantId, customers.document],
+      set: {
+        name: input.nome,
+        lgpdConsent: input.lgpdConsentimento,
+        consentDate: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    }).returning();
+
+    return cliente;
   }
   async consultarSaldo(tenantId: string, document: string) {
     const cpfValidation = validateAndCleanCPF(document);
@@ -102,17 +143,66 @@ export class ClientesService {
       throw new NotFoundError("Cliente não encontrado.");
     }
 
+    const now = new Date().toISOString();
+
+    const resultDisponiveis = await db.execute(sql`
+      SELECT COALESCE(SUM(remaining_points), 0) as total 
+      FROM transactions 
+      WHERE customer_id = ${cliente.id} 
+        AND tenant_id = ${tenantId} 
+        AND available_at <= ${now} 
+        AND expires_at > ${now}
+    `);
+    const disponiveis = resultDisponiveis.rows[0] as any;
+
+    const resultPendentes = await db.execute(sql`
+      SELECT COALESCE(SUM(remaining_points), 0) as total 
+      FROM transactions 
+      WHERE customer_id = ${cliente.id} 
+        AND tenant_id = ${tenantId} 
+        AND available_at > ${now}
+    `);
+    const pendentes = resultPendentes.rows[0] as any;
+
+    const resultExpirando = await db.execute(sql`
+      SELECT COALESCE(SUM(remaining_points), 0) as total, MIN(expires_at) as data_proxima_expiracao 
+      FROM transactions 
+      WHERE customer_id = ${cliente.id} 
+        AND tenant_id = ${tenantId} 
+        AND available_at <= ${now} 
+        AND expires_at > ${now} 
+        AND expires_at <= (${now}::timestamp + INTERVAL '7 days') 
+        AND remaining_points > 0
+    `);
+    const expirando = resultExpirando.rows[0] as any;
+
+    const historicoTransacoes = await db.query.transactions.findMany({
+      where: (t, { eq, and }) => and(
+        eq(t.customerId, cliente.id),
+        eq(t.tenantId, tenantId)
+      ),
+      orderBy: (t, { desc }) => [desc(t.createdAt)],
+      limit: 50,
+    });
+
+    const extrato = historicoTransacoes.map(t => ({
+      data: t.createdAt,
+      tipo: "credito",
+      descricao: `Lançamento - Compra R$ ${t.amountSpent}`,
+      pontos: t.pointsEarned,
+    }));
+
     return {
       cliente: {
         id: cliente.id,
         nome: cliente.name,
         document: cliente.document,
-        pontosDisponiveis: cliente.totalPoints,
-        pontosPendentes: 0,
-        pontosExpirando: 0,
-        dataProximaExpiracao: null,
+        pontosDisponiveis: Number(disponiveis?.total || 0),
+        pontosPendentes: Number(pendentes?.total || 0),
+        pontosExpirando: Number(expirando?.total || 0),
+        dataProximaExpiracao: expirando?.data_proxima_expiracao || null,
       },
-      extrato: [], // Será implementado no módulo de extrato/fidelidade
+      extrato,
     };
   }
 }

@@ -16,7 +16,7 @@ const menuItems = [
 ]
 
 const generalItems = [
-  { icon: Gift, label: "Recompensas", href: routes.admin.fidelidade },
+  { icon: Gift, label: "Recompensas", href: routes.admin.recompensas },
   { icon: Settings, label: "Configuracoes", href: routes.admin.configuracoes },
   { icon: Home, label: "Pagina publica", href: routes.public.home },
 ]

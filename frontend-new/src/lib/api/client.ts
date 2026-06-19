@@ -22,13 +22,15 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   // Obtém o token armazenado se nenhum token específico foi passado
   const token = authToken !== undefined ? authToken : getStoredAccessToken()
 
+  const headersToUse: HeadersInit = {
+    ...(requestInit.body ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...headers,
+  }
+
   const response = await fetch(`${clientEnv.NEXT_PUBLIC_API_URL}${path}`, {
     ...requestInit,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
-    },
+    headers: headersToUse,
   })
 
   const contentType = response.headers.get("content-type")

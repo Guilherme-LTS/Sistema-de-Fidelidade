@@ -12,6 +12,7 @@ export const routes = {
     dashboard: "/admin/dashboard",
     clientes: "/admin/clientes",
     fidelidade: "/admin/fidelidade",
+    recompensas: "/admin/recompensas",
     configuracoes: "/admin/configuracoes",
   },
 } as const

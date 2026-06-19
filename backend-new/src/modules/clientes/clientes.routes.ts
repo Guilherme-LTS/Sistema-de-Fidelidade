@@ -9,4 +9,5 @@ export async function clientesRoutes(app: FastifyInstance) {
   app.get("/", clientesController.listar);
   app.post("/", clientesController.cadastrar);
   app.get("/:document/saldo", clientesController.saldo);
+  app.get("/documento/:document", clientesController.buscarPorCpf);
 }

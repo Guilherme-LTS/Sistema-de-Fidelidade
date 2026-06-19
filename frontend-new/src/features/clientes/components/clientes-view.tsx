@@ -6,6 +6,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { useClientes, useClienteComExtrato } from "../hooks/use-clientes"
 import { Cliente, limparCpf } from "../clientes.api"
 import { NovoClienteModal } from "./novo-cliente-modal"
+import { ResgateModal } from "@/features/resgates/components/resgate-modal"
 
 import {
   Card,
@@ -244,13 +245,19 @@ export function ClientesView() {
           ) : clienteAtivo ? (
             <div className="flex flex-col h-full animate-fade-in">
               <CardHeader className="border-b border-border bg-muted/10 pb-6">
-                <div>
-                  <CardTitle className="text-xl md:text-2xl font-bold text-foreground">
-                    {clienteAtivo.nome || `CPF ${clienteAtivo.document}`}
-                  </CardTitle>
-                  <CardDescription className="text-xs md:text-sm mt-1">
-                    CPF: <span className="font-mono">{clienteAtivo.document}</span> • ID: #{clienteAtivo.id}
-                  </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl md:text-2xl font-bold text-foreground">
+                      {clienteAtivo.nome || `CPF ${clienteAtivo.document}`}
+                    </CardTitle>
+                    <CardDescription className="text-xs md:text-sm mt-1">
+                      CPF: <span className="font-mono">{clienteAtivo.document}</span> • ID: #{clienteAtivo.id}
+                    </CardDescription>
+                  </div>
+                  <ResgateModal 
+                    document={clienteAtivo.document} 
+                    pontosDisponiveis={clienteAtivo.pontosDisponiveis ?? 0} 
+                  />
                 </div>
 
                 {/* Cards de Métricas Rápidas */}

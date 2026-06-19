@@ -1,10 +1,5 @@
-import { Header } from "@/components/dashboard/header"
+import { FidelidadeView } from "@/features/fidelidade/components/fidelidade-view"
 
 export default function FidelidadePage() {
-  return (
-    <Header
-      title="Fidelidade"
-      description="Base para regras de pontos, recompensas e operacoes do programa."
-    />
-  )
+  return <FidelidadeView />
 }

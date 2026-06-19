@@ -63,3 +63,15 @@ export async function cadastrarCliente(input: { nome: string; document: string; 
   const response = await api.post<{ success: boolean; data: Cliente }>("/clientes", input)
   return response.data
 }
+
+export async function buscarClientePorCpf(cpf: string): Promise<Cliente | null> {
+  const cpfLimpo = limparCpf(cpf)
+  if (cpfLimpo.length !== 11) return null
+
+  try {
+    const response = await api.get<{ success: boolean; data: Cliente | null }>(`/clientes/documento/${cpfLimpo}`)
+    return response.data
+  } catch (error) {
+    return null
+  }
+}

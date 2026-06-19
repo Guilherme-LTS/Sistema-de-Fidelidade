@@ -44,6 +44,16 @@ export class ClientesController {
 
     return successResponse(saldo);
   }
+
+  async buscarPorCpf(request: FastifyRequest<{ Params: { document: string } }>, reply: FastifyReply) {
+    const tenantId = request.user!.tenantId;
+    const document = request.params.document;
+
+    const cliente = await clientesService.buscarPorCpf(tenantId, document);
+    
+    // Return null data if not found instead of 404, easier for the form logic
+    return successResponse(cliente);
+  }
 }
 
 export const clientesController = new ClientesController();

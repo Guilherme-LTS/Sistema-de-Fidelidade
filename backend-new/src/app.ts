@@ -23,6 +23,9 @@ setupErrorHandler(app);
 
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { clientesRoutes } from "./modules/clientes/clientes.routes.js";
+import { transacoesRoutes } from "./modules/transacoes/transacoes.routes.js";
+import { recompensasRoutes } from "./modules/recompensas/recompensas.routes.js";
+import { resgatesRoutes } from "./modules/resgates/resgates.routes.js";
 
 // Rota de Health Check (/health)
 app.get("/health", async (_request, _reply) => {
@@ -37,3 +40,6 @@ app.get("/health", async (_request, _reply) => {
 // Registra as rotas da aplicação
 app.register(authRoutes, { prefix: "/auth" });
 app.register(clientesRoutes, { prefix: "/clientes" });
+app.register(transacoesRoutes, { prefix: "/transacoes" });
+app.register(recompensasRoutes, { prefix: "/recompensas" });
+app.register(resgatesRoutes, { prefix: "/resgates" });
