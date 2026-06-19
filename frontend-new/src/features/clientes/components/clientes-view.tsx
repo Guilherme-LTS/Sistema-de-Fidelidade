@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, useCallback } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useClientes, useClienteComExtrato } from "../hooks/use-clientes"
@@ -52,9 +51,6 @@ const formatarData = (dataISO?: string | null) => {
 }
 
 export function ClientesView() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  
   // Estados de busca e paginação
   const [termoBusca, setTermoBusca] = useState("")
   const debouncedBusca = useDebounce(termoBusca, 500)
@@ -101,27 +97,10 @@ export function ClientesView() {
     }
   }, [detailsError])
 
-  // Sincronizar parâmetro de consulta de documento da URL (?document=CPF)
-  useEffect(() => {
-    const docParam = searchParams.get("document")
-    if (docParam) {
-      const docLimpo = limparCpf(docParam)
-      if (docLimpo.length === 11) {
-        setSelectedDoc(docLimpo)
-        setTermoBusca(docLimpo)
-      }
-    }
-  }, [searchParams])
-
   const handleSelectCliente = useCallback((cliente: Cliente) => {
     const cleanDoc = limparCpf(cliente.document)
     setSelectedDoc(cleanDoc)
-    
-    // Atualizar URL sem recarregar a página
-    const params = new URLSearchParams(window.location.search)
-    params.set("document", cleanDoc)
-    router.push(`?${params.toString()}`, { scroll: false })
-  }, [router])
+  }, [])
 
   // Prepara lista de clientes a exibir
   const clientesExibidos = useMemo(() => {
