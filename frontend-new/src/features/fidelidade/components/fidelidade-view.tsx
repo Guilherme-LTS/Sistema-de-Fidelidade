@@ -4,6 +4,7 @@ import React from "react"
 import { Header } from "@/components/dashboard/header"
 import { LancamentoPontosForm } from "./lancamento-pontos-form"
 import { ResgateRapidoPanel } from "./resgate-rapido-panel"
+import { ConsultaPontosPanel } from "./consulta-pontos-panel"
 
 export function FidelidadeView() {
   return (
@@ -21,6 +22,10 @@ export function FidelidadeView() {
         <div className="h-full">
           <ResgateRapidoPanel />
         </div>
+      </div>
+
+      <div className="mt-6">
+        <ConsultaPontosPanel />
       </div>
     </div>
   )
