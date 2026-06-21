@@ -21,6 +21,8 @@ export async function authRoutes(app: FastifyInstance) {
         email: user.email,
         role: user.role,
         tenant_id: user.tenantId,
+        tenant_name: user.tenantName,
+        tenant_logo_url: user.tenantLogoUrl,
       });
     }
   );

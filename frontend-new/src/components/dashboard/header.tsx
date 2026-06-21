@@ -62,12 +62,14 @@ export function Header({ title, description, actions }: HeaderProps) {
           </Button>
 
           <div className="flex items-center gap-2 pl-2 md:pl-3 border-l border-border">
-            <Avatar className="w-7 h-7 md:w-8 md:h-8 ring-2 ring-primary/20 transition-all duration-300 hover:ring-primary/40">
-              <AvatarImage src="/profile.jpg" alt={user?.nome || "Operador"} />
-              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            <Avatar className="w-7 h-7 md:w-8 md:h-8 ring-2 ring-primary/20 transition-all duration-300 hover:ring-primary/40 bg-muted">
+              <AvatarImage src={user?.tenant_logo_url || ""} alt={user?.tenant_name || "Logo"} className="object-cover" />
+              <AvatarFallback className="text-xs">
+                {user?.tenant_name ? user.tenant_name.slice(0, 2).toUpperCase() : initials}
+              </AvatarFallback>
             </Avatar>
             <div className="text-xs hidden sm:block">
-              <p className="font-semibold text-foreground">{user?.nome || "Operador"}</p>
+              <p className="font-semibold text-foreground">{user?.tenant_name || "Restaurante"}</p>
               <p className="text-muted-foreground text-[10px]">{user?.email || ""}</p>
             </div>
           </div>

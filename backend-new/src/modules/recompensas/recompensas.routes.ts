@@ -7,6 +7,6 @@ export async function recompensasRoutes(app: FastifyInstance) {
 
   app.get("/", (req, rep) => recompensasController.listar(req, rep));
   app.post("/", (req, rep) => recompensasController.criar(req, rep));
-  app.put("/:id", (req, rep) => recompensasController.atualizar(req, rep));
-  app.delete("/:id", (req, rep) => recompensasController.excluir(req, rep));
+  app.put<{ Params: { id: string } }>("/:id", (req, rep) => recompensasController.atualizar(req, rep));
+  app.delete<{ Params: { id: string } }>("/:id", (req, rep) => recompensasController.excluir(req, rep));
 }

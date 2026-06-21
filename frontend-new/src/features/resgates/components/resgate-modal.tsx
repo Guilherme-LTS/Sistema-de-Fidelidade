@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRecompensas } from "@/features/recompensas/hooks/use-recompensas"
 import { useResgates } from "../hooks/use-resgates"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -41,17 +42,32 @@ export function ResgateModal({ document, pontosDisponiveis }: ResgateModalProps)
   const handleSubmit = () => {
     if (!selectedRewardId) return
 
-    if (confirm("Confirma o resgate deste prêmio? Os pontos serão deduzidos do saldo do cliente.")) {
-      resgatar.mutate(
-        { document, rewardId: selectedRewardId },
-        {
-          onSuccess: () => {
-            setIsOpen(false)
-            setSelectedRewardId(null)
-          }
+    resgatar.mutate(
+      { document, rewardId: selectedRewardId },
+      {
+        onSuccess: (data) => {
+          setIsOpen(false)
+          setSelectedRewardId(null)
+          
+          const saldoRestante = pontosDisponiveis - data.recompensa.pointsCost;
+          
+          toast.success("Resgate realizado com sucesso!", {
+            description: (
+              <div className="mt-2 space-y-1">
+                <p><strong>Cliente:</strong> {data.cliente.nome}</p>
+                <p><strong>Prêmio:</strong> {data.recompensa.name}</p>
+                <p><strong>Pontos utilizados:</strong> {data.recompensa.pointsCost}</p>
+                <p><strong>Saldo restante:</strong> {saldoRestante} pts</p>
+              </div>
+            ),
+            duration: 5000,
+          });
+        },
+        onError: (error: any) => {
+          toast.error(error.message || "Erro ao realizar o resgate.");
         }
-      )
-    }
+      }
+    )
   }
 
   return (

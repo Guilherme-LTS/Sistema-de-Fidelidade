@@ -15,36 +15,38 @@ export class ClientesService {
       const searchTerm = `%${busca}%`;
       baseConditions.push(
         or(
-          ilike(customers.name, searchTerm),
-          ilike(customers.document, searchTerm)
+          ilike(consumerProfiles.name, searchTerm),
+          ilike(consumerProfiles.document, searchTerm)
         )!
       );
     }
 
     const whereClause = and(...baseConditions);
 
-    const data = await db.query.customers.findMany({
-      where: whereClause,
-      limit,
-      offset,
-      orderBy: [desc(customers.createdAt)],
-    });
+    const data = await db
+      .select({
+        id: customers.id,
+        nome: consumerProfiles.name,
+        document: consumerProfiles.document,
+        createdAt: customers.createdAt,
+      })
+      .from(customers)
+      .innerJoin(consumerProfiles, eq(customers.consumerProfileId, consumerProfiles.id))
+      .where(whereClause)
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(customers.createdAt));
 
     const totalResult = await db
       .select({ count: count() })
       .from(customers)
+      .innerJoin(consumerProfiles, eq(customers.consumerProfileId, consumerProfiles.id))
       .where(whereClause);
 
     const total = totalResult[0].count;
 
     return {
-      clientes: data.map(c => ({
-        id: c.id,
-        nome: c.name,
-        document: c.document,
-        totalPoints: c.totalPoints,
-        createdAt: c.createdAt,
-      })),
+      clientes: data,
       total,
       paginaAtual: page,
       totalPaginas: Math.ceil(total / limit),
@@ -57,21 +59,21 @@ export class ClientesService {
       throw new AppError(cpfValidation.error || "CPF inválido.");
     }
 
-    const cliente = await db.query.customers.findFirst({
-      where: (c, { eq, and }) => and(
-        eq(c.tenantId, tenantId),
-        eq(c.document, cpfValidation.cleaned)
-      )
-    });
+    const result = await db
+      .select({
+        id: customers.id,
+        document: consumerProfiles.document,
+        nome: consumerProfiles.name,
+        consumerProfileId: consumerProfiles.id,
+      })
+      .from(customers)
+      .innerJoin(consumerProfiles, eq(customers.consumerProfileId, consumerProfiles.id))
+      .where(and(eq(customers.tenantId, tenantId), eq(consumerProfiles.document, cpfValidation.cleaned)))
+      .limit(1);
 
-    if (!cliente) return null;
+    if (result.length === 0) return null;
 
-    return {
-      id: cliente.id,
-      document: cliente.document,
-      nome: cliente.name,
-      totalPoints: cliente.totalPoints,
-    };
+    return result[0];
   }
 
   async cadastrarCliente(tenantId: string, input: { nome: string; document: string; lgpdConsentimento: boolean }) {
@@ -110,34 +112,23 @@ export class ClientesService {
     const [cliente] = await db.insert(customers).values({
       tenantId,
       consumerProfileId: profile.id,
-      document: cleanedDoc,
-      name: input.nome,
-      lgpdConsent: input.lgpdConsentimento,
-      consentDate: new Date().toISOString(),
     }).onConflictDoUpdate({
-      target: [customers.tenantId, customers.document],
+      target: [customers.tenantId, customers.consumerProfileId],
       set: {
-        name: input.nome,
-        lgpdConsent: input.lgpdConsentimento,
-        consentDate: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
     }).returning();
 
-    return cliente;
+    return {
+      id: cliente.id,
+      document: profile.document,
+      nome: profile.name,
+      consumerProfileId: profile.id,
+    };
   }
-  async consultarSaldo(tenantId: string, document: string) {
-    const cpfValidation = validateAndCleanCPF(document);
-    if (!cpfValidation.isValid) {
-      throw new AppError(cpfValidation.error || "CPF inválido.");
-    }
 
-    const cliente = await db.query.customers.findFirst({
-      where: (c, { eq, and }) => and(
-        eq(c.tenantId, tenantId),
-        eq(c.document, cpfValidation.cleaned)
-      )
-    });
+  async consultarSaldo(tenantId: string, document: string) {
+    const cliente = await this.buscarPorCpf(tenantId, document);
 
     if (!cliente) {
       throw new NotFoundError("Cliente não encontrado.");
@@ -195,7 +186,7 @@ export class ClientesService {
     return {
       cliente: {
         id: cliente.id,
-        nome: cliente.name,
+        nome: cliente.nome,
         document: cliente.document,
         pontosDisponiveis: Number(disponiveis?.total || 0),
         pontosPendentes: Number(pendentes?.total || 0),

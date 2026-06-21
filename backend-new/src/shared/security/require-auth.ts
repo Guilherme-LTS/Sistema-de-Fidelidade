@@ -7,6 +7,8 @@ export type AuthenticatedUser = {
   authUserId: string;
   tenantUserId: string;
   tenantId: string;
+  tenantName: string;
+  tenantLogoUrl?: string | null;
   role: "admin" | "operador";
   email?: string;
   name: string;
@@ -25,6 +27,8 @@ declare module "fastify" {
  * Middleware/Hook para requerer autenticação via JWT do Supabase e carregar perfil de tenant.
  */
 export async function requireAuth(request: FastifyRequest, _reply: FastifyReply) {
+  if (request.method === "OPTIONS") return;
+
   const authHeader = request.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -61,6 +65,8 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
     authUserId: supabaseUser.id,
     tenantUserId: tenantUserRecord.id,
     tenantId: tenantUserRecord.tenantId!,
+    tenantName: tenantUserRecord.tenant?.name || "Restaurante",
+    tenantLogoUrl: tenantUserRecord.tenant?.logoUrl,
     role: tenantUserRecord.role,
     email: supabaseUser.email,
     name: tenantUserRecord.name,

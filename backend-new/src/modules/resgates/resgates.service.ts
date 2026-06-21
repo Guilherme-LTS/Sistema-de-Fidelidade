@@ -42,7 +42,16 @@ export class ResgatesService {
         throw new AppError(`Saldo insuficiente. O cliente possui ${saldoInfo.cliente.pontosDisponiveis} pontos, mas o prêmio custa ${recompensa.pointsCost} pontos.`);
       }
 
-      // 3. FIFO Dedução
+      // 3. Registrar Resgate primeiro para obter o ID
+      const [resgate] = await tx.insert(redemptions).values({
+        customerId: cliente.id,
+        rewardId: recompensa.id,
+        pointsSpent: recompensa.pointsCost,
+        operatorId: input.operatorId,
+        tenantId: input.tenantId,
+      }).returning();
+
+      // 4. FIFO Dedução
       const now = new Date().toISOString();
       const historicoPositivo = await tx.query.transactions.findMany({
         where: (t, { eq, and }) => and(
@@ -56,6 +65,7 @@ export class ResgatesService {
       });
 
       let pontosRestantesParaDeduzir = recompensa.pointsCost;
+      const ledgerItems = [];
 
       for (const transacao of historicoPositivo) {
         if (pontosRestantesParaDeduzir <= 0) break;
@@ -71,6 +81,13 @@ export class ResgatesService {
           })
           .where(eq(transactions.id, transacao.id));
 
+        // Registrar no ledger
+        ledgerItems.push({
+          redemptionId: resgate.id,
+          transactionId: transacao.id,
+          pointsDeducted: pontosAdeduzir,
+        });
+
         pontosRestantesParaDeduzir -= pontosAdeduzir;
       }
 
@@ -79,14 +96,12 @@ export class ResgatesService {
         throw new AppError("Erro na dedução de pontos. Saldo insuficiente ou transações inválidas.");
       }
 
-      // 4. Registrar Resgate
-      const [resgate] = await tx.insert(redemptions).values({
-        customerId: cliente.id,
-        rewardId: recompensa.id,
-        pointsSpent: recompensa.pointsCost,
-        operatorId: input.operatorId,
-        tenantId: input.tenantId,
-      }).returning();
+      // 5. Inserir itens de consumo
+      if (ledgerItems.length > 0) {
+        // Need to import redemptionItems at the top
+        const { redemptionItems } = await import("../../infra/database/schema.js");
+        await tx.insert(redemptionItems).values(ledgerItems);
+      }
 
       return {
         resgate,

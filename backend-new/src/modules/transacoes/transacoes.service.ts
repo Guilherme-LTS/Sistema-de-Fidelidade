@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "../../infra/database/db.js";
-import { transactions, tenantSettings } from "../../infra/database/schema.js";
+import { transactions, tenants } from "../../infra/database/schema.js";
 import { AppError } from "../../shared/errors/app-error.js";
 import { validateAndCleanCPF } from "../../shared/validators/cpf.js";
 import { clientesService } from "../clientes/clientes.service.js";
@@ -33,15 +33,16 @@ export class TransacoesService {
     }
 
     // Buscar configurações do Tenant
-    const settings = await db.query.tenantSettings.findMany({
-      where: eq(tenantSettings.tenantId, input.tenantId),
+    const tenant = await db.query.tenants.findFirst({
+      where: eq(tenants.id, input.tenantId),
+      columns: {
+        loyaltyGracePeriodDays: true,
+        loyaltyExpirationDays: true,
+      }
     });
 
-    const carenciaSetting = settings.find(s => s.settingKey === "carencia_pontos");
-    const expiracaoSetting = settings.find(s => s.settingKey === "expiracao_pontos");
-
-    const carenciaDias = carenciaSetting?.settingValue || 0;
-    const expiracaoDias = expiracaoSetting?.settingValue || 90;
+    const carenciaDias = tenant?.loyaltyGracePeriodDays || 0;
+    const expiracaoDias = tenant?.loyaltyExpirationDays || 90;
 
     const now = new Date();
     const availableAt = new Date(now.getTime() + carenciaDias * 24 * 60 * 60 * 1000);

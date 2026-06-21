@@ -8,8 +8,10 @@ export interface UsuarioPerfil {
   user_id: string
   nome: string
   email: string
-  role: string
+  role: "admin" | "operador"
   tenant_id: string
+  tenant_name?: string
+  tenant_logo_url?: string | null
 }
 
 export interface RecentCliente {
