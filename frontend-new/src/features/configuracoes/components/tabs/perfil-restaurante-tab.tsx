@@ -214,68 +214,12 @@ export function PerfilRestauranteTab() {
             </div>
 
             <Separator />
-            <h3 className="text-lg font-medium">Endereço</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="addressLine1"
-                render={({ field }) => (
-                  <FormItem className="lg:col-span-2">
-                    <FormLabel>Rua / Avenida</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Rua das Flores" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="addressNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número</FormLabel>
-                    <FormControl>
-                      <Input placeholder="123" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="addressCity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cidade</FormLabel>
-                    <FormControl>
-                      <Input placeholder="São Paulo" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="addressState"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>UF</FormLabel>
-                    <FormControl>
-                      <Input placeholder="SP" maxLength={2} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="space-y-4 pt-4 border-t border-border mt-6">
+            <h3 className="text-lg font-medium">Localização</h3>
+            
+            <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium mb-1">Localização no Mapa</h4>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Pesquise seu endereço ou clique no mapa para definir a localização exata do restaurante para os clientes.
+                <p className="text-sm text-muted-foreground mb-4">
+                  Pesquise seu estabelecimento pelo nome ou endereço para preenchermos seus dados automaticamente.
                 </p>
               </div>
               <MapPicker 
@@ -285,18 +229,78 @@ export function PerfilRestauranteTab() {
                   form.setValue("latitude", lat, { shouldDirty: true })
                   form.setValue("longitude", lng, { shouldDirty: true })
                   
-                  // Se a busca retornar dados úteis do Nominatim, podemos auto-preencher
-                  if (details?.address) {
-                    if (details.address.road && !form.getValues("addressLine1")) {
-                      form.setValue("addressLine1", details.address.road, { shouldDirty: true })
-                    }
-                    if (details.address.city || details.address.town) {
-                      form.setValue("addressCity", details.address.city || details.address.town, { shouldDirty: true })
-                    }
-                    // State requires 2 chars but OSM returns full name, better to leave manual
+                  if (details) {
+                    if (details.street) form.setValue("addressLine1", details.street, { shouldDirty: true })
+                    if (details.number) form.setValue("addressNumber", details.number, { shouldDirty: true })
+                    if (details.city) form.setValue("addressCity", details.city, { shouldDirty: true })
+                    if (details.state) form.setValue("addressState", details.state.substring(0, 2), { shouldDirty: true })
                   }
                 }}
               />
+            </div>
+
+            <div className="border rounded-md p-4 bg-muted/20">
+              <details className="group">
+                <summary className="text-sm font-medium cursor-pointer list-none flex justify-between items-center text-muted-foreground hover:text-foreground transition-colors">
+                  Ajustar endereço manualmente
+                  <span className="group-open:rotate-180 transition-transform text-xs">▼</span>
+                </summary>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+                  <FormField
+                    control={form.control}
+                    name="addressLine1"
+                    render={({ field }) => (
+                      <FormItem className="lg:col-span-2">
+                        <FormLabel>Rua / Avenida</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Rua das Flores" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="addressNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número / Complemento</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="addressCity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cidade</FormLabel>
+                        <FormControl>
+                          <Input placeholder="São Paulo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="addressState"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>UF</FormLabel>
+                        <FormControl>
+                          <Input placeholder="SP" maxLength={2} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </details>
             </div>
 
             <div className="flex justify-end pt-4">

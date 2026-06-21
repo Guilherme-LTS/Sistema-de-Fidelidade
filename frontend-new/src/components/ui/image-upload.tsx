@@ -87,7 +87,10 @@ export function ImageUpload({ value, onChange, tenantId, bucket = "tenant-logos"
 
       <div className="flex items-center gap-6">
         {value ? (
-          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border bg-muted">
+          <div 
+            className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border bg-muted cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <img 
               src={value} 
               alt="Logo" 
@@ -95,14 +98,20 @@ export function ImageUpload({ value, onChange, tenantId, bucket = "tenant-logos"
             />
             <button
               type="button"
-              onClick={() => onChange("")}
-              className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation()
+                onChange("")
+              }}
+              className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70 transition-colors cursor-pointer"
             >
               <X className="h-3 w-3" />
             </button>
           </div>
         ) : (
-          <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-md border bg-muted border-dashed">
+          <div 
+            className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-md border bg-muted border-dashed cursor-pointer hover:bg-accent transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
           </div>
         )}

@@ -10,8 +10,8 @@ export interface RestauranteInput {
   addressNumber?: string
   addressCity?: string
   addressState?: string
-  latitude?: string
-  longitude?: string
+  latitude?: string | number
+  longitude?: string | number
   logoUrl?: string
 }
 
