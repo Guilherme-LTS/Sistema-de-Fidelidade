@@ -13,15 +13,14 @@ export const updateRestauranteSchema = z.object({
   longitude: z.union([z.string(), z.number()]).optional(),
   logoUrl: z.string().optional(),
 });
+import { requireRole } from "../../shared/security/require-role.js";
 
 export async function configuracoesRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAuth);
+  app.addHook("preHandler", requireRole(["admin"]));
 
   app.get("/restaurante", (req, rep) => configuracoesController.getRestaurante(req, rep));
   app.put("/restaurante", (req, rep) => configuracoesController.updateRestaurante(req, rep));
-
-  app.get("/usuario", (req, rep) => configuracoesController.getUsuario(req, rep));
-  app.put("/usuario", (req, rep) => configuracoesController.updateUsuario(req, rep));
 
   app.get("/fidelidade", (req, rep) => configuracoesController.getFidelidade(req, rep));
   app.put("/fidelidade", (req, rep) => configuracoesController.updateFidelidade(req, rep));

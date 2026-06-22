@@ -16,6 +16,8 @@ import { MobileAppCard } from "@/components/dashboard/mobile-app-card"
 import { TimeTracker } from "@/components/dashboard/time-tracker"
 import { Button } from "@/components/ui/button"
 
+import { AuthGuard } from "@/features/auth/components/auth-guard"
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -37,7 +39,7 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <>
+    <AuthGuard allowedRoles={["admin", "operador"]}>
       <Header
         title="Dashboard"
         description="Acompanhe os indicadores principais do programa de fidelidade."
@@ -77,6 +79,6 @@ export default function DashboardPage() {
           <TimeTracker />
         </div>
       </div>
-    </>
+    </AuthGuard>
   )
 }

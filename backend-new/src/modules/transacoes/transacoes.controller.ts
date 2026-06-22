@@ -19,10 +19,13 @@ export class TransacoesController {
 
     const resultado = await transacoesService.lancarPontos({
       tenantId,
+      operatorId: request.user!.tenantUserId,
+      authUserId: request.user!.authUserId,
       document: body.document,
       valor: body.valor,
       nome: body.nome,
       lgpdConsentimento: body.lgpdConsentimento,
+      ipAddress: request.ip,
     });
 
     return reply.status(201).send(successResponse(resultado, "Pontos lançados com sucesso."));

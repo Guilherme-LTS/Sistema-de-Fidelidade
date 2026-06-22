@@ -49,20 +49,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
-    const token = getStoredAccessToken()
-    if (token) {
-      const decoded = decodeJwt(token)
-      if (decoded && decoded.exp && decoded.exp * 1000 < Date.now()) {
+    // 1. Ouvir mudanças no estado de autenticação do Supabase (ex: login, logout, token refreshed)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`[Auth Context] onAuthStateChange event: ${event}`, session?.user?.email)
+      
+      if (session) {
+        setStoredAccessToken(session.access_token)
+        setHasToken(true)
+      } else {
         clearStoredAccessToken()
         setHasToken(false)
-      } else {
-        setHasToken(true)
+        queryClient.removeQueries({ queryKey: ["auth-profile"] })
       }
-    } else {
-      setHasToken(false)
+      setIsInitializing(false)
+    })
+
+    // 2. Carregar sessão inicial de forma assíncrona (com auto-refresh se necessário)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setStoredAccessToken(session.access_token)
+        setHasToken(true)
+      } else {
+        const localToken = getStoredAccessToken()
+        if (localToken) {
+          const decoded = decodeJwt(localToken)
+          if (decoded && decoded.exp && decoded.exp * 1000 > Date.now()) {
+            setHasToken(true)
+          } else {
+            clearStoredAccessToken()
+            setHasToken(false)
+          }
+        } else {
+          setHasToken(false)
+        }
+      }
+      setIsInitializing(false)
+    }).catch((err) => {
+      console.error("[Auth Context] Erro ao buscar sessão inicial:", err)
+      setIsInitializing(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
     }
-    setIsInitializing(false)
-  }, [])
+  }, [queryClient])
 
   // O React Query gerencia o cache e o ciclo de vida dos dados do usuário
   const { 
@@ -83,6 +113,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearStoredAccessToken()
       setHasToken(false)
       queryClient.removeQueries({ queryKey: ["auth-profile"] })
+      // Força o logout também no Supabase para sincronizar e evitar loops de reconexão
+      supabase.auth.signOut().catch((e) => {
+        console.warn("[Auth Context] Erro ao deslogar após falha de perfil:", e)
+      })
     }
   }, [isError, queryClient])
 
@@ -94,7 +128,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (error) {
-        throw new Error(error.message)
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("E-mail ou senha inválidos.")
+        }
+        if (error.message.includes("Email not confirmed")) {
+          throw new Error("E-mail não confirmado. Verifique sua caixa de entrada.")
+        }
+        if (error.message.includes("Password should be at least")) {
+          throw new Error("A senha deve ter pelo menos 6 caracteres.")
+        }
+        throw new Error("Não foi possível realizar o login. Verifique suas credenciais.")
       }
 
       if (!data?.session) {

@@ -11,31 +11,31 @@ export class AppError extends Error {
 }
 
 export class NotFoundError extends AppError {
-  constructor(message = "Resource not found") {
+  constructor(message = "Recurso não encontrado.") {
     super(message, 404, "NOT_FOUND");
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = "Unauthorized access") {
+  constructor(message = "Acesso não autorizado.") {
     super(message, 401, "UNAUTHORIZED");
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = "Forbidden access") {
+  constructor(message = "Acesso negado.") {
     super(message, 403, "FORBIDDEN");
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message = "Conflict occurred") {
+  constructor(message = "Ocorreu um conflito de dados.") {
     super(message, 409, "CONFLICT");
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message = "Validation failed") {
+  constructor(message = "Falha na validação dos dados.") {
     super(message, 400, "VALIDATION_ERROR");
   }
 }

@@ -10,6 +10,7 @@ export function useResgates() {
       // Invalida os dados do cliente para forçar o recarregamento do saldo e do extrato
       queryClient.invalidateQueries({ queryKey: ["clientes"] })
       queryClient.invalidateQueries({ queryKey: ["cliente-extrato", variables.document.replace(/\D/g, "")] })
+      queryClient.invalidateQueries({ queryKey: ["auditoria"] })
     },
   })
 

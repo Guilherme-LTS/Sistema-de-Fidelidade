@@ -4,14 +4,17 @@ import { transactions, tenants } from "../../infra/database/schema.js";
 import { AppError } from "../../shared/errors/app-error.js";
 import { validateAndCleanCPF } from "../../shared/validators/cpf.js";
 import { clientesService } from "../clientes/clientes.service.js";
+import { logAuditEvent } from "../../shared/audit.service.js";
 
 type LancarPontosInput = {
   tenantId: string;
   operatorId?: string;
+  authUserId?: string;
   document: string;
   valor: number;
   nome?: string;
   lgpdConsentimento?: boolean;
+  ipAddress?: string;
 };
 
 export class TransacoesService {
@@ -62,7 +65,7 @@ export class TransacoesService {
     }
 
     // Inserir a transação
-    await db.insert(transactions).values({
+    const [novaTransacao] = await db.insert(transactions).values({
       customerId: cliente.id,
       tenantId: input.tenantId,
       operatorId: input.operatorId,
@@ -71,9 +74,24 @@ export class TransacoesService {
       remainingPoints: pontosGanhos,
       availableAt: availableAt.toISOString(),
       expiresAt: expiresAt.toISOString(),
-    });
+    }).returning();
 
-    // TODO: Adicionar Auditoria (Log) quando a tabela for mapeada
+    // Registrar o evento na Auditoria
+    await logAuditEvent({
+      tenantId: input.tenantId,
+      operatorId: input.authUserId,
+      action: 'ADD_POINTS',
+      entityType: 'TRANSACTION',
+      entityId: String(novaTransacao.id),
+      metadata: {
+        clienteId: cliente.id,
+        clienteNome: cliente.nome || cliente.name,
+        clienteCpf: cliente.document,
+        pontosGanhos,
+        valorCompra: input.valor,
+      },
+      ipAddress: input.ipAddress,
+    });
 
     return {
       pontosGanhos,

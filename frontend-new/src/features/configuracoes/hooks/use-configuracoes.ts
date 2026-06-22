@@ -25,6 +25,7 @@ export function useRestaurante() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes", "restaurante"] })
       queryClient.invalidateQueries({ queryKey: ["auth-profile"] })
+      queryClient.invalidateQueries({ queryKey: ["auditoria"] })
       toast.success("Perfil do restaurante atualizado.")
     },
     onError: () => toast.error("Falha ao atualizar o restaurante.")
@@ -45,6 +46,7 @@ export function useUsuario() {
     mutationFn: (input: UsuarioInput) => updateUsuario(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes", "usuario"] })
+      queryClient.invalidateQueries({ queryKey: ["auditoria"] })
       toast.success("Perfil do usuário atualizado.")
     },
     onError: () => toast.error("Falha ao atualizar o perfil.")
@@ -65,6 +67,7 @@ export function useFidelidadeConfig() {
     mutationFn: (input: FidelidadeInput) => updateFidelidade(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes", "fidelidade"] })
+      queryClient.invalidateQueries({ queryKey: ["auditoria"] })
       toast.success("Regras de fidelidade atualizadas.")
     },
     onError: () => toast.error("Falha ao atualizar regras.")

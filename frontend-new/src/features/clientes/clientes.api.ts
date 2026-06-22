@@ -59,7 +59,7 @@ export async function consultarClienteComExtrato(cpf: string): Promise<Consultar
   return response.data
 }
 
-export async function cadastrarCliente(input: { nome: string; document: string; lgpdConsentimento: boolean }): Promise<Cliente> {
+export async function cadastrarCliente(input: { nome?: string; document: string; lgpdConsentimento: boolean }): Promise<Cliente> {
   const response = await api.post<{ success: boolean; data: Cliente }>("/clientes", input)
   return response.data
 }

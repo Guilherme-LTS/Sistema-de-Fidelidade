@@ -32,7 +32,7 @@ export const tenantUsers = pgTable("tenant_users", {
   userId: uuid("user_id"), // FK to auth.users.id
   name: varchar("name").notNull(),
   phone: varchar("phone"),
-  role: varchar("role").notNull().$type<"admin" | "operador">(),
+  role: varchar("role").notNull().$type<"admin" | "operador" | "novato">(),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow(),
@@ -176,5 +176,29 @@ export const redemptionItemsRelations = relations(redemptionItems, ({ one }) => 
   transaction: one(transactions, {
     fields: [redemptionItems.transactionId],
     references: [transactions.id],
+  }),
+}));
+
+// -----------------------------------------------------------------------------
+// System & Audit
+// -----------------------------------------------------------------------------
+
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  operatorId: uuid("operator_id"), // Quem realizou a acao (auth.users.id ou tenant_users.id dependendo do contexto)
+  action: varchar("action").notNull(),
+  entityType: varchar("entity_type"),
+  entityId: varchar("entity_id"),
+  metadata: text("metadata"), // JSON stringified para comportar o diff/contexto
+  status: varchar("status").default("SUCESSO").notNull(), // SUCESSO ou FALHA
+  ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
+});
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [auditLogs.tenantId],
+    references: [tenants.id],
   }),
 }));

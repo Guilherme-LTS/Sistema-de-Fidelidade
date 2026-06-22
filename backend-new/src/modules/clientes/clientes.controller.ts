@@ -10,7 +10,7 @@ const listarQuerySchema = z.object({
 });
 
 const cadastrarBodySchema = z.object({
-  nome: z.string().min(2),
+  nome: z.string().optional(),
   document: z.string().min(11), // CPF
   lgpdConsentimento: z.boolean().refine(val => val === true, {
     message: "É necessário aceitar os termos de LGPD.",

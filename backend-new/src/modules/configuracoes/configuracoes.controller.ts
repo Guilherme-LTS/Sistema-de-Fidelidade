@@ -18,11 +18,6 @@ const restauranteSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal("")),
 });
 
-const usuarioSchema = z.object({
-  name: z.string().min(1),
-  phone: z.string().optional(),
-});
-
 const fidelidadeSchema = z.object({
   carenciaPontos: z.number().min(0),
   expiracaoPontos: z.number().min(0),
@@ -38,22 +33,8 @@ export class ConfiguracoesController {
   async updateRestaurante(request: FastifyRequest, reply: FastifyReply) {
     const tenantId = request.user!.tenantId;
     const body = restauranteSchema.parse(request.body);
-    const data = await configuracoesService.updateRestaurante(tenantId, body);
+    const data = await configuracoesService.updateRestaurante(tenantId, body, request.user!.authUserId, request.ip);
     return successResponse(data, "Perfil do restaurante atualizado com sucesso.");
-  }
-
-  async getUsuario(request: FastifyRequest, reply: FastifyReply) {
-    const tenantUserId = request.user!.tenantUserId;
-    const data = await configuracoesService.getUsuario(tenantUserId);
-    // Para simplificar no front, vamos incluir o email do Auth
-    return successResponse({ ...data, email: request.user!.email });
-  }
-
-  async updateUsuario(request: FastifyRequest, reply: FastifyReply) {
-    const tenantUserId = request.user!.tenantUserId;
-    const body = usuarioSchema.parse(request.body);
-    const data = await configuracoesService.updateUsuario(tenantUserId, body);
-    return successResponse({ ...data, email: request.user!.email }, "Perfil de usuário atualizado com sucesso.");
   }
 
   async getFidelidade(request: FastifyRequest, reply: FastifyReply) {
@@ -65,7 +46,7 @@ export class ConfiguracoesController {
   async updateFidelidade(request: FastifyRequest, reply: FastifyReply) {
     const tenantId = request.user!.tenantId;
     const body = fidelidadeSchema.parse(request.body);
-    const data = await configuracoesService.updateFidelidade(tenantId, body);
+    const data = await configuracoesService.updateFidelidade(tenantId, body, request.user!.authUserId, request.ip);
     return successResponse(data, "Regras do programa atualizadas com sucesso.");
   }
 }

@@ -11,15 +11,16 @@ const resgatarPremioSchema = z.object({
 export class ResgatesController {
   async resgatar(request: FastifyRequest, reply: FastifyReply) {
     const tenantId = request.user!.tenantId;
-    const operatorId = request.user!.tenantUserId; 
     
     const body = resgatarPremioSchema.parse(request.body);
     
     const resultado = await resgatesService.resgatarPremio({
       tenantId,
-      operatorId,
+      operatorId: request.user!.tenantUserId,
+      authUserId: request.user!.authUserId,
       document: body.document,
       rewardId: body.rewardId,
+      ipAddress: request.ip,
     });
 
     return reply.status(201).send(successResponse(resultado, "Resgate realizado com sucesso."));

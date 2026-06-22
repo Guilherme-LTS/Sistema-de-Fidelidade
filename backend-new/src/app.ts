@@ -27,6 +27,9 @@ import { transacoesRoutes } from "./modules/transacoes/transacoes.routes.js";
 import { recompensasRoutes } from "./modules/recompensas/recompensas.routes.js";
 import { resgatesRoutes } from "./modules/resgates/resgates.routes.js";
 import { configuracoesRoutes } from "./modules/configuracoes/configuracoes.routes.js";
+import { auditoriaRoutes } from "./modules/auditoria/auditoria.routes.js";
+
+import { usuariosRoutes } from "./modules/usuarios/usuarios.routes.js";
 
 // Rota de Health Check (/health)
 app.get("/health", async (_request, _reply) => {
@@ -45,3 +48,5 @@ app.register(transacoesRoutes, { prefix: "/transacoes" });
 app.register(recompensasRoutes, { prefix: "/recompensas" });
 app.register(resgatesRoutes, { prefix: "/resgates" });
 app.register(configuracoesRoutes, { prefix: "/configuracoes" });
+app.register(auditoriaRoutes, { prefix: "/auditoria" });
+app.register(usuariosRoutes, { prefix: "/usuarios" });

@@ -24,6 +24,35 @@ export class SupabaseAuthGateway {
     }
     return user;
   }
+
+  get admin() {
+    return this.client.auth.admin;
+  }
+
+  /**
+   * Verifica se a senha atual está correta realizando um login temporário.
+   */
+  async verifyPassword(email: string, password: string): Promise<boolean> {
+    const { error } = await this.client.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    // Como a instância não persiste sessão, não precisamos fazer sign out explicitamente
+    return !error;
+  }
+
+  /**
+   * Atualiza a senha do usuário utilizando privilégios de Admin.
+   */
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
+    const { error } = await this.client.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+    if (error) {
+      throw error;
+    }
+  }
 }
 
 export const supabaseAuthGateway = new SupabaseAuthGateway();

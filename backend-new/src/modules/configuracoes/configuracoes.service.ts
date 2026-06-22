@@ -2,6 +2,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../../infra/database/db.js";
 import { tenants, tenantUsers } from "../../infra/database/schema.js";
 import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
+import { logAuditEvent } from "../../shared/audit.service.js";
 
 type RestauranteInput = {
   name: string;
@@ -16,11 +17,6 @@ type RestauranteInput = {
   latitude?: string | number;
   longitude?: string | number;
   logoUrl?: string;
-};
-
-type UsuarioInput = {
-  name: string;
-  phone?: string;
 };
 
 type FidelidadeInput = {
@@ -38,39 +34,30 @@ export class ConfiguracoesService {
     return tenant;
   }
 
-  async updateRestaurante(tenantId: string, input: RestauranteInput) {
+  async updateRestaurante(tenantId: string, input: RestauranteInput, operatorId?: string, ipAddress?: string) {
     const [tenant] = await db.update(tenants)
       .set({
         ...input,
+        latitude: input.latitude ? String(input.latitude) : undefined,
+        longitude: input.longitude ? String(input.longitude) : undefined,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tenants.id, tenantId))
       .returning();
       
     if (!tenant) throw new NotFoundError("Restaurante não encontrado.");
-    return tenant;
-  }
 
-  async getUsuario(tenantUserId: string) {
-    const user = await db.query.tenantUsers.findFirst({
-      where: eq(tenantUsers.id, tenantUserId),
+    await logAuditEvent({
+      tenantId,
+      operatorId,
+      action: 'UPDATE_CONFIG',
+      entityType: 'TENANT_CONFIG',
+      entityId: tenantId,
+      metadata: { action: 'UPDATE_RESTAURANTE', changes: input },
+      ipAddress
     });
-    if (!user) throw new NotFoundError("Usuário não encontrado.");
-    return user;
-  }
 
-  async updateUsuario(tenantUserId: string, input: UsuarioInput) {
-    const [user] = await db.update(tenantUsers)
-      .set({
-        name: input.name,
-        phone: input.phone,
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(tenantUsers.id, tenantUserId))
-      .returning();
-      
-    if (!user) throw new NotFoundError("Usuário não encontrado.");
-    return user;
+    return tenant;
   }
 
   async getFidelidade(tenantId: string) {
@@ -90,7 +77,7 @@ export class ConfiguracoesService {
     };
   }
 
-  async updateFidelidade(tenantId: string, input: FidelidadeInput) {
+  async updateFidelidade(tenantId: string, input: FidelidadeInput, operatorId?: string, ipAddress?: string) {
     const [tenant] = await db.update(tenants)
       .set({
         loyaltyGracePeriodDays: input.carenciaPontos,
@@ -101,6 +88,16 @@ export class ConfiguracoesService {
       .returning();
 
     if (!tenant) throw new NotFoundError("Restaurante não encontrado.");
+
+    await logAuditEvent({
+      tenantId,
+      operatorId,
+      action: 'UPDATE_CONFIG',
+      entityType: 'LOYALTY_CONFIG',
+      entityId: tenantId,
+      metadata: { action: 'UPDATE_FIDELIDADE', changes: input },
+      ipAddress
+    });
 
     return {
       carenciaPontos: tenant.loyaltyGracePeriodDays || 0,

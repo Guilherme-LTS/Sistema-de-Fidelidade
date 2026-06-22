@@ -9,8 +9,9 @@ export type AuthenticatedUser = {
   tenantId: string;
   tenantName: string;
   tenantLogoUrl?: string | null;
-  role: "admin" | "operador";
+  role: "admin" | "operador" | "novato";
   email?: string;
+  phone?: string | null;
   name: string;
 };
 
@@ -57,7 +58,7 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
   });
 
   if (!tenantUserRecord || !tenantUserRecord.tenant?.isActive) {
-    throw new ForbiddenError("Usuário sem perfil de funcionário ativo associado a um Tenant.");
+    throw new ForbiddenError("Seu acesso ao sistema foi desativado. Entre em contato com o proprietário da conta ou administrador.");
   }
 
   // 3. Montar e injetar o AuthenticatedUser no request
@@ -69,6 +70,7 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
     tenantLogoUrl: tenantUserRecord.tenant?.logoUrl,
     role: tenantUserRecord.role,
     email: supabaseUser.email,
+    phone: tenantUserRecord.phone,
     name: tenantUserRecord.name,
   };
 }

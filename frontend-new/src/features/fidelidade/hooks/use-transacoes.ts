@@ -12,6 +12,7 @@ export function useLancarPontos() {
       // Invalidate both lists and specific customer queries
       queryClient.invalidateQueries({ queryKey: ["clientes"] })
       queryClient.invalidateQueries({ queryKey: ["cliente-extrato", data.cliente.document] })
+      queryClient.invalidateQueries({ queryKey: ["auditoria"] })
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao lançar pontos.")

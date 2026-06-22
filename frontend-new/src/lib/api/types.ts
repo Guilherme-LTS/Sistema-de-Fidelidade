@@ -8,7 +8,7 @@ export interface UsuarioPerfil {
   user_id: string
   nome: string
   email: string
-  role: "admin" | "operador"
+  role: "admin" | "operador" | "novato"
   tenant_id: string
   tenant_name?: string
   tenant_logo_url?: string | null

@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { LogIn, ArrowLeft, Mail, Lock } from "lucide-react"
 
@@ -33,6 +33,16 @@ export function LoginForm() {
   const [carregando, setCarregando] = useState(false)
   const { login, sendPasswordReset } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get("expired") === "true") {
+      const timer = setTimeout(() => {
+        toast.warning("Sessão expirada. Por favor, faça login novamente.")
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams])
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -47,9 +57,14 @@ export function LoginForm() {
   const handleLoginSubmit = async (values: LoginFormValues) => {
     setCarregando(true)
     try {
-      await login(values.email, values.password)
+      const perfil = await login(values.email, values.password)
       toast.success("Login realizado com sucesso!")
-      router.push(routes.admin.dashboard)
+      
+      if (perfil.role === "novato") {
+        router.push(routes.admin.fidelidade)
+      } else {
+        router.push(routes.admin.dashboard)
+      }
     } catch (err: any) {
       toast.error(err.message || "Erro ao realizar login.")
     } finally {

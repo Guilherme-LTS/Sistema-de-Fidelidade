@@ -54,13 +54,6 @@ const finalFormSchema = z.object({
   isNewCustomer: z.boolean().default(false),
 }).superRefine((data, ctx) => {
   if (data.isNewCustomer) {
-    if (!data.nome || data.nome.trim().length < 2) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Nome é obrigatório para novos clientes.",
-        path: ["nome"],
-      });
-    }
     if (data.lgpdConsentimento !== true) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -229,7 +222,7 @@ export function LancamentoPontosForm() {
                       name="nome"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome Completo</FormLabel>
+                          <FormLabel>Nome Completo (Opcional)</FormLabel>
                           <FormControl>
                             <Input placeholder="Ex: João da Silva" {...field} />
                           </FormControl>

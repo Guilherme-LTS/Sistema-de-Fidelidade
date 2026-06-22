@@ -4,7 +4,7 @@ import { AuthGuard } from "@/features/auth/components/auth-guard"
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthGuard requireAdmin>
+    <AuthGuard allowedRoles={["admin", "operador", "novato"]}>
       <div className="flex min-h-screen bg-background">
         <div className="hidden lg:block">
           <Sidebar />

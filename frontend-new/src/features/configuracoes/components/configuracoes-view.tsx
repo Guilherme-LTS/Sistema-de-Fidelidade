@@ -1,10 +1,9 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, User, Gift } from "lucide-react"
+import { Building2, Gift } from "lucide-react"
 
 import { PerfilRestauranteTab } from "./tabs/perfil-restaurante-tab"
-import { PerfilUsuarioTab } from "./tabs/perfil-usuario-tab"
 import { ProgramaFidelidadeTab } from "./tabs/programa-fidelidade-tab"
 
 export function ConfiguracoesView() {
@@ -16,10 +15,7 @@ export function ConfiguracoesView() {
             <Building2 className="w-4 h-4 mr-2" />
             Perfil do Restaurante
           </TabsTrigger>
-          <TabsTrigger value="usuario" className="data-[state=active]:bg-background">
-            <User className="w-4 h-4 mr-2" />
-            Perfil do Usuário
-          </TabsTrigger>
+
           <TabsTrigger value="fidelidade" className="data-[state=active]:bg-background">
             <Gift className="w-4 h-4 mr-2" />
             Programa de Fidelidade
@@ -30,9 +26,6 @@ export function ConfiguracoesView() {
           <PerfilRestauranteTab />
         </TabsContent>
 
-        <TabsContent value="usuario" className="focus-visible:outline-none">
-          <PerfilUsuarioTab />
-        </TabsContent>
 
         <TabsContent value="fidelidade" className="focus-visible:outline-none">
           <ProgramaFidelidadeTab />

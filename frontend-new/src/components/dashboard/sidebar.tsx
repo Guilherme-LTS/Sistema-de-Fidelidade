@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutDashboard, Users, Gift, Settings, Trophy, Home, LogOut } from "lucide-react"
+import { LayoutDashboard, Users, Gift, Settings, Trophy, Home, LogOut, ShieldCheck, UsersRound, UserCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import Link from "next/link"
@@ -10,22 +10,26 @@ import { useAuth } from "@/lib/auth/auth-context"
 
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: routes.admin.dashboard },
-  { icon: Users, label: "Clientes", href: routes.admin.clientes },
-  { icon: Trophy, label: "Fidelidade", href: routes.admin.fidelidade },
+  { icon: LayoutDashboard, label: "Dashboard", href: routes.admin.dashboard, roles: ["admin", "operador"] },
+  { icon: Users, label: "Clientes", href: routes.admin.clientes, roles: ["admin", "operador", "novato"] },
+  { icon: Trophy, label: "Fidelidade", href: routes.admin.fidelidade, roles: ["admin", "operador", "novato"] },
 ]
 
 const generalItems = [
-  { icon: Gift, label: "Recompensas", href: routes.admin.recompensas },
-  { icon: Settings, label: "Configuracoes", href: routes.admin.configuracoes },
-  { icon: Home, label: "Pagina publica", href: routes.public.home },
+  { icon: Gift, label: "Recompensas", href: routes.admin.recompensas, roles: ["admin", "operador", "novato"] },
+  { icon: UsersRound, label: "Equipe", href: routes.admin.equipe, roles: ["admin"] },
+  { icon: UserCircle, label: "Meu Perfil", href: routes.admin.perfil, roles: ["admin", "operador", "novato"], hideForOwner: true },
+  { icon: Settings, label: "Configurações", href: routes.admin.configuracoes, roles: ["admin"] },
+  { icon: ShieldCheck, label: "Auditoria", href: routes.admin.auditoria, roles: ["admin"] },
+  { icon: Home, label: "Página pública", href: routes.public.home, roles: ["admin", "operador", "novato"] },
 ]
 
 export function Sidebar() {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const pathname = usePathname()
-  const { logout } = useAuth()
-
+  const { user, logout } = useAuth()
+  
+  const isOwner = user?.authUserId === user?.tenantId;
 
   return (
     <aside className="fixed top-0 left-0 w-64 bg-card border-r border-border p-4 h-screen overflow-y-auto lg:block">
@@ -51,6 +55,8 @@ export function Sidebar() {
           <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">Operacao</p>
           <nav className="space-y-0.5">
             {menuItems.map((item) => {
+              if (user && !item.roles.includes(user.role)) return null
+              if (isOwner && (item as any).hideForOwner) return null
               const isActive = pathname === item.href
               return (
                 <Link
@@ -78,6 +84,8 @@ export function Sidebar() {
           <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">Sistema</p>
           <nav className="space-y-0.5">
             {generalItems.map((item) => {
+              if (user && !item.roles.includes(user.role)) return null
+              if (isOwner && (item as any).hideForOwner) return null
               const isActive = pathname === item.href
               return (
                 <Link

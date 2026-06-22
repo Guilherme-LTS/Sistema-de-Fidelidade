@@ -1,4 +1,5 @@
 import { LoginForm } from "@/features/auth/components/login-form"
+import { Suspense } from "react"
 
 export default function LoginPage() {
   return (
@@ -7,7 +8,9 @@ export default function LoginPage() {
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-primary/5 blur-[80px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[350px] h-[350px] rounded-full bg-emerald-500/5 blur-[80px] pointer-events-none" />
 
-      <LoginForm />
+      <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando formulário...</div>}>
+        <LoginForm />
+      </Suspense>
     </main>
   )
 }

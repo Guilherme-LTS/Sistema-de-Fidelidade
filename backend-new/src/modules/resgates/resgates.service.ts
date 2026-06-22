@@ -3,17 +3,20 @@ import { db } from "../../infra/database/db.js";
 import { rewards, redemptions, transactions, customers } from "../../infra/database/schema.js";
 import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
 import { clientesService } from "../clientes/clientes.service.js";
+import { logAuditEvent } from "../../shared/audit.service.js";
 
 type ResgatarPremioInput = {
   tenantId: string;
   operatorId?: string;
+  authUserId?: string;
   document: string;
   rewardId: number;
+  ipAddress?: string;
 };
 
 export class ResgatesService {
   async resgatarPremio(input: ResgatarPremioInput) {
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       // 1. Validar recompensa
       const recompensa = await tx.query.rewards.findFirst({
         where: (r, { eq, and }) => and(
@@ -110,11 +113,32 @@ export class ResgatesService {
           pointsCost: recompensa.pointsCost,
         },
         cliente: {
+          id: cliente.id,
           nome: cliente.nome,
           document: cliente.document,
         }
       };
     });
+
+    // Registrar o evento na Auditoria
+    await logAuditEvent({
+      tenantId: input.tenantId,
+      operatorId: input.authUserId,
+      action: 'REDEEM_REWARD',
+      entityType: 'REDEMPTION',
+      entityId: String(result.resgate.id),
+      metadata: {
+        clienteId: result.cliente.id,
+        clienteNome: result.cliente.nome,
+        clienteCpf: result.cliente.document,
+        pontosGastos: result.recompensa.pointsCost,
+        recompensaId: input.rewardId,
+        recompensaNome: result.recompensa.name,
+      },
+      ipAddress: input.ipAddress,
+    });
+
+    return result;
   }
 }
 

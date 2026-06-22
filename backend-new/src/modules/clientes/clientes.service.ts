@@ -76,9 +76,9 @@ export class ClientesService {
     return result[0];
   }
 
-  async cadastrarCliente(tenantId: string, input: { nome: string; document: string; lgpdConsentimento: boolean }) {
-    if (!input.nome || !input.document) {
-      throw new AppError("Nome e CPF são obrigatórios.");
+  async cadastrarCliente(tenantId: string, input: { nome?: string; document: string; lgpdConsentimento: boolean }) {
+    if (!input.document) {
+      throw new AppError("CPF é obrigatório.");
     }
 
     if (input.lgpdConsentimento !== true) {

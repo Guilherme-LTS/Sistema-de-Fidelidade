@@ -1,5 +1,6 @@
 import { clientEnv } from "@/config/env.client"
 import { getStoredAccessToken } from "@/lib/auth/session"
+import { supabase } from "@/lib/supabase"
 
 type RequestOptions = RequestInit & {
   authToken?: string | null
@@ -19,8 +20,17 @@ export class ApiError extends Error {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { authToken, headers, ...requestInit } = options
   
-  // Obtém o token armazenado se nenhum token específico foi passado
-  const token = authToken !== undefined ? authToken : getStoredAccessToken()
+  // Obtém o token ativo do Supabase (que faz refresh automático se necessário)
+  let token = authToken
+  if (token === undefined) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      token = session?.access_token || null
+    } catch (e) {
+      console.warn("[API Client] Falha ao obter sessão do Supabase, tentando token local:", e)
+      token = getStoredAccessToken()
+    }
+  }
 
   const headersToUse: HeadersInit = {
     ...(requestInit.body ? { "Content-Type": "application/json" } : {}),
@@ -31,16 +41,52 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const response = await fetch(`${clientEnv.NEXT_PUBLIC_API_URL}${path}`, {
     ...requestInit,
     headers: headersToUse,
+    cache: "no-store",
   })
 
   const contentType = response.headers.get("content-type")
   const payload = contentType?.includes("application/json") ? await response.json() : await response.text()
 
   if (!response.ok) {
-    const message =
-      typeof payload === "object" && payload && "error" in payload
-        ? String(payload.error)
-        : `Erro na API (${response.status})`
+    let message = `Erro na API (${response.status})`
+    if (typeof payload === "object" && payload) {
+      if ("error" in payload) {
+        const errorObj = (payload as any).error
+        if (typeof errorObj === "object" && errorObj !== null) {
+          if (errorObj.message) {
+            message = errorObj.message
+            // Se for erro de validação e tiver detalhes, formata-os para o usuário
+            if (errorObj.code === "VALIDATION_ERROR" && Array.isArray(errorObj.details)) {
+              const detailsMsg = errorObj.details
+                .map((d: any) => d.message || `${d.path}: ${d.message}`)
+                .join(", ")
+              if (detailsMsg) {
+                message = detailsMsg
+              }
+            }
+          } else {
+            message = JSON.stringify(errorObj)
+          }
+        } else if (typeof errorObj === "string") {
+          message = errorObj
+        }
+      } else if ("message" in payload && typeof (payload as any).message === "string") {
+        message = (payload as any).message
+      }
+    }
+
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        import("@/lib/auth/session").then(({ clearStoredAccessToken }) => {
+          clearStoredAccessToken()
+        })
+        supabase.auth.signOut().then(() => {
+          if (!window.location.pathname.includes("/login")) {
+            window.location.href = "/login?expired=true"
+          }
+        })
+      }
+    }
 
     throw new ApiError(message, response.status, payload)
   }
@@ -63,6 +109,13 @@ export const api = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
       ...options,
     }),
+  patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    apiRequest<T>(path, {
+      method: "PATCH",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      ...options,
+    }),
   delete: <T>(path: string, options?: RequestOptions) =>
     apiRequest<T>(path, { method: "DELETE", ...options }),
 }
+

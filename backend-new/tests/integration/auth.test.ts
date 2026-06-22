@@ -116,7 +116,7 @@ describe("Authentication & Authorization Integration", () => {
     expect(JSON.parse(res.body)).toEqual({
       error: {
         code: "FORBIDDEN",
-        message: "Usuário sem perfil de funcionário ativo associado a um Tenant.",
+        message: "Seu acesso ao sistema foi desativado. Entre em contato com o proprietário da conta ou administrador.",
       },
     });
   });

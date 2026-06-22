@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useClientes, useClienteComExtrato } from "../hooks/use-clientes"
 import { Cliente, limparCpf } from "../clientes.api"
-import { NovoClienteModal } from "./novo-cliente-modal"
+import { ClienteModal } from "./cliente-modal"
 import { ResgateModal } from "@/features/resgates/components/resgate-modal"
 
 import {
@@ -33,7 +33,8 @@ import {
   Award, 
   Clock, 
   AlertTriangle,
-  FileText
+  FileText,
+  Edit2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -59,6 +60,9 @@ export function ClientesView() {
   
   // Documento selecionado (CPF)
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null)
+  
+  // Modal de edição
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   // Resetar página quando a busca mudar
   useEffect(() => {
@@ -146,7 +150,6 @@ export function ClientesView() {
               placeholder="Buscar por nome ou CPF..."
             />
           </div>
-          <NovoClienteModal />
         </div>
       </div>
 
@@ -247,8 +250,11 @@ export function ClientesView() {
               <CardHeader className="border-b border-border bg-muted/10 pb-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-xl md:text-2xl font-bold text-foreground">
+                    <CardTitle className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
                       {clienteAtivo.nome || `CPF ${clienteAtivo.document}`}
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => setIsModalOpen(true)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
                     </CardTitle>
                     <CardDescription className="text-xs md:text-sm mt-1">
                       CPF: <span className="font-mono">{clienteAtivo.document}</span> • ID: #{clienteAtivo.id}
@@ -369,6 +375,12 @@ export function ClientesView() {
           )}
         </Card>
       </div>
+
+      <ClienteModal 
+        open={isModalOpen} 
+        onOpenChange={setIsModalOpen} 
+        cliente={clienteAtivo} 
+      />
     </div>
   )
 }

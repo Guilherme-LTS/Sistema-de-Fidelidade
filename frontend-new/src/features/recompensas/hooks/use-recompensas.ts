@@ -15,6 +15,7 @@ export function useRecompensas() {
     mutationFn: recompensasApi.criar,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: RECOMPENSAS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ["auditoria"] })
     },
   })
 
@@ -23,6 +24,7 @@ export function useRecompensas() {
       recompensasApi.atualizar(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: RECOMPENSAS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ["auditoria"] })
     },
   })
 
@@ -30,6 +32,7 @@ export function useRecompensas() {
     mutationFn: recompensasApi.excluir,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: RECOMPENSAS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ["auditoria"] })
     },
   })
 
