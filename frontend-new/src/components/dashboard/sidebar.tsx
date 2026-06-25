@@ -18,7 +18,7 @@ const menuItems = [
 const generalItems = [
   { icon: Gift, label: "Recompensas", href: routes.admin.recompensas, roles: ["admin", "operador", "novato"] },
   { icon: UsersRound, label: "Equipe", href: routes.admin.equipe, roles: ["admin"] },
-  { icon: UserCircle, label: "Meu Perfil", href: routes.admin.perfil, roles: ["admin", "operador", "novato"], hideForOwner: true },
+  { icon: UserCircle, label: "Meu Perfil", href: routes.admin.perfil, roles: ["admin", "operador", "novato"] },
   { icon: Settings, label: "Configurações", href: routes.admin.configuracoes, roles: ["admin"] },
   { icon: ShieldCheck, label: "Auditoria", href: routes.admin.auditoria, roles: ["admin"] },
   { icon: Home, label: "Página pública", href: routes.public.home, roles: ["admin", "operador", "novato"] },
@@ -56,7 +56,6 @@ export function Sidebar() {
           <nav className="space-y-0.5">
             {menuItems.map((item) => {
               if (user && !item.roles.includes(user.role)) return null
-              if (isOwner && (item as any).hideForOwner) return null
               const isActive = pathname === item.href
               return (
                 <Link
@@ -85,7 +84,6 @@ export function Sidebar() {
           <nav className="space-y-0.5">
             {generalItems.map((item) => {
               if (user && !item.roles.includes(user.role)) return null
-              if (isOwner && (item as any).hideForOwner) return null
               const isActive = pathname === item.href
               return (
                 <Link

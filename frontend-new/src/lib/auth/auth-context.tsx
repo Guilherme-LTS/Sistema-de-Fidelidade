@@ -64,6 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsInitializing(false)
     })
 
+    // Fallback de segurança: se o Supabase travar por algum motivo (ex: Web Locks), libera a interface após 3 segundos
+    const initTimeout = setTimeout(() => {
+      setIsInitializing(false)
+    }, 3000)
+
     // 2. Carregar sessão inicial de forma assíncrona (com auto-refresh se necessário)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -90,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     return () => {
+      clearTimeout(initTimeout)
       subscription.unsubscribe()
     }
   }, [queryClient])

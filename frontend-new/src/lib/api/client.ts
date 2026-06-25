@@ -20,16 +20,10 @@ export class ApiError extends Error {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { authToken, headers, ...requestInit } = options
   
-  // Obtém o token ativo do Supabase (que faz refresh automático se necessário)
+  // Obtém o token mantido atualizado pelo AuthContext
   let token = authToken
   if (token === undefined) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      token = session?.access_token || null
-    } catch (e) {
-      console.warn("[API Client] Falha ao obter sessão do Supabase, tentando token local:", e)
-      token = getStoredAccessToken()
-    }
+    token = getStoredAccessToken()
   }
 
   const headersToUse: HeadersInit = {
@@ -75,14 +69,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       }
     }
 
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 403) {
       if (typeof window !== "undefined") {
         import("@/lib/auth/session").then(({ clearStoredAccessToken }) => {
           clearStoredAccessToken()
         })
         supabase.auth.signOut().then(() => {
           if (!window.location.pathname.includes("/login")) {
-            window.location.href = "/login?expired=true"
+            const redirectUrl = response.status === 403 
+              ? `/login?error=${encodeURIComponent(message)}` 
+              : "/login?expired=true";
+            window.location.href = redirectUrl
           }
         })
       }

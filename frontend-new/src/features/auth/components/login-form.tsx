@@ -35,7 +35,19 @@ export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  const [isMounted, setIsMounted] = useState(false)
+
   useEffect(() => {
+    setIsMounted(true)
+    
+    const errorMsg = searchParams.get("error")
+    if (errorMsg) {
+      const timer = setTimeout(() => {
+        toast.error(errorMsg, { duration: 5000 })
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+
     if (searchParams.get("expired") === "true") {
       const timer = setTimeout(() => {
         toast.warning("Sessão expirada. Por favor, faça login novamente.")
@@ -132,7 +144,7 @@ export function LoginForm() {
             <Button
               type="submit"
               className="w-full h-10 font-medium bg-primary hover:bg-primary/95 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:scale-[1.01] transition-all duration-200"
-              disabled={carregando}
+              disabled={carregando || !isMounted}
             >
               {carregando ? (
                 <>
@@ -197,7 +209,7 @@ export function LoginForm() {
             <Button
               type="submit"
               className="w-full h-10 mt-2 font-medium bg-primary hover:bg-primary/95 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:scale-[1.01] transition-all duration-200"
-              disabled={carregando}
+              disabled={carregando || !isMounted}
             >
               {carregando ? (
                 <>
