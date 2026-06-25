@@ -1,22 +1,44 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
+import { api } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cpfMask } from "@/lib/masks"
+import { formatCPF, getPasswordStrength } from "@/lib/masks"
+
+function extractErrorMessage(err: any): string {
+  if (!err) return "Erro interno do sistema. Tente novamente em alguns minutos."
+  
+  // Extrai mensagem da API (se houver)
+  const apiMessage = err.response?.data?.error?.message || err.response?.data?.message;
+  if (typeof apiMessage === 'string' && apiMessage.trim() !== '' && apiMessage !== '{}') {
+    return apiMessage;
+  }
+  
+  // Extrai do objeto de erro nativo
+  if (typeof err.message === 'string' && err.message.trim() !== '' && err.message !== '{}') {
+    // Se for um erro genérico de rede do Axios que vaza pro usuário
+    if (err.message.includes("Request failed with status code 500")) {
+      return "Erro interno do sistema. Tente novamente em alguns minutos."
+    }
+    return err.message;
+  }
+  
+  return "Erro interno do sistema. Tente novamente em alguns minutos."
+}
 
 // ---- Schemas ----
 const loginSchema = z.object({
-  email: z.string().email("E-mail inválido."),
+  identifier: z.string().min(1, "Informe seu CPF ou E-mail."),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres."),
 })
 
@@ -24,11 +46,23 @@ const signupSchema = z.object({
   name: z.string().min(3, "Nome muito curto."),
   cpf: z.string().length(14, "CPF incompleto."),
   email: z.string().email("E-mail inválido."),
-  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres."),
+  password: z.string()
+    .min(8, "A senha deve ter no mínimo 8 caracteres.")
+    .regex(/[A-Z]/, "A senha deve conter pelo menos uma letra maiúscula.")
+    .regex(/[0-9]/, "A senha deve conter pelo menos um número."),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem.",
+  path: ["confirmPassword"],
+})
+
+const forgotSchema = z.object({
+  identifier: z.string().min(1, "Informe seu CPF ou E-mail."),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
 type SignupFormValues = z.infer<typeof signupSchema>
+type ForgotFormValues = z.infer<typeof forgotSchema>
 
 interface ConsumerAuthFormProps {
   tenantName: string
@@ -36,32 +70,51 @@ interface ConsumerAuthFormProps {
 
 export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
   const [loading, setLoading] = useState(false)
+  const [forgotMode, setForgotMode] = useState(false)
+  const [passwordScore, setPasswordScore] = useState(0)
   const router = useRouter()
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { identifier: "", password: "" },
   })
 
   const signupForm = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { name: "", cpf: "", email: "", password: "" },
+    defaultValues: { name: "", cpf: "", email: "", password: "", confirmPassword: "" },
+    mode: "onChange",
   })
+
+  const forgotForm = useForm<ForgotFormValues>({
+    resolver: zodResolver(forgotSchema),
+    defaultValues: { identifier: "" },
+  })
+
+  const watchPassword = signupForm.watch("password")
+  
+  useEffect(() => {
+    setPasswordScore(getPasswordStrength(watchPassword))
+  }, [watchPassword])
 
   const onLoginSubmit = async (values: LoginFormValues) => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
+      // Usamos a nossa nova rota inteligente que resolve CPF ou E-mail
+      const res = await api.post<{ success: boolean; data: { session: any } }>("/public/consumer/login", {
+        identifier: values.identifier,
         password: values.password,
       })
 
-      if (error) throw error
+      if (res.data?.session) {
+        await supabase.auth.setSession(res.data.session)
+      } else {
+        throw new Error("Sessão não retornada pelo servidor.")
+      }
 
       toast.success("Login realizado com sucesso!")
       router.push("/painel")
     } catch (err: any) {
-      toast.error(err.message || "Erro ao fazer login.")
+      toast.error(extractErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -70,31 +123,89 @@ export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
   const onSignupSubmit = async (values: SignupFormValues) => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signUp({
+      const res = await api.post<{ success: boolean; data: { session: any } }>("/public/consumer/signup", {
+        name: values.name,
+        cpf: values.cpf.replace(/\D/g, ''),
         email: values.email,
         password: values.password,
-        options: {
-          data: {
-            isConsumer: 'true',
-            name: values.name,
-            document: values.cpf.replace(/\D/g, ''), // Salva apenas números
-          }
-        }
       })
 
-      if (error) throw error
+      if (res.data?.session) {
+        await supabase.auth.setSession(res.data.session)
+      } else {
+        throw new Error("Sessão não retornada pelo servidor.")
+      }
 
       toast.success("Conta criada! Você já pode acessar seu painel.")
       router.push("/painel")
     } catch (err: any) {
-      toast.error(err.message || "Erro ao criar conta.")
+      toast.error(extractErrorMessage(err))
     } finally {
       setLoading(false)
     }
   }
 
+  const onForgotSubmit = async (values: ForgotFormValues) => {
+    setLoading(true)
+    try {
+      const res = await api.post<{ success: boolean; message: string }>("/public/consumer/recover-password", {
+        identifier: values.identifier
+      })
+      toast.success(res.message || "Enviamos um link para redefinir sua senha!")
+      setForgotMode(false)
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (forgotMode) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center space-y-1 mb-4">
+          <h3 className="font-semibold text-lg">Recuperar Senha</h3>
+          <p className="text-sm text-muted-foreground">Insira seu e-mail para receber o link de acesso.</p>
+        </div>
+        <form onSubmit={forgotForm.handleSubmit(onForgotSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="forgot-identifier">CPF ou E-mail</Label>
+            <Input
+              id="forgot-identifier"
+              type="text"
+              placeholder="000.000.000-00 ou seu@email.com"
+              {...forgotForm.register("identifier", {
+                onChange: (e) => {
+                  const val = e.target.value
+                  if (/^\d/.test(val) && !val.includes("@")) {
+                    e.target.value = formatCPF(val)
+                  }
+                }
+              })}
+            />
+            {forgotForm.formState.errors.identifier && (
+              <p className="text-xs text-destructive">{forgotForm.formState.errors.identifier.message}</p>
+            )}
+          </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? <Spinner className="mr-2" /> : "Enviar link de recuperação"}
+          </Button>
+          <Button 
+            type="button" 
+            variant="ghost" 
+            className="w-full" 
+            onClick={() => setForgotMode(false)}
+            disabled={loading}
+          >
+            Voltar para o login
+          </Button>
+        </form>
+      </div>
+    )
+  }
+
   return (
-    <Tabs defaultValue="signup" className="w-full">
+    <Tabs defaultValue="login" className="w-full">
       <TabsList className="grid w-full grid-cols-2 mb-6">
         <TabsTrigger value="login">Já tenho conta</TabsTrigger>
         <TabsTrigger value="signup">Primeiro Acesso</TabsTrigger>
@@ -103,18 +214,35 @@ export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
       <TabsContent value="login" className="space-y-4">
         <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="login-email">E-mail</Label>
+            <Label htmlFor="login-identifier">CPF ou E-mail</Label>
             <Input
-              id="login-email"
-              placeholder="seu@email.com"
-              {...loginForm.register("email")}
+              id="login-identifier"
+              placeholder="000.000.000-00 ou seu@email.com"
+              {...loginForm.register("identifier", {
+                onChange: (e) => {
+                  const val = e.target.value
+                  // Apply mask only if it looks like a CPF (numbers)
+                  if (/^\d/.test(val) && !val.includes("@")) {
+                    e.target.value = formatCPF(val)
+                  }
+                }
+              })}
             />
-            {loginForm.formState.errors.email && (
-              <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>
+            {loginForm.formState.errors.identifier && (
+              <p className="text-xs text-destructive">{loginForm.formState.errors.identifier.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="login-password">Senha</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="login-password">Senha</Label>
+              <button 
+                type="button" 
+                onClick={() => setForgotMode(true)}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
             <Input
               id="login-password"
               type="password"
@@ -134,13 +262,13 @@ export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
       <TabsContent value="signup" className="space-y-4">
         <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="signup-cpf">CPF (O mesmo informado no balcão)</Label>
+            <Label htmlFor="signup-cpf">CPF</Label>
             <Input
               id="signup-cpf"
               placeholder="000.000.000-00"
               {...signupForm.register("cpf", {
                 onChange: (e) => {
-                  e.target.value = cpfMask(e.target.value)
+                  e.target.value = formatCPF(e.target.value)
                 }
               })}
             />
@@ -179,11 +307,35 @@ export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
               placeholder="••••••••"
               {...signupForm.register("password")}
             />
+            
+            {watchPassword?.length > 0 && (
+              <div className="flex gap-1 mt-1.5 h-1.5 w-full rounded-full overflow-hidden bg-muted">
+                <div className={`h-full transition-all duration-500 ${passwordScore >= 1 ? (passwordScore >= 3 ? 'bg-emerald-500' : 'bg-amber-500') : 'bg-destructive'} w-1/4`} />
+                <div className={`h-full transition-all duration-500 ${passwordScore >= 2 ? (passwordScore >= 3 ? 'bg-emerald-500' : 'bg-amber-500') : 'bg-transparent'} w-1/4`} />
+                <div className={`h-full transition-all duration-500 ${passwordScore >= 3 ? 'bg-emerald-500' : 'bg-transparent'} w-1/4`} />
+                <div className={`h-full transition-all duration-500 ${passwordScore >= 4 ? 'bg-emerald-500' : 'bg-transparent'} w-1/4`} />
+              </div>
+            )}
+
             {signupForm.formState.errors.password && (
               <p className="text-xs text-destructive">{signupForm.formState.errors.password.message}</p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          
+          <div className="space-y-2">
+            <Label htmlFor="signup-confirm-password">Confirmar Senha</Label>
+            <Input
+              id="signup-confirm-password"
+              type="password"
+              placeholder="••••••••"
+              {...signupForm.register("confirmPassword")}
+            />
+            {signupForm.formState.errors.confirmPassword && (
+              <p className="text-xs text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          <Button type="submit" className="w-full mt-2" disabled={loading}>
             {loading ? <Spinner className="mr-2" /> : "Ver Meus Pontos"}
           </Button>
         </form>

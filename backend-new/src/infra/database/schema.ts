@@ -45,6 +45,7 @@ export const consumerProfiles = pgTable("consumer_profiles", {
   authUserId: uuid("auth_user_id"), // FK to auth.users.id
   document: varchar("document", { length: 14 }).notNull().unique(),
   name: varchar("name", { length: 255 }),
+  phone: varchar("phone"),
   lgpdConsent: boolean("lgpd_consent").default(false),
   consentDate: timestamp("consent_date", { withTimezone: true, mode: "string" }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),

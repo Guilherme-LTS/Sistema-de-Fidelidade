@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryProvider } from "@/components/query-provider"
-import { AuthProvider } from "@/lib/auth/auth-context"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
@@ -43,9 +42,7 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         <ThemeProvider defaultTheme="light" storageKey="tasko-theme">
           <QueryProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
+            {children}
           </QueryProvider>
         </ThemeProvider>
         <Toaster closeButton position="top-right" />

@@ -224,7 +224,7 @@ export function LoginForm() {
       </CardContent>
 
       <CardFooter className="flex flex-col gap-3 justify-center border-t border-border/40 pt-4 bg-muted/20 pb-6 rounded-b-2xl">
-        {forgotMode && (
+        {forgotMode ? (
           <button
             type="button"
             className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -233,6 +233,13 @@ export function LoginForm() {
             <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
             Voltar para o login
           </button>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Ainda não tem uma conta?{" "}
+            <a href="/cadastro" className="font-semibold text-primary hover:underline">
+              Cadastre-se aqui
+            </a>
+          </p>
         )}
       </CardFooter>
     </Card>

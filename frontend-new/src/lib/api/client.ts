@@ -75,10 +75,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
           clearStoredAccessToken()
         })
         supabase.auth.signOut().then(() => {
-          if (!window.location.pathname.includes("/login")) {
+          const currentPath = window.location.pathname
+          
+          if (!currentPath.includes("/login") && !currentPath.includes("/acesso")) {
+            // Se estiver no fluxo do consumidor (painel/perfil), redireciona pro acesso do consumidor
+            const isConsumerFlow = currentPath.startsWith("/painel") || currentPath.startsWith("/fidelidade") || currentPath.startsWith("/perfil")
+            const baseLoginUrl = isConsumerFlow ? "/acesso" : "/login"
+            
             const redirectUrl = response.status === 403 
-              ? `/login?error=${encodeURIComponent(message)}` 
-              : "/login?expired=true";
+              ? `${baseLoginUrl}?error=${encodeURIComponent(message)}` 
+              : `${baseLoginUrl}?expired=true`;
+            
             window.location.href = redirectUrl
           }
         })

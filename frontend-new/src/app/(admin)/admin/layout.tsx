@@ -1,18 +1,21 @@
 import type { ReactNode } from "react"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { AuthGuard } from "@/features/auth/components/auth-guard"
+import { AuthProvider } from "@/lib/auth/auth-context"
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthGuard allowedRoles={["admin", "operador", "novato"]}>
-      <div className="flex min-h-screen bg-background">
-        <div className="hidden lg:block">
-          <Sidebar />
-        </div>
+    <AuthProvider>
+      <AuthGuard allowedRoles={["admin", "operador", "novato"]}>
+        <div className="flex min-h-screen bg-background">
+          <div className="hidden lg:block">
+            <Sidebar />
+          </div>
 
-        <main className="flex-1 p-3 md:p-4 lg:ml-64 lg:p-5">{children}</main>
-      </div>
-    </AuthGuard>
+          <main className="flex-1 p-3 md:p-4 lg:ml-64 lg:p-5">{children}</main>
+        </div>
+      </AuthGuard>
+    </AuthProvider>
   )
 }
 

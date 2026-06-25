@@ -41,6 +41,23 @@ export function formatCNPJ(value: string): string {
   return r
 }
 
+export function formatCPF(value: string): string {
+  if (!value) return ""
+  
+  let r = value.replace(/\D/g, "")
+  if (r.length > 11) r = r.slice(0, 11)
+  
+  if (r.length > 9) {
+    r = r.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, "$1.$2.$3-$4")
+  } else if (r.length > 6) {
+    r = r.replace(/^(\d{3})(\d{3})(\d{0,3}).*/, "$1.$2.$3")
+  } else if (r.length > 3) {
+    r = r.replace(/^(\d{3})(\d{0,3})/, "$1.$2")
+  }
+  
+  return r
+}
+
 export function isValidCNPJ(cnpj: string): boolean {
   if (!cnpj) return false
 

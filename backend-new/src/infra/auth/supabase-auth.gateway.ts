@@ -43,6 +43,20 @@ export class SupabaseAuthGateway {
   }
 
   /**
+   * Realiza login e retorna a sessão do usuário.
+   */
+  async signIn(email: string, password: string) {
+    const { data, error } = await this.client.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      throw error;
+    }
+    return data;
+  }
+
+  /**
    * Atualiza a senha do usuário utilizando privilégios de Admin.
    */
   async updatePassword(userId: string, newPassword: string): Promise<void> {

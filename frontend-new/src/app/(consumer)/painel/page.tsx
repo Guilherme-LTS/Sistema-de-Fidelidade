@@ -1,8 +1,8 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useAuth } from "@/lib/auth/auth-context"
-import { apiClient } from "@/lib/api/api-client"
+import { useConsumerAuth } from "@/features/consumer/contexts/consumer-auth-context"
+import { api } from "@/lib/api/client"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { Store, Star, ArrowRight } from "lucide-react"
@@ -27,18 +27,10 @@ interface ConsumerDashboardResponse {
 }
 
 export default function ConsumerPanel() {
-  const { user } = useAuth()
+  const { data: consumerData, loading } = useConsumerAuth()
+  const user = consumerData?.profile
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["consumer-dashboard"],
-    queryFn: async () => {
-      const res = await apiClient.get<ConsumerDashboardResponse>("/consumer/dashboard")
-      return res.data
-    },
-    // Opcionalmente podemos rodar só quando o usuário tá logado e a gente sabe que é consumidor, mas aqui assumiremos que quem acessa /painel é consumidor.
-  })
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center p-12">
         <Spinner className="h-8 w-8 text-primary" />
@@ -46,8 +38,8 @@ export default function ConsumerPanel() {
     )
   }
 
-  const profile = data?.profile
-  const memberships = data?.memberships || []
+  const profile = consumerData?.profile
+  const memberships = consumerData?.memberships || []
 
   return (
     <div className="space-y-6">

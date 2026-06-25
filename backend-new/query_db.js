@@ -7,11 +7,10 @@ async function main() {
   });
 
   await client.connect();
-  const res1 = await client.query('SELECT * FROM public.tenants ORDER BY created_at DESC LIMIT 3');
-  console.log("TENANTS:", res1.rows);
-  
-  const res2 = await client.query('SELECT * FROM public.tenant_users ORDER BY created_at DESC LIMIT 3');
-  console.log("TENANT_USERS:", res2.rows);
+
+  const res = await client.query("SELECT id, email, raw_user_meta_data FROM auth.users");
+  console.log("ALL AUTH USERS:");
+  console.log(res.rows);
 
   await client.end();
 }
