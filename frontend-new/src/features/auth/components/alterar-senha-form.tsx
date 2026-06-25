@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { KeyRound, Lock } from "lucide-react"
 
+import { getPasswordStrength } from "@/lib/masks"
 import { useAuth } from "@/lib/auth/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,7 +18,10 @@ import { Spinner } from "@/components/ui/spinner"
 import { routes } from "@/config/routes"
 
 const passwordSchema = z.object({
-  password: z.string().min(6, { message: "A senha deve ter no mínimo 6 caracteres." }),
+  password: z.string()
+    .min(8, { message: "A senha deve ter no mínimo 8 caracteres." })
+    .regex(/[A-Z]/, { message: "A senha deve conter pelo menos uma letra maiúscula." })
+    .regex(/[0-9]/, { message: "A senha deve conter pelo menos um número." }),
   confirmPassword: z.string().min(6, { message: "A confirmação de senha é obrigatória." }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem.",
@@ -28,13 +32,28 @@ type PasswordFormValues = z.infer<typeof passwordSchema>
 
 export function AlterarSenhaForm() {
   const [carregando, setCarregando] = useState(false)
+  const [passwordScore, setPasswordScore] = useState(0)
   const { updatePassword, user } = useAuth()
   const router = useRouter()
 
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     defaultValues: { password: "", confirmPassword: "" },
+    mode: "onChange",
   })
+
+  // Watch password to update strength indicator
+  const watchPassword = form.watch("password")
+  
+  useEffect(() => {
+    setPasswordScore(getPasswordStrength(watchPassword))
+  }, [watchPassword])
+
+  useEffect(() => {
+    // Prefetch rotas para acelerar o redirecionamento pós-sucesso
+    router.prefetch(routes.admin.dashboard)
+    router.prefetch(routes.admin.fidelidade)
+  }, [router])
 
   const onSubmit = async (values: PasswordFormValues) => {
     setCarregando(true)
@@ -89,6 +108,16 @@ export function AlterarSenhaForm() {
                 {...form.register("password")}
               />
             </div>
+
+            {/* Força da Senha */}
+            {watchPassword.length > 0 && (
+              <div className="flex gap-1 mt-1.5 h-1.5 w-full rounded-full overflow-hidden bg-muted">
+                <div className={`h-full transition-all duration-500 ${passwordScore >= 1 ? (passwordScore >= 3 ? 'bg-emerald-500' : 'bg-amber-500') : 'bg-destructive'} w-1/4`} />
+                <div className={`h-full transition-all duration-500 ${passwordScore >= 2 ? (passwordScore >= 3 ? 'bg-emerald-500' : 'bg-amber-500') : 'bg-transparent'} w-1/4`} />
+                <div className={`h-full transition-all duration-500 ${passwordScore >= 3 ? 'bg-emerald-500' : 'bg-transparent'} w-1/4`} />
+                <div className={`h-full transition-all duration-500 ${passwordScore >= 4 ? 'bg-emerald-500' : 'bg-transparent'} w-1/4`} />
+              </div>
+            )}
             {form.formState.errors.password && (
               <p className="text-xs text-destructive mt-1">
                 {form.formState.errors.password.message}
