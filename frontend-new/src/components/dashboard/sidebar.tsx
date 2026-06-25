@@ -29,7 +29,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   
-  const isOwner = user?.authUserId === user?.tenantId;
+
 
   return (
     <aside className="fixed top-0 left-0 w-64 bg-card border-r border-border p-4 h-screen overflow-y-auto lg:block">
