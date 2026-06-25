@@ -8,6 +8,7 @@ import { relations, sql } from "drizzle-orm";
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey(), // PK (matches auth.users.id of the admin in most cases)
   name: varchar("name").notNull(),
+  slug: varchar("slug", { length: 255 }).unique(),
   tradingName: varchar("trading_name"),
   document: varchar("document"),
   phone: varchar("phone"),
@@ -41,6 +42,7 @@ export const tenantUsers = pgTable("tenant_users", {
 
 export const consumerProfiles = pgTable("consumer_profiles", {
   id: uuid("id").defaultRandom().primaryKey(),
+  authUserId: uuid("auth_user_id"), // FK to auth.users.id
   document: varchar("document", { length: 14 }).notNull().unique(),
   name: varchar("name", { length: 255 }),
   lgpdConsent: boolean("lgpd_consent").default(false),
