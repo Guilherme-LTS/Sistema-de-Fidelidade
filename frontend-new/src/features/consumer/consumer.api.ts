@@ -35,3 +35,54 @@ export async function solicitarRecuperacaoConsumer(identifier: string) {
   const response = await api.post<{ success: boolean; message: string }>("/public/consumer/recover-password", { identifier })
   return response
 }
+
+export interface TenantDashboardDetails {
+  tenant: {
+    id: string
+    name: string
+    tradingName: string | null
+    slug: string
+    logoUrl: string | null
+    email: string | null
+    phone: string | null
+    addressLine1: string | null
+    addressNumber: string | null
+    addressCity: string | null
+    addressState: string | null
+    latitude: number | null
+    longitude: number | null
+    businessHours?: Record<string, { active: boolean; open: string; close: string }>
+    socialLinks?: { instagram?: string; facebook?: string; tiktok?: string; website?: string }
+  }
+  rewards: {
+    id: number
+    name: string
+    description: string | null
+    pointsCost: number
+    isActive: boolean
+    createdAt: string
+  }[]
+  summary: {
+    pontos_disponiveis: number
+    total_transactions: number
+    last_transaction_date: string | null
+  }
+}
+
+export async function carregarTenantConsumer(slug: string): Promise<TenantDashboardDetails> {
+  const response = await api.get<{ success: boolean; data: TenantDashboardDetails }>(`/consumer/tenant/${slug}`)
+  return response.data
+}
+
+export interface TransactionHistoryItem {
+  id: string
+  type: "earn" | "spend" | "expire"
+  points: number
+  description: string
+  createdAt: string
+}
+
+export async function carregarExtratoConsumer(slug: string): Promise<{ history: TransactionHistoryItem[] }> {
+  const response = await api.get<{ success: boolean; data: { history: TransactionHistoryItem[] } }>(`/consumer/tenant/${slug}/transactions`)
+  return response.data
+}

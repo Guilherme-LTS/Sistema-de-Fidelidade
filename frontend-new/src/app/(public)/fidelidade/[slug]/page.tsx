@@ -22,12 +22,13 @@ async function getTenantBySlug(slug: string) {
 }
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params
   const data = await getTenantBySlug(params.slug)
   const tenant = data?.data
   
@@ -41,7 +42,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function FidelidadePage({ params }: PageProps) {
+export default async function FidelidadePage(props: PageProps) {
+  const params = await props.params
   const data = await getTenantBySlug(params.slug)
   const tenant = data?.data
 

@@ -17,6 +17,8 @@ type RestauranteInput = {
   latitude?: string | number;
   longitude?: string | number;
   logoUrl?: string;
+  businessHours?: Record<string, { active: boolean; open: string; close: string }>;
+  socialLinks?: { instagram?: string; facebook?: string; tiktok?: string; website?: string };
 };
 
 type FidelidadeInput = {
@@ -31,7 +33,19 @@ export class ConfiguracoesService {
       where: eq(tenants.id, tenantId),
     });
     if (!tenant) throw new NotFoundError("Restaurante não encontrado.");
-    return tenant;
+    
+    // Ensure we always return an object even if it's null in DB
+    const businessHours = tenant.businessHours || {
+      monday: { active: false, open: "08:00", close: "18:00" },
+      tuesday: { active: false, open: "08:00", close: "18:00" },
+      wednesday: { active: false, open: "08:00", close: "18:00" },
+      thursday: { active: false, open: "08:00", close: "18:00" },
+      friday: { active: false, open: "08:00", close: "18:00" },
+      saturday: { active: false, open: "08:00", close: "18:00" },
+      sunday: { active: false, open: "08:00", close: "18:00" },
+    };
+
+    return { ...tenant, businessHours };
   }
 
   async updateRestaurante(tenantId: string, input: RestauranteInput, operatorId?: string, ipAddress?: string) {
@@ -40,6 +54,8 @@ export class ConfiguracoesService {
         ...input,
         latitude: input.latitude ? String(input.latitude) : undefined,
         longitude: input.longitude ? String(input.longitude) : undefined,
+        businessHours: input.businessHours,
+        socialLinks: input.socialLinks,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tenants.id, tenantId))

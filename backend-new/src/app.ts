@@ -31,6 +31,7 @@ import { auditoriaRoutes } from "./modules/auditoria/auditoria.routes.js";
 import { usuariosRoutes } from "./modules/usuarios/usuarios.routes.js";
 import { publicRoutes } from "./modules/public/public.routes.js";
 import { consumerRoutes } from "./modules/consumer/consumer.routes.js";
+import { cronRoutes } from "./modules/cron/cron.routes.js";
 
 // Rota de Health Check (/health)
 app.get("/health", async (_request, _reply) => {
@@ -53,3 +54,4 @@ app.register(auditoriaRoutes, { prefix: "/auditoria" });
 app.register(usuariosRoutes, { prefix: "/usuarios" });
 app.register(publicRoutes, { prefix: "/public" });
 app.register(consumerRoutes, { prefix: "/consumer" });
+app.register(cronRoutes, { prefix: "/webhooks/cron" });

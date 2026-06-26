@@ -28,6 +28,11 @@ const actionTranslations: Record<string, string> = {
   UPDATE_CONFIG: "Configurações Alteradas",
   UPDATE_USER: "Alteração de Perfil de Usuário",
   DELETE_USER: "Exclusão de Usuário",
+  POINTS_EXPIRED: "Pontos Expirados",
+  CREATE_USER: "Usuário Criado",
+  UPDATE_PASSWORD: "Senha Alterada",
+  ACTIVATE_USER: "Usuário Ativado",
+  DEACTIVATE_USER: "Usuário Desativado",
 }
 
 function getActionLabel(action: string) {
@@ -107,25 +112,74 @@ function renderLogDetailsFriendly(log: any) {
     )
   }
 
-  // 2. REDEEM_REWARD
-  if (log.action === "REDEEM_REWARD") {
+  // 2. POINTS_EXPIRED
+  if (log.action === "POINTS_EXPIRED") {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2 border-b pb-3">
           <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-          <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Dados do Resgate</h4>
+          <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Dados da Expiração</h4>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
           <DetailItem label="Cliente" value={metadata.clienteNome || "Não informado"} />
           <DetailItem label="CPF" value={formatCPF(metadata.clienteCpf)} />
-          <DetailItem label="Recompensa" value={metadata.recompensaNome || "Não especificada"} valueClassName="font-semibold text-foreground" />
-          <DetailItem label="Pontos Utilizados" value={`- ${metadata.pontosGastos} pts`} highlight valueClassName="text-orange-600 dark:text-orange-500 font-bold" />
+          <DetailItem 
+            label="Quantidade Expirada" 
+            value={`- ${metadata.pontosExpirados || metadata.pointsExpired || 0} pts`} 
+            highlight 
+            valueClassName="text-orange-600 dark:text-orange-500 font-bold" 
+          />
+          <DetailItem 
+            label="Motivo" 
+            value={metadata.motivo || "Expiração automática conforme regras do programa de fidelidade."} 
+            valueClassName="text-muted-foreground text-sm"
+          />
         </div>
       </div>
     )
   }
 
-  // 3. UPDATE_CONFIG
+  // 3. REDEEM_REWARD
+  if (log.action === "REDEEM_REWARD") {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 border-b pb-3">
+          <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+          <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Dados do Resgate</h4>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+          <DetailItem label="Cliente" value={metadata.clienteNome || "Não informado"} />
+          <DetailItem label="CPF" value={formatCPF(metadata.clienteCpf)} />
+          <DetailItem label="Recompensa" value={metadata.recompensaNome || "-"} />
+          <DetailItem 
+            label="Pontos Gastos" 
+            value={`- ${metadata.pontosGastos} pts`} 
+            highlight 
+            valueClassName="text-rose-600 dark:text-rose-500 font-bold" 
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // 4. CREATE_CUSTOMER
+  if (log.action === "CREATE_CUSTOMER") {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 border-b pb-3">
+          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+          <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Dados do Cadastro</h4>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+          <DetailItem label="Cliente" value={metadata.clienteNome || "Não informado"} />
+          <DetailItem label="CPF" value={formatCPF(metadata.clienteCpf)} />
+          <DetailItem label="ID no Sistema" value={metadata.clienteId || "-"} />
+        </div>
+      </div>
+    )
+  }
+
+  // 5. UPDATE_CONFIG
   if (log.action === "UPDATE_CONFIG") {
     const isFidelidade = metadata.action === "UPDATE_FIDELIDADE"
     return (
@@ -281,6 +335,7 @@ export function AuditoriaView() {
                   <SelectItem className="cursor-pointer" value="CREATE_CUSTOMER">Cadastro de Cliente</SelectItem>
                   <SelectItem className="cursor-pointer" value="ADD_POINTS">Lançar Pontos</SelectItem>
                   <SelectItem className="cursor-pointer" value="REDEEM_REWARD">Resgatar Recompensa</SelectItem>
+                  <SelectItem className="cursor-pointer" value="POINTS_EXPIRED">Pontos Expirados</SelectItem>
                 </SelectContent>
               </Select>
             </div>

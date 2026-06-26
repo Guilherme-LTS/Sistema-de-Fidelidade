@@ -15,7 +15,7 @@ export interface ClienteDetails extends Cliente {
 
 export interface ExtratoItem {
   data: string
-  tipo: "credito" | "debito"
+  tipo: "credito" | "debito" | "expirado"
   descricao: string
   pontos: number
 }

@@ -15,6 +15,7 @@ import { useRestaurante } from "../../hooks/use-configuracoes"
 import { Separator } from "@/components/ui/separator"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { MapPicker } from "@/components/ui/map-picker"
+import { Switch } from "@/components/ui/switch"
 
 // Simplified CNPJ mask for UX
 const formatCnpj = (value: string) => {
@@ -48,7 +49,28 @@ const formSchema = z.object({
   latitude: z.union([z.string(), z.number()]).optional(),
   longitude: z.union([z.string(), z.number()]).optional(),
   logoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  businessHours: z.record(z.string(), z.object({
+    active: z.boolean(),
+    open: z.string(),
+    close: z.string()
+  })).optional(),
+  socialLinks: z.object({
+    instagram: z.string().optional().or(z.literal("")),
+    facebook: z.string().optional().or(z.literal("")),
+    tiktok: z.string().optional().or(z.literal("")),
+    website: z.string().optional().or(z.literal("")),
+  }).optional(),
 })
+
+const DAYS_OF_WEEK = [
+  { id: 'monday', label: 'Segunda-feira' },
+  { id: 'tuesday', label: 'Terça-feira' },
+  { id: 'wednesday', label: 'Quarta-feira' },
+  { id: 'thursday', label: 'Quinta-feira' },
+  { id: 'friday', label: 'Sexta-feira' },
+  { id: 'saturday', label: 'Sábado' },
+  { id: 'sunday', label: 'Domingo' },
+];
 
 export function PerfilRestauranteTab() {
   const { query, mutation } = useRestaurante()
@@ -68,6 +90,15 @@ export function PerfilRestauranteTab() {
       latitude: "",
       longitude: "",
       logoUrl: "",
+      businessHours: {
+        monday: { active: false, open: "08:00", close: "18:00" },
+        tuesday: { active: false, open: "08:00", close: "18:00" },
+        wednesday: { active: false, open: "08:00", close: "18:00" },
+        thursday: { active: false, open: "08:00", close: "18:00" },
+        friday: { active: false, open: "08:00", close: "18:00" },
+        saturday: { active: false, open: "08:00", close: "18:00" },
+        sunday: { active: false, open: "08:00", close: "18:00" },
+      }
     },
   })
 
@@ -86,6 +117,21 @@ export function PerfilRestauranteTab() {
         latitude: query.data.latitude || "",
         longitude: query.data.longitude || "",
         logoUrl: query.data.logoUrl || "",
+        businessHours: query.data.businessHours || {
+          monday: { active: false, open: "08:00", close: "18:00" },
+          tuesday: { active: false, open: "08:00", close: "18:00" },
+          wednesday: { active: false, open: "08:00", close: "18:00" },
+          thursday: { active: false, open: "08:00", close: "18:00" },
+          friday: { active: false, open: "08:00", close: "18:00" },
+          saturday: { active: false, open: "08:00", close: "18:00" },
+          sunday: { active: false, open: "08:00", close: "18:00" },
+        },
+        socialLinks: query.data.socialLinks || {
+          instagram: "",
+          facebook: "",
+          tiktok: "",
+          website: "",
+        },
       })
     }
   }, [query.data, form])
@@ -301,6 +347,131 @@ export function PerfilRestauranteTab() {
                   />
                 </div>
               </details>
+            </div>
+
+            <Separator />
+            <h3 className="text-lg font-medium">Redes Sociais</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormField
+                control={form.control}
+                name="socialLinks.instagram"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://instagram.com/..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="socialLinks.facebook"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Facebook</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://facebook.com/..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="socialLinks.tiktok"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>TikTok</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://tiktok.com/@..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="socialLinks.website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Site Oficial</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://seusite.com.br" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+            <h3 className="text-lg font-medium">Horário de Funcionamento</h3>
+            
+            <div className="space-y-4 border rounded-md p-4 bg-muted/10">
+              <div className="grid grid-cols-[1fr_80px_100px_100px] gap-4 items-center text-sm font-medium text-muted-foreground mb-2 px-2">
+                <div>Dia</div>
+                <div className="text-center">Status</div>
+                <div className="text-center">Abertura</div>
+                <div className="text-center">Fechamento</div>
+              </div>
+              
+              {DAYS_OF_WEEK.map((day) => (
+                <div key={day.id} className="grid grid-cols-[1fr_80px_100px_100px] gap-4 items-center p-2 hover:bg-muted/30 rounded-lg transition-colors">
+                  <div className="font-medium">{day.label}</div>
+                  
+                  <FormField
+                    control={form.control}
+                    name={`businessHours.${day.id}.active`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-center space-y-0">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name={`businessHours.${day.id}.open`}
+                    render={({ field }) => (
+                      <FormItem className="space-y-0">
+                        <FormControl>
+                          <Input 
+                            type="time" 
+                            {...field} 
+                            disabled={!form.watch(`businessHours.${day.id}.active`)}
+                            className="text-center"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name={`businessHours.${day.id}.close`}
+                    render={({ field }) => (
+                      <FormItem className="space-y-0">
+                        <FormControl>
+                          <Input 
+                            type="time" 
+                            {...field} 
+                            disabled={!form.watch(`businessHours.${day.id}.active`)}
+                            className="text-center"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
             </div>
 
             <div className="flex justify-end pt-4">

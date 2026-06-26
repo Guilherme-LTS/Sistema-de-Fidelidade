@@ -15,6 +15,13 @@
       "when": 1782421838081,
       "tag": "0001_loving_terror",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782453233556,
+      "tag": "0002_hesitant_blur",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,8 @@ export interface RestauranteInput {
   latitude?: string | number
   longitude?: string | number
   logoUrl?: string
+  businessHours?: Record<string, { active: boolean; open: string; close: string }>
+  socialLinks?: { instagram?: string; facebook?: string; tiktok?: string; website?: string }
 }
 
 export interface RestauranteData extends RestauranteInput {

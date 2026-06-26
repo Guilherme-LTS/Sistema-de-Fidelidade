@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete"
@@ -49,6 +49,16 @@ function LocationMarker({ position, setPosition, onLocationSelect }: any) {
   )
 }
 
+function MapUpdater({ center }: { center: L.LatLng | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (center) {
+      map.setView(center, 16)
+    }
+  }, [center, map])
+  return null
+}
+
 export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect }: MapPickerProps) {
   const [position, setPosition] = useState<L.LatLng | null>(null)
   const [isClient, setIsClient] = useState(false)
@@ -78,7 +88,11 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
   useEffect(() => {
     setIsClient(true)
     if (defaultLatitude && defaultLongitude) {
-      setPosition(L.latLng(Number(defaultLatitude), Number(defaultLongitude)))
+      const pos = L.latLng(Number(defaultLatitude), Number(defaultLongitude))
+      setPosition(pos)
+      if (mapRef.current) {
+        mapRef.current.setView(pos, 16)
+      }
     }
   }, [defaultLatitude, defaultLongitude])
 
@@ -172,6 +186,7 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
             setPosition={setPosition} 
             onLocationSelect={onLocationSelect} 
           />
+          <MapUpdater center={position} />
         </MapContainer>
       </div>
       <p className="text-xs text-muted-foreground">O Google definiu as coordenadas. Arraste o mapa e clique caso queira ajustar o pino manualmente.</p>

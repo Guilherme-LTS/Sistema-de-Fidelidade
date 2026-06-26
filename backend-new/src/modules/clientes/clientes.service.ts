@@ -3,6 +3,7 @@ import { db } from "../../infra/database/db.js";
 import { customers, consumerProfiles } from "../../infra/database/schema.js";
 import { validateAndCleanCPF } from "../../shared/validators/cpf.js";
 import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
+import { logAuditEvent } from "../../shared/audit.service.js";
 
 export class ClientesService {
   async listarClientes(tenantId: string, params: { busca?: string; page: number; limit: number }) {
@@ -76,7 +77,7 @@ export class ClientesService {
     return result[0];
   }
 
-  async cadastrarCliente(tenantId: string, input: { nome?: string; document: string; lgpdConsentimento: boolean }) {
+  async cadastrarCliente(tenantId: string, operatorId: string, input: { nome?: string; document: string; lgpdConsentimento: boolean }) {
     if (!input.document) {
       throw new AppError("CPF é obrigatório.");
     }
@@ -118,6 +119,20 @@ export class ClientesService {
         updatedAt: new Date().toISOString(),
       }
     }).returning();
+
+    // 3. Registrar na Auditoria
+    await logAuditEvent({
+      tenantId,
+      operatorId,
+      action: "CREATE_CUSTOMER",
+      entityType: "CUSTOMER",
+      entityId: String(cliente.id),
+      metadata: {
+        clienteId: cliente.id,
+        clienteNome: profile.name,
+        clienteCpf: profile.document,
+      }
+    });
 
     return {
       id: cliente.id,
@@ -167,21 +182,59 @@ export class ClientesService {
     `);
     const expirando = resultExpirando.rows[0] as any;
 
+    // Buscando Lançamentos (Earns)
     const historicoTransacoes = await db.query.transactions.findMany({
       where: (t, { eq, and }) => and(
         eq(t.customerId, cliente.id),
         eq(t.tenantId, tenantId)
-      ),
-      orderBy: (t, { desc }) => [desc(t.createdAt)],
-      limit: 50,
+      )
     });
 
-    const extrato = historicoTransacoes.map(t => ({
-      data: t.createdAt,
-      tipo: "credito",
-      descricao: `Lançamento - Compra R$ ${t.amountSpent}`,
-      pontos: t.pointsEarned,
-    }));
+    // Buscando Resgates (Spends)
+    const { rows: spends } = await db.execute<{
+      id: number;
+      created_at: string;
+      points_spent: number;
+      reward_name: string;
+    }>(sql`
+      SELECT r.id, r.created_at, r.points_spent, rew.name as reward_name
+      FROM redemptions r
+      JOIN rewards rew ON r.reward_id = rew.id
+      WHERE r.customer_id = ${cliente.id}
+    `);
+
+    // Buscando Expirações (Expires)
+    const { rows: expirationsList } = await db.execute<{
+      id: number;
+      created_at: string;
+      points_expired: number;
+    }>(sql`
+      SELECT e.id, e.created_at, e.points_expired
+      FROM expirations e
+      WHERE e.customer_id = ${cliente.id}
+    `);
+
+    // Unificando Histórico
+    const extrato = [
+      ...historicoTransacoes.map(t => ({
+        data: t.createdAt,
+        tipo: "credito",
+        descricao: `Lançamento - Compra R$ ${t.amountSpent}`,
+        pontos: t.pointsEarned,
+      })),
+      ...spends.map(r => ({
+        data: r.created_at,
+        tipo: "debito",
+        descricao: `Resgate: ${r.reward_name}`,
+        pontos: r.points_spent,
+      })),
+      ...expirationsList.map(e => ({
+        data: e.created_at,
+        tipo: "expirado",
+        descricao: "Pontos expirados",
+        pontos: e.points_expired,
+      }))
+    ].sort((a, b) => new Date(b.data || "").getTime() - new Date(a.data || "").getTime());
 
     return {
       cliente: {

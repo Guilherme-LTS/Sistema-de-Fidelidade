@@ -57,7 +57,7 @@ export class TransacoesService {
       if (!input.nome || input.lgpdConsentimento !== true) {
         throw new AppError("Cliente não encontrado. Para cadastrar um novo, envie 'nome' e aceite a LGPD.");
       }
-      cliente = await clientesService.cadastrarCliente(input.tenantId, {
+      cliente = await clientesService.cadastrarCliente(input.tenantId, input.authUserId || "SISTEMA", {
         document: cleanedDoc,
         nome: input.nome,
         lgpdConsentimento: input.lgpdConsentimento,

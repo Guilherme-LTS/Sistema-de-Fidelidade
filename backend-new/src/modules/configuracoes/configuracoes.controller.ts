@@ -16,6 +16,17 @@ const restauranteSchema = z.object({
   latitude: z.union([z.string(), z.number()]).optional(),
   longitude: z.union([z.string(), z.number()]).optional(),
   logoUrl: z.string().url().optional().or(z.literal("")),
+  businessHours: z.record(z.string(), z.object({
+    active: z.boolean(),
+    open: z.string(),
+    close: z.string(),
+  })).optional(),
+  socialLinks: z.object({
+    instagram: z.string().optional().or(z.literal("")),
+    facebook: z.string().optional().or(z.literal("")),
+    tiktok: z.string().optional().or(z.literal("")),
+    website: z.string().optional().or(z.literal("")),
+  }).optional(),
 });
 
 const fidelidadeSchema = z.object({

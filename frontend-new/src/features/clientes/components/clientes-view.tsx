@@ -340,6 +340,13 @@ export function ClientesView() {
                         <TableBody>
                           {extratoAtivo.map((item, index) => {
                             const isCredit = item.tipo === "credito"
+                            const isExpire = item.tipo === "expirado"
+                            
+                            let textColor = isCredit ? "text-emerald-600" : "text-rose-500"
+                            if (isExpire) textColor = "text-orange-500"
+                            
+                            const sign = isCredit ? "+" : "-"
+
                             return (
                               <TableRow key={index} className="hover:bg-muted/20 transition-colors">
                                 <TableCell className="font-medium text-xs whitespace-nowrap">
@@ -350,9 +357,9 @@ export function ClientesView() {
                                 </TableCell>
                                 <TableCell className={cn(
                                   "text-right font-bold text-sm",
-                                  isCredit ? "text-emerald-600" : "text-rose-500"
+                                  textColor
                                 )}>
-                                  {isCredit ? `+${item.pontos}` : `-${item.pontos}`}
+                                  {sign}{item.pontos}
                                 </TableCell>
                               </TableRow>
                             )

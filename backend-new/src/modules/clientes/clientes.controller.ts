@@ -30,8 +30,9 @@ export class ClientesController {
   async cadastrar(request: FastifyRequest, reply: FastifyReply) {
     const body = cadastrarBodySchema.parse(request.body);
     const tenantId = request.user!.tenantId;
+    const operatorId = request.user!.tenantUserId;
 
-    const cliente = await clientesService.cadastrarCliente(tenantId, body);
+    const cliente = await clientesService.cadastrarCliente(tenantId, operatorId, body);
 
     return reply.status(201).send(successResponse(cliente, "Cliente cadastrado com sucesso."));
   }

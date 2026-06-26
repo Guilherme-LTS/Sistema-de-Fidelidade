@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, boolean, timestamp, text, integer, uniqueIndex, serial, numeric, decimal } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, boolean, timestamp, text, integer, uniqueIndex, serial, numeric, decimal, jsonb } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
 // -----------------------------------------------------------------------------
@@ -22,6 +22,8 @@ export const tenants = pgTable("tenants", {
   logoUrl: text("logo_url"),
   loyaltyGracePeriodDays: integer("loyalty_grace_period_days").default(0),
   loyaltyExpirationDays: integer("loyalty_expiration_days").default(90),
+  businessHours: jsonb("business_hours").$type<Record<string, { active: boolean; open: string; close: string }>>(),
+  socialLinks: jsonb("social_links").$type<{ instagram?: string; facebook?: string; tiktok?: string; website?: string }>(),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow(),
@@ -203,5 +205,44 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   tenant: one(tenants, {
     fields: [auditLogs.tenantId],
     references: [tenants.id],
+  }),
+}));
+
+export const expirations = pgTable("expirations", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  pointsExpired: integer("points_expired").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
+});
+
+export const expirationItems = pgTable("expiration_items", {
+  id: serial("id").primaryKey(),
+  expirationId: integer("expiration_id").notNull().references(() => expirations.id, { onDelete: "cascade" }),
+  transactionId: integer("transaction_id").notNull().references(() => transactions.id, { onDelete: "cascade" }),
+  pointsDeducted: integer("points_deducted").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
+});
+
+export const expirationsRelations = relations(expirations, ({ one, many }) => ({
+  customer: one(customers, {
+    fields: [expirations.customerId],
+    references: [customers.id],
+  }),
+  tenant: one(tenants, {
+    fields: [expirations.tenantId],
+    references: [tenants.id],
+  }),
+  items: many(expirationItems),
+}));
+
+export const expirationItemsRelations = relations(expirationItems, ({ one }) => ({
+  expiration: one(expirations, {
+    fields: [expirationItems.expirationId],
+    references: [expirations.id],
+  }),
+  transaction: one(transactions, {
+    fields: [expirationItems.transactionId],
+    references: [transactions.id],
   }),
 }));

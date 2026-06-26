@@ -12,6 +12,11 @@ export const updateRestauranteSchema = z.object({
   latitude: z.union([z.string(), z.number()]).optional(),
   longitude: z.union([z.string(), z.number()]).optional(),
   logoUrl: z.string().optional(),
+  businessHours: z.record(z.string(), z.object({
+    active: z.boolean(),
+    open: z.string(),
+    close: z.string()
+  })).optional(),
 });
 import { requireRole } from "../../shared/security/require-role.js";
 

@@ -100,7 +100,7 @@ export default function ConsumerPanel() {
 
                 {/* Exemplo de Link para o extrato detalhado de uma loja específica */}
                 <Button variant="outline" className="w-full text-xs h-9" asChild>
-                  <Link href={`/fidelidade/${membership.tenant_slug}`}>
+                  <Link href={`/painel/${membership.tenant_slug}`}>
                     Ver Prêmios <ArrowRight className="ml-2 h-3 w-3" />
                   </Link>
                 </Button>
