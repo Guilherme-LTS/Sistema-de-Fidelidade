@@ -30,19 +30,23 @@ export class TransacoesService {
 
     const cleanedDoc = cpfValidation.cleaned;
 
-    const pontosGanhos = Math.floor(input.valor);
-    if (pontosGanhos === 0) {
-      throw new AppError("O valor não é suficiente para gerar pontos inteiros.");
-    }
-
     // Buscar configurações do Tenant
     const tenant = await db.query.tenants.findFirst({
       where: eq(tenants.id, input.tenantId),
       columns: {
         loyaltyGracePeriodDays: true,
         loyaltyExpirationDays: true,
+        pointsConversionReal: true,
       }
     });
+
+    const conversionReal = tenant?.pointsConversionReal ? Number(tenant.pointsConversionReal) : 1.00;
+    const divisor = conversionReal > 0 ? conversionReal : 1.00;
+
+    const pontosGanhos = Math.floor(input.valor / divisor);
+    if (pontosGanhos === 0) {
+      throw new AppError(`O valor da compra não é suficiente para gerar pontos. Valor mínimo para este restaurante: R$ ${divisor.toFixed(2).replace(".", ",")}.`);
+    }
 
     const carenciaDias = tenant?.loyaltyGracePeriodDays || 0;
     const expiracaoDias = tenant?.loyaltyExpirationDays || 90;

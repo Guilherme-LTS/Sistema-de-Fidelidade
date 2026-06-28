@@ -35,6 +35,7 @@ export interface UsuarioData extends UsuarioInput {
 export interface FidelidadeInput {
   carenciaPontos: number
   expiracaoPontos: number
+  pointsConversionReal: number
 }
 
 // APIs

@@ -14,24 +14,48 @@ export interface UsuarioPerfil {
   tenant_logo_url?: string | null
 }
 
-export interface RecentCliente {
-  nome: string
-  document: string
-  saldo_pontos: number
+export interface RecentActivity {
+  id: number
+  action: string
+  createdAt: string
+  metadata: string
 }
 
 export interface ChartDataItem {
-  name: string
-  pendentes: number
-  lancados: number
-  resgates: number
+  date: string
+  emitidos: number
+  resgatados: number
+  expirados: number
+}
+
+export interface TopCustomer {
+  id: number
+  nome: string
+  saldo: number
 }
 
 export interface DashboardStats {
-  totalClientes: number
-  pontosPendentes: number
-  pontosDisponiveis: number
-  pontosResgatados: number
-  recentes: RecentCliente[]
+  clientes: {
+    total: number
+    novosMes: number
+    crescimento: number
+  }
+  pontos: {
+    emitidos: number
+    emitidosCrescimento: number
+    resgatados: number
+    resgatadosCrescimento: number
+    expirados: number
+    expiradosCrescimento: number
+    saldoCirculante: number
+    expirandoEmBreve: number
+  }
+  recompensas: {
+    favorita: string | null
+    topRecompensas: Array<{ name: string; resgates: number }>
+    resgatesMes: number
+  }
+  topClientes: TopCustomer[]
+  atividades: RecentActivity[]
   chartData: ChartDataItem[]
 }

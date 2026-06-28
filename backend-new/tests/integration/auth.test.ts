@@ -138,6 +138,10 @@ describe("Authentication & Authorization Integration", () => {
       tenantId: testTenantId,
       role: "admin",
       email: "admin@test.com",
+      name: "Restaurante A Teste teste",
+      phone: "(92) 98416-8887",
+      tenantName: "Restaurante A Teste Razao",
+      tenantLogoUrl: "https://hzzujdjgyqnlhtrsfagz.supabase.co/storage/v1/object/public/tenant-logos/960467ea-9e16-4cdc-926b-1205945fca70/logo-1782025075534.png",
     });
   });
 

@@ -32,6 +32,7 @@ const restauranteSchema = z.object({
 const fidelidadeSchema = z.object({
   carenciaPontos: z.number().min(0),
   expiracaoPontos: z.number().min(0),
+  pointsConversionReal: z.number().positive("O valor de conversão deve ser maior que zero."),
 });
 
 export class ConfiguracoesController {

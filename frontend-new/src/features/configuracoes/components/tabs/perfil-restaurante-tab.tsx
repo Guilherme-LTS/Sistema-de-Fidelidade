@@ -98,6 +98,12 @@ export function PerfilRestauranteTab() {
         friday: { active: false, open: "08:00", close: "18:00" },
         saturday: { active: false, open: "08:00", close: "18:00" },
         sunday: { active: false, open: "08:00", close: "18:00" },
+      },
+      socialLinks: {
+        instagram: "",
+        facebook: "",
+        tiktok: "",
+        website: "",
       }
     },
   })
@@ -126,11 +132,11 @@ export function PerfilRestauranteTab() {
           saturday: { active: false, open: "08:00", close: "18:00" },
           sunday: { active: false, open: "08:00", close: "18:00" },
         },
-        socialLinks: query.data.socialLinks || {
-          instagram: "",
-          facebook: "",
-          tiktok: "",
-          website: "",
+        socialLinks: {
+          instagram: query.data.socialLinks?.instagram || "",
+          facebook: query.data.socialLinks?.facebook || "",
+          tiktok: query.data.socialLinks?.tiktok || "",
+          website: query.data.socialLinks?.website || "",
         },
       })
     }

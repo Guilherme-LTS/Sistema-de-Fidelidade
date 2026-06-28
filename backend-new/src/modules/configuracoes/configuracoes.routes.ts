@@ -22,11 +22,18 @@ import { requireRole } from "../../shared/security/require-role.js";
 
 export async function configuracoesRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAuth);
-  app.addHook("preHandler", requireRole(["admin"]));
 
   app.get("/restaurante", (req, rep) => configuracoesController.getRestaurante(req, rep));
-  app.put("/restaurante", (req, rep) => configuracoesController.updateRestaurante(req, rep));
+  app.put(
+    "/restaurante",
+    { preHandler: [requireRole(["admin"])] },
+    (req, rep) => configuracoesController.updateRestaurante(req, rep)
+  );
 
   app.get("/fidelidade", (req, rep) => configuracoesController.getFidelidade(req, rep));
-  app.put("/fidelidade", (req, rep) => configuracoesController.updateFidelidade(req, rep));
+  app.put(
+    "/fidelidade",
+    { preHandler: [requireRole(["admin"])] },
+    (req, rep) => configuracoesController.updateFidelidade(req, rep)
+  );
 }

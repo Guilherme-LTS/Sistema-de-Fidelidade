@@ -10,19 +10,17 @@ export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 import { AuthGuard } from "@/features/auth/components/auth-guard"
+import { PageContainer } from "@/components/layout/page-container"
 
 export default function AuditoriaPage() {
   return (
     <AuthGuard allowedRoles={["admin"]}>
-      <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Auditoria</h1>
-          <p className="text-muted-foreground mt-2">
-            Histórico de eventos, logs de segurança e alterações no sistema.
-          </p>
-        </div>
+      <PageContainer
+        title="Auditoria"
+        description="Histórico de eventos, logs de segurança e alterações no sistema."
+      >
         <AuditoriaView />
-      </div>
+      </PageContainer>
     </AuthGuard>
   )
 }

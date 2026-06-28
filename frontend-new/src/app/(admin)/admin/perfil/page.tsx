@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import { PerfilView } from "@/features/perfil/components/perfil-view"
+import { PageContainer } from "@/components/layout/page-container"
 
 export const metadata: Metadata = {
   title: "Meu Perfil | Sistema de Fidelidade",
@@ -7,5 +8,12 @@ export const metadata: Metadata = {
 }
 
 export default function PerfilPage() {
-  return <PerfilView />
+  return (
+    <PageContainer
+      title="Meu Perfil"
+      description="Gerencie seus dados pessoais e configurações de acesso."
+    >
+      <PerfilView />
+    </PageContainer>
+  )
 }

@@ -35,10 +35,10 @@ describe("PostgreSQL Row Level Security Isolation Integration", () => {
 
     // 4. Inserir clientes vinculados ao tenant
     await db.execute(sql`
-      INSERT INTO customers (id, tenant_id, consumer_profile_id, document, name, lgpd_consent)
+      INSERT INTO customers (id, tenant_id, consumer_profile_id)
       VALUES 
-        (${customerIdA}, ${tenantA}, ${profileIdA}, '12345678901', 'Cliente Tenant A', true),
-        (${customerIdB}, ${tenantB}, ${profileIdB}, '98765432109', 'Cliente Tenant B', true)
+        (${customerIdA}, ${tenantA}, ${profileIdA}),
+        (${customerIdB}, ${tenantB}, ${profileIdB})
     `);
   });
 
@@ -52,7 +52,7 @@ describe("PostgreSQL Row Level Security Isolation Integration", () => {
   it("should return ONLY Customer A when running query inside Tenant A transaction context", async () => {
     const result = await withTenantTransaction({ tenantId: tenantA }, async (tx) => {
       const res = await tx.execute(
-        sql`SELECT id, name, tenant_id FROM customers WHERE id IN (${customerIdA}, ${customerIdB})`
+        sql`SELECT id, tenant_id FROM customers WHERE id IN (${customerIdA}, ${customerIdB})`
       );
       return res.rows;
     });
@@ -65,7 +65,7 @@ describe("PostgreSQL Row Level Security Isolation Integration", () => {
   it("should return ONLY Customer B when running query inside Tenant B transaction context", async () => {
     const result = await withTenantTransaction({ tenantId: tenantB }, async (tx) => {
       const res = await tx.execute(
-        sql`SELECT id, name, tenant_id FROM customers WHERE id IN (${customerIdA}, ${customerIdB})`
+        sql`SELECT id, tenant_id FROM customers WHERE id IN (${customerIdA}, ${customerIdB})`
       );
       return res.rows;
     });

@@ -7,6 +7,7 @@ import * as z from "zod"
 import { useLancarPontos } from "../hooks/use-transacoes"
 import { limparCpf, buscarClientePorCpf, Cliente } from "@/features/clientes/clientes.api"
 import { isValidCpf, applyCpfMask } from "@/lib/validators/cpf"
+import { useFidelidadeConfig } from "@/features/configuracoes/hooks/use-configuracoes"
 
 import {
   Card,
@@ -70,6 +71,7 @@ export function LancamentoPontosForm() {
   const [foundCustomer, setFoundCustomer] = useState<Cliente | null>(null)
   
   const lancarMutation = useLancarPontos()
+  const { query: fidelidadeConfig } = useFidelidadeConfig()
 
   const form = useForm<z.infer<typeof finalFormSchema>>({
     resolver: zodResolver(finalFormSchema),
@@ -262,23 +264,26 @@ export function LancamentoPontosForm() {
                   <FormField
                     control={form.control}
                     name="valorFormatado"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Valor da Compra</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="R$ 0,00" 
-                            {...field} 
-                            onChange={(e) => field.onChange(applyMoneyMask(e.target.value))}
-                            className="text-lg font-medium text-emerald-600 dark:text-emerald-400"
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Cada R$ 1 inteiro vale 1 ponto.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const conversionRule = fidelidadeConfig.data?.pointsConversionReal ?? 1.00;
+                      return (
+                        <FormItem>
+                          <FormLabel>Valor da Compra</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="R$ 0,00" 
+                              {...field} 
+                              onChange={(e) => field.onChange(applyMoneyMask(e.target.value))}
+                              className="text-lg font-medium text-emerald-600 dark:text-emerald-400"
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Cada R$ {conversionRule.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} em compras equivale a 1 ponto.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   <Button type="submit" className="w-full h-12 text-md mt-6" disabled={lancarMutation.isPending}>

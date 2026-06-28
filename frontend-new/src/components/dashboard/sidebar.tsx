@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutDashboard, Users, Gift, Settings, Trophy, Home, LogOut, ShieldCheck, UsersRound, UserCircle } from "lucide-react"
+import { LayoutDashboard, Users, Gift, Settings, Trophy, LogOut, ShieldCheck, UsersRound, UserCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import Link from "next/link"
@@ -8,113 +8,114 @@ import { usePathname } from "next/navigation"
 import { routes } from "@/config/routes"
 import { useAuth } from "@/lib/auth/auth-context"
 
-
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: routes.admin.dashboard, roles: ["admin", "operador"] },
-  { icon: Users, label: "Clientes", href: routes.admin.clientes, roles: ["admin", "operador", "novato"] },
-  { icon: Trophy, label: "Fidelidade", href: routes.admin.fidelidade, roles: ["admin", "operador", "novato"] },
-]
-
-const generalItems = [
-  { icon: Gift, label: "Recompensas", href: routes.admin.recompensas, roles: ["admin", "operador", "novato"] },
-  { icon: UsersRound, label: "Equipe", href: routes.admin.equipe, roles: ["admin"] },
-  { icon: UserCircle, label: "Meu Perfil", href: routes.admin.perfil, roles: ["admin", "operador", "novato"] },
-  { icon: Settings, label: "Configurações", href: routes.admin.configuracoes, roles: ["admin"] },
-  { icon: ShieldCheck, label: "Auditoria", href: routes.admin.auditoria, roles: ["admin"] },
-  { icon: Home, label: "Página pública", href: routes.public.home, roles: ["admin", "operador", "novato"] },
+const sidebarGroups = [
+  {
+    title: "Visão Geral",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", href: routes.admin.dashboard, roles: ["admin", "operador"] },
+    ]
+  },
+  {
+    title: "Operação",
+    items: [
+      { icon: Users, label: "Clientes", href: routes.admin.clientes, roles: ["admin", "operador", "novato"] },
+      { icon: Trophy, label: "Fidelidade", href: routes.admin.fidelidade, roles: ["admin", "operador", "novato"] },
+      { icon: Gift, label: "Recompensas", href: routes.admin.recompensas, roles: ["admin", "operador", "novato"] },
+    ]
+  },
+  {
+    title: "Administração",
+    items: [
+      { icon: UsersRound, label: "Equipe", href: routes.admin.equipe, roles: ["admin"] },
+      { icon: ShieldCheck, label: "Auditoria", href: routes.admin.auditoria, roles: ["admin"] },
+    ]
+  },
+  {
+    title: "Configurações",
+    items: [
+      { icon: Settings, label: "Configurações", href: routes.admin.configuracoes, roles: ["admin"] },
+    ]
+  },
+  {
+    title: "Conta",
+    items: [
+      { icon: UserCircle, label: "Meu Perfil", href: routes.admin.perfil, roles: ["admin", "operador", "novato"] },
+    ]
+  }
 ]
 
 export function Sidebar() {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const pathname = usePathname()
   const { user, logout } = useAuth()
-  
-
 
   return (
-    <aside className="fixed top-0 left-0 w-64 bg-card border-r border-border p-4 h-screen overflow-y-auto lg:block">
-      <div className="flex items-center gap-2 mb-6 group cursor-pointer">
-        <Link href={routes.admin.dashboard} className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-transform group-hover:scale-110 duration-300 relative">
-            <div
-              className="w-1.5 h-1.5 rounded-full bg-primary-foreground absolute"
-              style={{ top: "30%", left: "30%" }}
-            />
-            <div
-              className="w-1.5 h-1.5 rounded-full bg-primary-foreground absolute"
-              style={{ top: "30%", right: "30%" }}
-            />
-            <div className="w-3 h-1.5 border-b-2 border-primary-foreground rounded-full absolute bottom-2.5" />
-          </div>
-          <span className="text-lg font-semibold text-foreground">Fidelidade</span>
-        </Link>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">Operacao</p>
-          <nav className="space-y-0.5">
-            {menuItems.map((item) => {
-              if (user && !item.roles.includes(user.role)) return null
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onMouseEnter={() => setHoveredItem(item.label)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  className={cn(
-                    "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-300",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                    hoveredItem === item.label && !isActive && "translate-x-1",
-                  )}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span className="text-sm">{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
+    <aside className="fixed top-0 left-0 w-64 bg-card border-r border-border/60 p-4 h-screen flex flex-col justify-between lg:block">
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 px-2 group cursor-pointer">
+          <Link href={routes.admin.dashboard} className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-transform group-hover:scale-105 duration-300 relative shadow-sm">
+              <div
+                className="w-1.5 h-1.5 rounded-full bg-primary-foreground absolute"
+                style={{ top: "30%", left: "30%" }}
+              />
+              <div
+                className="w-1.5 h-1.5 rounded-full bg-primary-foreground absolute"
+                style={{ top: "30%", right: "30%" }}
+              />
+              <div className="w-3 h-1.5 border-b-2 border-primary-foreground rounded-full absolute bottom-2.5" />
+            </div>
+            <span className="text-base font-bold text-foreground tracking-tight">Fidelidade</span>
+          </Link>
         </div>
 
-        <div>
-          <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">Sistema</p>
-          <nav className="space-y-0.5">
-            {generalItems.map((item) => {
-              if (user && !item.roles.includes(user.role)) return null
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onMouseEnter={() => setHoveredItem(item.label)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  className={cn(
-                    "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-300",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                    hoveredItem === item.label && !isActive && "translate-x-1",
-                  )}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span className="text-sm">{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
+        <div className="space-y-4">
+          {sidebarGroups.map((group) => {
+            // Check if user has permission to see at least one item in the group
+            const visibleItems = group.items.filter(item => !user || item.roles.includes(user.role))
+            if (visibleItems.length === 0) return null
+
+            return (
+              <div key={group.title} className="space-y-1">
+                <p className="px-2.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider mb-1.5">
+                  {group.title}
+                </p>
+                <nav className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const isActive = pathname === item.href
+                    return (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        onMouseEnter={() => setHoveredItem(item.label)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200",
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-sm shadow-primary/10"
+                            : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
+                          hoveredItem === item.label && !isActive && "translate-x-0.5"
+                        )}
+                      >
+                        <item.icon className="w-4 h-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                </nav>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      <div className="absolute bottom-4 left-4 right-4 border-t border-border/40 pt-4">
+      <div className="absolute bottom-4 left-4 right-4 border-t border-border/40 pt-4 bg-card">
         <button
           onClick={logout}
-          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-300 cursor-pointer"
+          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200 cursor-pointer"
         >
-          <LogOut className="w-4 h-4" />
-          <span className="text-sm">Sair da conta</span>
+          <LogOut className="w-4 h-4 shrink-0" />
+          <span>Sair da conta</span>
         </button>
       </div>
     </aside>

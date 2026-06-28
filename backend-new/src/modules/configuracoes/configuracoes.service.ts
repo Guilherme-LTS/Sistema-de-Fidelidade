@@ -24,7 +24,7 @@ type RestauranteInput = {
 type FidelidadeInput = {
   carenciaPontos: number;
   expiracaoPontos: number;
-  // futuramente outras regras
+  pointsConversionReal: number;
 };
 
 export class ConfiguracoesService {
@@ -82,6 +82,7 @@ export class ConfiguracoesService {
       columns: {
         loyaltyGracePeriodDays: true,
         loyaltyExpirationDays: true,
+        pointsConversionReal: true,
       }
     });
 
@@ -90,14 +91,27 @@ export class ConfiguracoesService {
     return {
       carenciaPontos: tenant.loyaltyGracePeriodDays || 0,
       expiracaoPontos: tenant.loyaltyExpirationDays || 90,
+      pointsConversionReal: tenant.pointsConversionReal ? Number(tenant.pointsConversionReal) : 1.00,
     };
   }
 
   async updateFidelidade(tenantId: string, input: FidelidadeInput, operatorId?: string, ipAddress?: string) {
+    const currentConfig = await db.query.tenants.findFirst({
+      where: eq(tenants.id, tenantId),
+      columns: {
+        loyaltyGracePeriodDays: true,
+        loyaltyExpirationDays: true,
+        pointsConversionReal: true,
+      }
+    });
+
+    const previousConversion = currentConfig?.pointsConversionReal ? Number(currentConfig.pointsConversionReal) : 1.00;
+
     const [tenant] = await db.update(tenants)
       .set({
         loyaltyGracePeriodDays: input.carenciaPontos,
         loyaltyExpirationDays: input.expiracaoPontos,
+        pointsConversionReal: input.pointsConversionReal.toString(),
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tenants.id, tenantId))
@@ -105,19 +119,35 @@ export class ConfiguracoesService {
 
     if (!tenant) throw new NotFoundError("Restaurante não encontrado.");
 
+    const conversionChanged = previousConversion !== input.pointsConversionReal;
+    const metadata: any = { 
+      action: 'UPDATE_FIDELIDADE', 
+      changes: input,
+      previous: {
+        carenciaPontos: currentConfig?.loyaltyGracePeriodDays || 0,
+        expiracaoPontos: currentConfig?.loyaltyExpirationDays || 90,
+        pointsConversionReal: previousConversion,
+      }
+    };
+
+    if (conversionChanged) {
+      metadata.customDescription = `Regra de Conversão Alterada. Valor anterior: R$ ${previousConversion.toFixed(2).replace(".", ",")} → 1 ponto. Novo valor: R$ ${input.pointsConversionReal.toFixed(2).replace(".", ",")} → 1 ponto.`;
+    }
+
     await logAuditEvent({
       tenantId,
       operatorId,
       action: 'UPDATE_CONFIG',
       entityType: 'LOYALTY_CONFIG',
       entityId: tenantId,
-      metadata: { action: 'UPDATE_FIDELIDADE', changes: input },
+      metadata,
       ipAddress
     });
 
     return {
       carenciaPontos: tenant.loyaltyGracePeriodDays || 0,
       expiracaoPontos: tenant.loyaltyExpirationDays || 90,
+      pointsConversionReal: tenant.pointsConversionReal ? Number(tenant.pointsConversionReal) : 1.00,
     };
   }
 }

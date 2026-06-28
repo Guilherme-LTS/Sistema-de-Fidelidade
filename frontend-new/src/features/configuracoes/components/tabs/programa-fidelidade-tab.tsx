@@ -15,9 +15,23 @@ import { useFidelidadeConfig } from "../../hooks/use-configuracoes"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
+const applyMoneyMask = (value: string) => {
+  let v = value.replace(/\D/g, "")
+  if (!v) return ""
+  v = (parseInt(v, 10) / 100).toFixed(2)
+  return `R$ ${v.replace(".", ",")}`
+}
+
+const unmaskMoney = (value: string) => {
+  if (!value) return 0
+  const clean = value.replace(/\D/g, "")
+  return parseInt(clean, 10) / 100
+}
+
 const formSchema = z.object({
   carenciaPontos: z.coerce.number().min(0, "Mínimo 0 dias").max(365, "Máximo 1 ano"),
   expiracaoPontos: z.coerce.number().min(0, "Mínimo 0 dias").max(1825, "Máximo 5 anos"),
+  valorConversaoFormatado: z.string().min(4, "Informe um valor válido."),
 })
 
 export function ProgramaFidelidadeTab() {
@@ -28,20 +42,38 @@ export function ProgramaFidelidadeTab() {
     defaultValues: {
       carenciaPontos: 0,
       expiracaoPontos: 90,
+      valorConversaoFormatado: "R$ 1,00",
     },
   })
 
   useEffect(() => {
     if (query.data) {
+      const rawValue = query.data.pointsConversionReal ?? 1.00;
+      const cents = Math.round(rawValue * 100);
       form.reset({
         carenciaPontos: query.data.carenciaPontos ?? 0,
         expiracaoPontos: query.data.expiracaoPontos ?? 90,
+        valorConversaoFormatado: applyMoneyMask(cents.toString()),
       })
     }
   }, [query.data, form])
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutation.mutate(values, {
+    const unmasked = unmaskMoney(values.valorConversaoFormatado);
+    if (unmasked <= 0) {
+      form.setError("valorConversaoFormatado", { message: "O valor de conversão deve ser maior que zero." });
+      return;
+    }
+    if (unmasked > 10000) {
+      form.setError("valorConversaoFormatado", { message: "Valor de conversão muito alto (máximo R$ 10.000,00)." });
+      return;
+    }
+    
+    mutation.mutate({
+      carenciaPontos: values.carenciaPontos,
+      expiracaoPontos: values.expiracaoPontos,
+      pointsConversionReal: unmasked,
+    }, {
       onSuccess: () => {
         form.reset(values)
       }
@@ -109,8 +141,32 @@ export function ProgramaFidelidadeTab() {
             </div>
 
             <Separator />
-            <h3 className="text-lg font-medium opacity-50">Regras de Acúmulo (Em Breve)</h3>
-            <p className="text-sm text-muted-foreground">O módulo de proporção Reais x Pontos está sendo planejado para a próxima atualização.</p>
+            <h3 className="text-lg font-medium">Regra de Acúmulo</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="valorConversaoFormatado"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor gasto para 1 ponto</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="R$ 1,00" 
+                        {...field} 
+                        onChange={(e) => field.onChange(applyMoneyMask(e.target.value))}
+                        className="text-lg font-medium text-emerald-600 dark:text-emerald-400"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Insira o valor em Reais (R$) necessário para o cliente acumular exatamente 1 ponto.
+                      Exemplo: R$ 5,00 gastos = 1 ponto ganho.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={!form.formState.isDirty || mutation.isPending}>

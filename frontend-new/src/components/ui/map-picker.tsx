@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
-import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete"
 import { useLoadScript } from "@react-google-maps/api"
 
 import { Input } from "@/components/ui/input"
@@ -71,19 +70,47 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
     region: "BR"
   })
 
-  const {
-    ready,
-    value,
-    suggestions: { status, data },
-    setValue,
-    clearSuggestions,
-  } = usePlacesAutocomplete({
-    requestOptions: {
-      componentRestrictions: { country: "br" },
-    },
-    debounce: 300,
-    initOnMount: isLoaded
-  })
+  const [searchTerm, setSearchTerm] = useState("")
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const sessionTokenRef = useRef<any>(null)
+
+  // Inicializa o token de sessão do Autocomplete
+  useEffect(() => {
+    if (isLoaded && typeof window !== "undefined" && window.google) {
+      sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken()
+    }
+  }, [isLoaded])
+
+  // Busca debounced usando a nova API v2 (AutocompleteSuggestion)
+  useEffect(() => {
+    if (!searchTerm || searchTerm.length < 3 || !isLoaded || !window.google) {
+      setSuggestions([])
+      return
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      setIsSearching(true)
+      try {
+        const { AutocompleteSuggestion } = await window.google.maps.importLibrary("places") as any
+        
+        const request = {
+          input: searchTerm,
+          sessionToken: sessionTokenRef.current,
+          componentRestrictions: { country: "br" },
+        }
+
+        const { suggestions: results } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request)
+        setSuggestions(results || [])
+      } catch (err) {
+        console.error("Erro ao buscar sugestões do Google Places:", err)
+      } finally {
+        setIsSearching(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(delayDebounce)
+  }, [searchTerm, isLoaded])
 
   useEffect(() => {
     setIsClient(true)
@@ -96,35 +123,43 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
     }
   }, [defaultLatitude, defaultLongitude])
 
-  const handleSelect = async (address: string) => {
-    setValue(address, false)
-    clearSuggestions()
+  const handleSelect = async (description: string) => {
+    setSearchTerm(description)
+    setSuggestions([])
 
     try {
-      const results = await getGeocode({ address })
-      const { lat, lng } = await getLatLng(results[0])
-      
-      const newPos = L.latLng(lat, lng)
-      setPosition(newPos)
-      if (mapRef.current) {
-        mapRef.current.flyTo(newPos, 16)
-      }
+      const geocoder = new window.google.maps.Geocoder()
+      geocoder.geocode({ address: description }, (results, status) => {
+        if (status === "OK" && results && results[0]) {
+          const result = results[0]
+          const lat = result.geometry.location.lat()
+          const lng = result.geometry.location.lng()
+          
+          const newPos = L.latLng(lat, lng)
+          setPosition(newPos)
+          if (mapRef.current) {
+            mapRef.current.flyTo(newPos, 16)
+          }
 
-      // Extraindo dados estruturados
-      const addressComponents = results[0].address_components
-      const details: AddressDetails = {}
+          // Extraindo dados estruturados do Geocode
+          const addressComponents = result.address_components
+          const details: AddressDetails = {}
 
-      addressComponents.forEach(component => {
-        const types = component.types
-        if (types.includes("route")) details.street = component.long_name
-        if (types.includes("street_number")) details.number = component.long_name
-        if (types.includes("sublocality") || types.includes("sublocality_level_1")) details.neighborhood = component.long_name
-        if (types.includes("administrative_area_level_2")) details.city = component.long_name
-        if (types.includes("administrative_area_level_1")) details.state = component.short_name
-        if (types.includes("postal_code")) details.zipCode = component.long_name
+          addressComponents.forEach(component => {
+            const types = component.types
+            if (types.includes("route")) details.street = component.long_name
+            if (types.includes("street_number")) details.number = component.long_name
+            if (types.includes("sublocality") || types.includes("sublocality_level_1")) details.neighborhood = component.long_name
+            if (types.includes("administrative_area_level_2")) details.city = component.long_name
+            if (types.includes("administrative_area_level_1")) details.state = component.short_name
+            if (types.includes("postal_code")) details.zipCode = component.long_name
+          })
+
+          onLocationSelect(lat, lng, details)
+        } else {
+          console.error("Erro no geocoding status:", status)
+        }
       })
-
-      onLocationSelect(lat, lng, details)
     } catch (error) {
       console.error("Erro ao obter coordenadas: ", error)
     }
@@ -144,9 +179,8 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
         <div className="flex gap-2">
           <Input 
             placeholder="Pesquise seu estabelecimento ou endereço completo" 
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            disabled={!ready}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="pr-10"
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -154,17 +188,21 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
           </div>
         </div>
 
-        {status === "OK" && (
+        {suggestions.length > 0 && (
           <ul className="absolute top-full left-0 w-full bg-popover border border-border rounded-md shadow-md mt-1 max-h-60 overflow-y-auto z-10 flex flex-col">
-            {data.map(({ place_id, description }) => (
-              <li 
-                key={place_id} 
-                className="px-3 py-2 text-sm text-popover-foreground hover:bg-muted cursor-pointer transition-colors border-b border-border last:border-0"
-                onClick={() => handleSelect(description)}
-              >
-                {description}
-              </li>
-            ))}
+            {suggestions.map((suggestion) => {
+              const placeId = suggestion.placePrediction.placeId
+              const text = suggestion.placePrediction.text.toString()
+              return (
+                <li 
+                  key={placeId} 
+                  className="px-3 py-2 text-sm text-popover-foreground hover:bg-muted cursor-pointer transition-colors border-b border-border last:border-0"
+                  onClick={() => handleSelect(text)}
+                >
+                  {text}
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

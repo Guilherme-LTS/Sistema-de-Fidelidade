@@ -20,6 +20,7 @@ export const tenants = pgTable("tenants", {
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   logoUrl: text("logo_url"),
+  pointsConversionReal: decimal("points_conversion_real", { precision: 10, scale: 2 }).default("1.00").notNull(),
   loyaltyGracePeriodDays: integer("loyalty_grace_period_days").default(0),
   loyaltyExpirationDays: integer("loyalty_expiration_days").default(90),
   businessHours: jsonb("business_hours").$type<Record<string, { active: boolean; open: string; close: string }>>(),
