@@ -1,1 +1,0 @@
-import db from '../src/infra/database/db'; db.query('SELECT * FROM funcionarios LIMIT 1').then(res => console.log(res.rows)).catch(console.error).finally(()=>process.exit(0));
