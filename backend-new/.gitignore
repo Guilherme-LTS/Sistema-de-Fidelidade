@@ -1,0 +1,30 @@
+# Dependências
+node_modules/
+
+# Compilação e Build
+dist/
+build/
+coverage/
+.tsbuildinfo
+*.tsbuildinfo
+
+# Variáveis de Ambiente locais
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Editor e IDE
+.DS_Store
+.vscode/
+.idea/
+.serverless/
