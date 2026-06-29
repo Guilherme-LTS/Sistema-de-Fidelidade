@@ -195,6 +195,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.17)
+      baseline-browser-mapping:
+        specifier: ^2.10.40
+        version: 2.10.40
       eslint:
         specifier: ^9.39.4
         version: 9.39.4(jiti@2.7.0)
