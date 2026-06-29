@@ -26,11 +26,13 @@
     "fastify": "^5.2.1",
     "pg": "^8.13.2",
     "pino": "^9.6.0",
+    "ws": "^8.21.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
     "@types/pg": "^8.11.11",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.24.0",
     "@typescript-eslint/parser": "^8.24.0",
     "drizzle-kit": "^0.30.4",

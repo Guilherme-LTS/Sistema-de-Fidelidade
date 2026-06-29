@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import ws from "ws";
 import { env } from "../../config/env.js";
 
 export class SupabaseAuthGateway {
@@ -10,6 +11,9 @@ export class SupabaseAuthGateway {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
+      },
+      realtime: {
+        transport: ws as any,
       },
     });
   }
