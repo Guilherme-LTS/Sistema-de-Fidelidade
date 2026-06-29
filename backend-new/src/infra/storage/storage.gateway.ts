@@ -5,7 +5,7 @@ export class StorageGateway {
   private client: SupabaseClient;
 
   constructor() {
-    this.client = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    this.client = createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY);
   }
 
   /**

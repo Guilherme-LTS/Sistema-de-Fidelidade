@@ -8,9 +8,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url().or(z.string().min(1)),
   APP_DATABASE_URL: z.string().url().or(z.string().min(1)),
   SUPABASE_URL: z.string().url(),
-  SUPABASE_ANON_KEY: z.string().min(10),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(10),
-  SUPABASE_JWT_SECRET: z.string().min(5),
+  SUPABASE_PUBLISHABLE_KEY: z.string().min(10),
+  SUPABASE_SECRET_KEY: z.string().min(10),
   ALLOWED_ORIGINS: z.string().transform((val) => val.split(",").map((s) => s.trim())),
   FRONTEND_URL: z.string().url(),
 });

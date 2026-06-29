@@ -6,7 +6,7 @@ export class SupabaseAuthGateway {
 
   constructor() {
     // Usamos a SERVICE_ROLE_KEY para operações administrativas seguras de autenticação no backend
-    this.client = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    this.client = createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
