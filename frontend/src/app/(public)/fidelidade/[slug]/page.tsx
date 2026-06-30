@@ -37,7 +37,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   }
 
   return {
-    title: `Fidelidade | ${tenant.name}`,
+    title: `Pontus | ${tenant.name}`,
     description: `Acesse seus pontos e prêmios em ${tenant.name}`,
   }
 }

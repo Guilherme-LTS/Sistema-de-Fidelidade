@@ -1,10 +1,11 @@
 import { Metadata } from "next"
 import Link from "next/link"
-import { Gift, ArrowLeft } from "lucide-react"
+import Image from "next/image"
+import { ArrowLeft } from "lucide-react"
 import { ConsumerAuthForm } from "@/features/consumer/components/consumer-auth-form"
 
 export const metadata: Metadata = {
-  title: "Acesso do Consumidor | FidelidadePro",
+  title: "Acesso do Consumidor | Pontus",
   description: "Acesse seus pontos e recompensas em todos os restaurantes parceiros.",
 }
 
@@ -21,8 +22,9 @@ export default function AcessoConsumidorPage() {
 
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Gift className="h-8 w-8 text-primary" />
+          <div className="mx-auto flex justify-center mb-6">
+            <Image src="/logo-light.png" alt="Pontus Logo" width={320} height={85} className="w-[320px] h-auto dark:hidden" priority />
+            <Image src="/logo-dark.png" alt="Pontus Logo" width={320} height={85} className="w-[320px] h-auto hidden dark:block" priority />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Meus Pontos</h1>

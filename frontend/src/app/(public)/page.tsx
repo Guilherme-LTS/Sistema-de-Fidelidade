@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowRight, CheckCircle2, QrCode, Smartphone, Store, Gift, ChevronDown, User, Star, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,8 +14,8 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Gift className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl tracking-tight">Fidelidade<span className="text-primary">Pro</span></span>
+            <Image src="/logo-light.png" alt="Pontus" width={180} height={48} className="w-[180px] h-auto dark:hidden" priority />
+            <Image src="/logo-dark.png" alt="Pontus" width={180} height={48} className="w-[180px] h-auto hidden dark:block" priority />
           </div>
           
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
@@ -43,7 +44,7 @@ export default function LandingPage() {
           {/* Background decoration */}
           <div className="absolute inset-0 bg-grid-slate-900/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] dark:bg-bottom dark:border-b dark:border-slate-100/5" style={{ maskImage: "linear-gradient(to bottom, transparent, black)" }}></div>
           <div className="absolute left-1/2 top-0 -z-10 -translate-x-1/2 blur-3xl xl:-top-6">
-            <div className="aspect-[1155/678] w-[72.1875rem] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-20" style={{ clipPath: "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)" }}></div>
+            <div className="aspect-[1155/678] w-[72.1875rem] bg-gradient-to-tr from-primary to-accent opacity-20" style={{ clipPath: "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)" }}></div>
           </div>
 
           <div className="container mx-auto max-w-6xl px-4 text-center relative z-10">
@@ -52,7 +53,7 @@ export default function LandingPage() {
             </div>
             
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground max-w-4xl mx-auto leading-tight">
-              Fidelize clientes e aumente o faturamento de forma <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">automática</span>.
+              Fidelize clientes e aumente o faturamento de forma <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">automática</span>.
             </h1>
             
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -137,8 +138,8 @@ export default function LandingPage() {
               {/* Lado do Lojista */}
               <div className="bg-card p-8 rounded-3xl shadow-xl border">
                 <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 bg-blue-500/10 rounded-2xl">
-                    <Store className="h-8 w-8 text-blue-500" />
+                  <div className="p-3 bg-primary/10 rounded-2xl">
+                    <Store className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold">Para o Restaurante</h3>
                 </div>
@@ -171,8 +172,8 @@ export default function LandingPage() {
               {/* Lado do Consumidor */}
               <div className="bg-card p-8 rounded-3xl shadow-xl border">
                 <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 bg-purple-500/10 rounded-2xl">
-                    <Smartphone className="h-8 w-8 text-purple-500" />
+                  <div className="p-3 bg-accent/10 rounded-2xl">
+                    <Smartphone className="h-8 w-8 text-accent" />
                   </div>
                   <h3 className="text-2xl font-bold">Para o Consumidor</h3>
                 </div>
@@ -249,8 +250,8 @@ export default function LandingPage() {
           
           <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-4">
             <div className="flex items-center gap-2">
-              <Gift className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl tracking-tight">Fidelidade<span className="text-primary">Pro</span></span>
+              <Image src="/logo-light.png" alt="Pontus" width={220} height={59} className="w-[220px] h-auto dark:hidden" priority />
+            <Image src="/logo-dark.png" alt="Pontus" width={220} height={59} className="w-[220px] h-auto hidden dark:block" priority />
             </div>
             <p className="text-sm text-muted-foreground max-w-xs">
               A plataforma definitiva de retenção e fidelização para restaurantes e negócios locais.
@@ -273,7 +274,7 @@ export default function LandingPage() {
 
         </div>
         <div className="container mx-auto max-w-6xl px-4 mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} FidelidadePro. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} Pontus. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

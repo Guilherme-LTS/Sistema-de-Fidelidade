@@ -51,8 +51,8 @@ export function DashboardStatsCards({ stats }: Props) {
       <Card className="bg-card hover:bg-muted/50 transition-colors">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Pontos em Circulação</CardTitle>
-          <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
-            <Coins className="h-4 w-4 text-amber-500" />
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Coins className="h-4 w-4 text-primary" />
           </div>
         </CardHeader>
         <CardContent>

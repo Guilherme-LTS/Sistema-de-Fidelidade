@@ -40,7 +40,7 @@ Página 2
 
 ## **Conceito** 
 
-O símbolo é uma grade 3×3 de pontos com opacidades variadas, formando uma sensação de profundidade e movimento — como uma onda. A wordmark usa “Pont” em índigo escuro e “us” em índigo primário, criando destaque sutil que reforça o conceito central do nome: pontos. 
+O símbolo é uma grade 3×3 de pontos com opacidades variadas, formando uma sensação de profundidade e movimento — como uma onda. A wordmark usa “Pont” em tom neutro escuro e “us” em verde primário, criando destaque sutil que reforça o conceito central do nome: pontos. 
 
 ## **Versões do logotipo** 
 
@@ -48,9 +48,9 @@ O símbolo é uma grade 3×3 de pontos com opacidades variadas, formando uma sen
 
 - Versão símbolo isolado: para favicon, ícone de app, avatar em redes sociais 
 
-- Versão monocromática: símbolo e texto em uma só cor (índigo escuro ou branco), para aplicações de baixo contraste 
+- Versão monocromática: símbolo e texto em uma só cor (verde-quase-preto ou branco), para aplicações de baixo contraste 
 
-- Versão sobre fundo escuro: wordmark em tom claro (#EEF2FF) com destaque em índigo claro (#818CF8) 
+- Versão sobre fundo escuro: wordmark em tom claro (#F4FAF6) com destaque em verde médio (#2E9B4F) 
 
 ## **Área de respiro mínima** 
 
@@ -60,14 +60,13 @@ Mantenha um espaço livre ao redor do logotipo equivalente à altura do símbolo
 
 Versão completa (símbolo + wordmark): nunca menor que 28px de altura em digital, ou 1,2cm em impressos. Versão símbolo isolado: nunca menor que 16px (uso em favicon a partir de 16x16px). 
 
-|||
-|---|---|
-|**Fazer**<br>Usar o logotipo sobre fundos com contraste<br>suficiente (claro para versão escura, escuro para<br>versão clara).|**Evitar**<br>Distorcer, esticar, rotacionar ou aplicar<br>sombra/gradiente ao logotipo.|
-|||
+**Fazer Evitar** Usar o logotipo sobre fundos com contraste Distorcer, esticar, rotacionar ou aplicar suficiente (claro para versão escura, escuro para sombra/gradiente ao logotipo. versão clara). 
 
+## **Fazer** 
 
+## **Evitar** 
 
-**Fazer Evitar** Manter a proporção original entre símbolo e Recolorir o logotipo fora da paleta oficial da marca. wordmark. 
+Manter a proporção original entre símbolo e Recolorir o logotipo fora da paleta oficial da marca. wordmark. 
 
 Página 3 
 
@@ -75,28 +74,16 @@ Página 3
 
 ## **3. Paleta de cores** 
 
-A paleta da Pontus equilibra confiança (índigo), leveza e conexão com o conceito de mar (ciano), e energia de recompensa (laranja) — pensada especialmente para o apetite visual do setor de food service. 
+A paleta da Pontus equilibra crescimento e prosperidade (verde), energia de recompensa (laranja) e solidez (verde-quase-preto) — pensada especialmente para o apetite visual e a confiança no setor de food service. 
 
-|service.|||
+|food service.|||
 |---|---|---|
-||||
-||**Índigo — primária**<br>`#4F46E5`|Cor principal da marca. Usar em logotipo, botões primários,<br>links e elementos de destaque. Transmite confiança e<br>modernidade sem frieza.|
-||||
-||**Ciano — secundária**<br>`#06B6D4`|Referência ao mar (Pontus). Usar em elementos secundários,<br>ícones e detalhes gráficos. Traz leveza ao conjunto.|
-||||
-||||
-||**Laranja — destaque**<br>`#F97316`|Cor de ação e recompensa. Usar exclusivamente em CTAs de<br>conversão e notificações de pontos/recompensas ganhas.|
-||||
-||||
-||**Índigo escuro —**<br>**texto**<br>`#1E1B4B`|Substitui o preto puro em todos os textos e fundos escuros<br>(dark mode). Mais sofisticado e coerente com a paleta.|
-||||
-||||
-||**Índigo claro —**<br>**fundo**<br>`#F8F7FF`|Fundo neutro para cards e seções. Nunca usar branco puro<br>(#FFFFFF) como fundo principal da interface.|
-||||
-||||
-||**Verde — sucesso**<br>`#10B981`|Uso exclusivo para estados de sucesso, confirmações e metas<br>atingidas no dashboard.|
-||||
-||||
+||**Verde — primária**<br>`#006323`|Cor principal da marca. Usar em logotpo, botões primários,<br>links e elementos de destaque. Transmite crescimento,<br>prosperidade e confança — forte associação com frescor e<br>food service.|
+||**Verde médio —**<br>**secundária**<br>`#2E9B4F`|Variação mais clara e viva do verde primário. Usar em hover<br>states, ícones secundários e elementos de apoio, mantendo a<br>família cromátca coesa.|
+||**Laranja — destaque**<br>`#E8762C`|Cor de ação e recompensa, complementar ao verde no círculo<br>cromátco. Usar exclusivamente em CTAs de conversão e<br>notfcações de pontos/recompensas ganhas.|
+||**Verde-quase-preto**<br>**— texto**<br>`#0D1F16`|Substtui o preto puro em todos os textos e fundos escuros<br>(dark mode). Mesma família tonal do verde primário,<br>evitando competção cromátca.|
+||**Verde claro — fundo**<br>`#F4FAF6`|Fundo neutro para cards e seções. Nunca usar branco puro<br>(#FFFFFF) como fundo principal da interface.|
+||**Verde sucesso —**<br>**estados**<br>`#16A34A`|Uso exclusivo para estados de sucesso, confrmações e metas<br>atngidas no dashboard. Mais vívido que o verde primário<br>para evitar ambiguidade entre 'marca' e 'confrmação'.|
 
 
 
@@ -104,9 +91,9 @@ A paleta da Pontus equilibra confiança (índigo), leveza e conexão com o conce
 
 - O laranja é a cor mais escassa da paleta — reservar para momentos de recompensa e ação. Usar em excesso dilui o impacto. 
 
-- Nunca usar mais de duas cores de destaque (índigo + uma cor) na mesma tela. 
+- Nunca usar mais de duas cores de destaque (verde + uma cor) na mesma tela. 
 
-- Verde é reservado para sucesso — nunca usar como cor decorativa. 
+- O verde de sucesso (#16A34A) é mais vívido que o verde primário (#006323) — essa diferença de tom é o que evita confundir 'isso é a marca' com 'isso é uma confirmação'. Nunca usar o verde de sucesso para elementos de marca, nem o verde primário para estados de sucesso. 
 
 Página 4 
 

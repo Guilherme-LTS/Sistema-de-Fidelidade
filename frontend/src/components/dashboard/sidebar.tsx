@@ -4,6 +4,7 @@ import { LayoutDashboard, Users, Gift, Settings, Trophy, LogOut, ShieldCheck, Us
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { routes } from "@/config/routes"
 import { useAuth } from "@/lib/auth/auth-context"
@@ -54,18 +55,10 @@ export function Sidebar() {
       <div className="space-y-6">
         <div className="flex items-center gap-2 px-2 group cursor-pointer">
           <Link href={routes.admin.dashboard} className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-transform group-hover:scale-105 duration-300 relative shadow-sm">
-              <div
-                className="w-1.5 h-1.5 rounded-full bg-primary-foreground absolute"
-                style={{ top: "30%", left: "30%" }}
-              />
-              <div
-                className="w-1.5 h-1.5 rounded-full bg-primary-foreground absolute"
-                style={{ top: "30%", right: "30%" }}
-              />
-              <div className="w-3 h-1.5 border-b-2 border-primary-foreground rounded-full absolute bottom-2.5" />
+            <div className="flex items-center gap-2">
+              <Image src="/logo-light.png" alt="Pontus Logo" width={200} height={23} className="w-[200px] h-auto dark:hidden" priority />
+              <Image src="/logo-dark.png" alt="Pontus Logo" width={200} height={23} className="w-[200px] h-auto hidden dark:block" priority />
             </div>
-            <span className="text-base font-bold text-foreground tracking-tight">Fidelidade</span>
           </Link>
         </div>
 
