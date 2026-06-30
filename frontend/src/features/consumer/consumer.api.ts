@@ -86,3 +86,34 @@ export async function carregarExtratoConsumer(slug: string): Promise<{ history: 
   const response = await api.get<{ success: boolean; data: { history: TransactionHistoryItem[] } }>(`/consumer/tenant/${slug}/transactions`)
   return response.data
 }
+
+export interface QuickCheckGlobalResult {
+  firstName: string
+  memberships: ConsumerMembership[]
+}
+
+export async function checkPointsGlobally(cpf: string): Promise<QuickCheckGlobalResult> {
+  const response = await api.get<{ success: boolean; data: QuickCheckGlobalResult }>(`/public/consumer/quick-check/${cpf}`)
+  return response.data
+}
+
+export interface QuickCheckTenantResult {
+  tenant: {
+    name: string
+    logoUrl: string | null
+  }
+  firstName: string
+  points: number
+  rewards: {
+    id: number
+    name: string
+    description: string | null
+    pointsCost: number
+  }[]
+}
+
+export async function checkPointsForTenant(slug: string, cpf: string): Promise<QuickCheckTenantResult> {
+  const response = await api.get<{ success: boolean; data: QuickCheckTenantResult }>(`/public/tenants/${slug}/quick-check/${cpf}`)
+  return response.data
+}
+

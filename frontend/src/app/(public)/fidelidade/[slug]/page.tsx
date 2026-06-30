@@ -74,7 +74,7 @@ export default async function FidelidadePage(props: PageProps) {
         </div>
 
         <div className="bg-card p-6 rounded-2xl shadow-xl border border-border">
-          <ConsumerAuthForm tenantName={tenant.name} />
+          <ConsumerAuthForm tenantName={tenant.name} tenantSlug={tenant.slug} />
         </div>
       </div>
     </div>
