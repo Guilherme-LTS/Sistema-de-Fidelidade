@@ -4,6 +4,7 @@ export interface Recompensa {
   id: number
   name: string
   description: string | null
+  imageUrl: string | null
   pointsCost: number
   isActive: boolean
   createdAt: string
@@ -13,6 +14,7 @@ export interface Recompensa {
 export interface CriarRecompensaDTO {
   name: string
   description?: string
+  imageUrl?: string
   pointsCost: number
   isActive?: boolean
 }

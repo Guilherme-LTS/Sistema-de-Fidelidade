@@ -30,3 +30,35 @@ CREATE POLICY "Permitir delete de logos"
 ON storage.objects FOR DELETE 
 TO authenticated
 USING (bucket_id = 'tenant-logos');
+
+-- REWARDS STORAGE
+
+-- Insere o bucket tenant-rewards se não existir
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('tenant-rewards', 'tenant-rewards', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Permitir upload para tenant-rewards" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir update em tenant-rewards" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir leitura de rewards" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir delete de rewards" ON storage.objects;
+
+CREATE POLICY "Permitir upload para tenant-rewards" 
+ON storage.objects FOR INSERT 
+TO authenticated
+WITH CHECK (bucket_id = 'tenant-rewards');
+
+CREATE POLICY "Permitir update em tenant-rewards" 
+ON storage.objects FOR UPDATE 
+TO authenticated
+USING (bucket_id = 'tenant-rewards');
+
+CREATE POLICY "Permitir leitura de rewards" 
+ON storage.objects FOR SELECT 
+TO public
+USING (bucket_id = 'tenant-rewards');
+
+CREATE POLICY "Permitir delete de rewards" 
+ON storage.objects FOR DELETE 
+TO authenticated
+USING (bucket_id = 'tenant-rewards');

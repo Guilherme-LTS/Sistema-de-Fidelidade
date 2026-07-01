@@ -245,31 +245,54 @@ export default function TenantDashboardPage(props: PageProps) {
                     return (
                       <div 
                         key={reward.id} 
-                        className={`relative rounded-xl border p-4 flex flex-col transition-all ${
+                        className={`relative rounded-xl border p-0 flex flex-col transition-all overflow-hidden ${
                           isRedeemable 
-                            ? 'bg-card border-primary/20 shadow-sm hover:border-primary/50' 
+                            ? 'bg-card border-primary/20 shadow-sm hover:border-primary/50 hover:shadow-md' 
                             : 'bg-muted/30 border-border opacity-80'
                         }`}
                       >
-                        <div className="flex justify-between items-start mb-2 gap-2">
-                          <h3 className="font-semibold text-base leading-tight">{reward.name}</h3>
-                          {isRedeemable && (
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5" title="Resgatável" />
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2 flex-1 mb-4">
-                          {reward.description || "Nenhuma descrição detalhada."}
-                        </p>
+                        {/* Image Header Area - Preserving aspect ratio elegantly */}
+                        {reward.imageUrl ? (
+                          <div className="relative h-40 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border-b border-border/50 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800 transition-colors">
+                            {/* Blurred background to fill empty space for vertical/horizontal mismatched images */}
+                            <div 
+                              className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-30 dark:opacity-50"
+                              style={{ backgroundImage: `url(${reward.imageUrl})` }}
+                            />
+                            {/* Uncropped main image */}
+                            <img 
+                              src={reward.imageUrl} 
+                              alt={reward.name}
+                              className="relative z-10 w-full h-full object-contain p-2 drop-shadow-md transition-transform duration-500 hover:scale-105"
+                            />
+                          </div>
+                        ) : (
+                          <div className="relative h-40 w-full overflow-hidden bg-primary/5 flex items-center justify-center border-b border-border/50">
+                            <Gift className="w-12 h-12 text-primary/20" />
+                          </div>
+                        )}
                         
-                        <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50">
-                          <span className="font-bold text-lg text-primary flex items-center gap-1">
-                            {reward.pointsCost} <Star className="h-4 w-4 fill-primary/50" />
-                          </span>
-                          {!isRedeemable && (
-                            <span className="text-xs font-medium text-muted-foreground">
-                              Faltam {reward.pointsCost - pontos_disponiveis} pts
+                        <div className="p-4 flex flex-col flex-1">
+                          <div className="flex justify-between items-start mb-2 gap-2">
+                            <h3 className="font-semibold text-base leading-tight">{reward.name}</h3>
+                            {isRedeemable && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 mt-1 shadow-[0_0_8px_rgba(16,185,129,0.6)]" title="Resgatável" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-2 flex-1 mb-4">
+                            {reward.description || "Nenhuma descrição detalhada."}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50">
+                            <span className="font-bold text-lg text-primary flex items-center gap-1">
+                              {reward.pointsCost} <Star className="h-4 w-4 fill-primary/50" />
                             </span>
-                          )}
+                            {!isRedeemable && (
+                              <span className="text-xs font-medium text-muted-foreground">
+                                Faltam {reward.pointsCost - pontos_disponiveis} pts
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )

@@ -124,6 +124,7 @@ export const rewards = pgTable("rewards", {
   id: serial("id").primaryKey(),
   name: varchar("name").notNull(),
   description: text("description"),
+  imageUrl: text("image_url"),
   pointsCost: integer("points_cost").notNull(),
   isActive: boolean("is_active").default(true),
   tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),

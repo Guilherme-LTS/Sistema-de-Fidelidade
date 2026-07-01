@@ -7,6 +7,7 @@ type CriarRecompensaInput = {
   tenantId: string;
   name: string;
   description?: string;
+  imageUrl?: string;
   pointsCost: number;
   isActive?: boolean;
 };
@@ -31,6 +32,7 @@ export class RecompensasService {
       tenantId: input.tenantId,
       name: input.name,
       description: input.description,
+      imageUrl: input.imageUrl,
       pointsCost: input.pointsCost,
       isActive: input.isActive ?? true,
     }).returning();

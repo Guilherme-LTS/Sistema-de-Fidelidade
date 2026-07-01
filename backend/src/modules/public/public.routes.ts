@@ -87,7 +87,19 @@ export async function publicRoutes(app: FastifyInstance) {
             WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock)
             THEN tr.remaining_points
             ELSE 0
-          END), 0)::int AS pontos_disponiveis
+          END), 0)::int AS pontos_disponiveis,
+          COALESCE(SUM(CASE
+            WHEN tr.available_at > (SELECT now_at FROM app_clock)
+            THEN tr.remaining_points
+            ELSE 0
+          END), 0)::int AS pontos_pendentes,
+          COALESCE(SUM(CASE
+            WHEN tr.available_at <= (SELECT now_at FROM app_clock) 
+                 AND tr.expires_at > (SELECT now_at FROM app_clock) 
+                 AND tr.expires_at <= (SELECT now_at FROM app_clock) + INTERVAL '30 days'
+            THEN tr.remaining_points
+            ELSE 0
+          END), 0)::int AS pontos_expirando
         FROM customers c
         INNER JOIN tenants t ON c.tenant_id = t.id
         LEFT JOIN transactions tr ON tr.customer_id = c.id

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { supabaseConsumerClient as supabase } from "@/lib/supabase-clients"
@@ -73,11 +73,35 @@ interface ConsumerAuthFormProps {
 }
 
 export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormProps) {
-  const [activeTab, setActiveTab] = useState<string>("quick-check")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (searchParams.has("entrar")) return "login"
+    if (searchParams.has("cadastro")) return "signup"
+    return "quick-check"
+  })
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    const newParams = new URLSearchParams(searchParams.toString())
+    newParams.delete("pontos")
+    newParams.delete("entrar")
+    newParams.delete("cadastro")
+    
+    if (value === "login") newParams.set("entrar", "")
+    else if (value === "signup") newParams.set("cadastro", "")
+    else if (value === "quick-check") newParams.set("pontos", "")
+    
+    const queryStr = newParams.toString().replace(/=&/g, '&').replace(/=$/, '')
+    const targetUrl = queryStr ? `${pathname}?${queryStr}` : pathname
+    router.replace(targetUrl, { scroll: false })
+  }
+
   const [loading, setLoading] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
   const [passwordScore, setPasswordScore] = useState(0)
-  const router = useRouter()
   const queryClient = useQueryClient()
 
   const loginForm = useForm<LoginFormValues>({
@@ -222,7 +246,7 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <TabsList className="grid w-full grid-cols-3 mb-6">
         <TabsTrigger value="quick-check" className="text-xs sm:text-sm">Pontos</TabsTrigger>
         <TabsTrigger value="login" className="text-xs sm:text-sm">Entrar</TabsTrigger>
@@ -232,7 +256,7 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
       <TabsContent value="quick-check" className="mt-0">
         <QuickCheckPanel 
           tenantSlug={tenantSlug} 
-          onSwitchToLogin={() => setActiveTab("login")} 
+          onSwitchToLogin={() => handleTabChange("login")} 
         />
       </TabsContent>
 
