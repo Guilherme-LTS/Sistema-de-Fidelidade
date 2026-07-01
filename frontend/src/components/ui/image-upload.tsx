@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { supabase } from "@/lib/supabase"
+import { supabaseAdminClient as supabase } from "@/lib/supabase-clients"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { UploadCloud, X, Image as ImageIcon } from "lucide-react"
 import { toast } from "sonner"
-import { getStoredAccessToken } from "@/lib/auth/session"
+import { getStoredAdminToken as getStoredAccessToken } from "@/lib/auth/session"
 
 interface ImageUploadProps {
   value?: string

@@ -3,11 +3,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { supabase } from "@/lib/supabase"
+import { supabaseAdminClient as supabase } from "@/lib/supabase-clients"
 import {
-  getStoredAccessToken,
-  setStoredAccessToken,
-  clearStoredAccessToken,
+  getStoredAdminToken as getStoredAccessToken,
+  setStoredAdminToken as setStoredAccessToken,
+  clearStoredAdminToken as clearStoredAccessToken,
 } from "@/lib/auth/session"
 import { carregarPerfilAtual } from "@/features/auth/auth.api"
 import { UsuarioPerfil } from "@/lib/api/types"

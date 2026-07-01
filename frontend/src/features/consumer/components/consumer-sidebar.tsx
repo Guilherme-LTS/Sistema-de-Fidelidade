@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Store, User, LogOut, Gift, Star } from "lucide-react"
+import { Store, User, LogOut, Star } from "lucide-react"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useConsumerAuth } from "../contexts/consumer-auth-context"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -50,12 +51,11 @@ export function ConsumerSidebar({ onItemClick }: ConsumerSidebarProps) {
   return (
     <div className="flex flex-col h-full bg-card border-r border-border p-4">
       {/* Header / Logo */}
-      <div className="flex items-center gap-2 mb-6 group cursor-pointer">
-        <Link href="/painel" className="flex items-center gap-2" onClick={onItemClick}>
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-transform group-hover:scale-110 duration-300 relative">
-            <Gift className="w-4 h-4 text-primary-foreground" />
-          </div>
-          <span className="text-lg font-semibold text-foreground tracking-tight">Portal do Cliente</span>
+      <div className="flex flex-col gap-1 mb-8 group cursor-pointer px-1">
+        <Link href="/painel" className="flex flex-col" onClick={onItemClick}>
+          <Image src="/logo-light.png" alt="Pontus Logo" width={160} height={42} className="w-[140px] h-auto dark:hidden transition-transform group-hover:scale-105 duration-300" priority />
+          <Image src="/logo-dark.png" alt="Pontus Logo" width={160} height={42} className="w-[140px] h-auto hidden dark:block transition-transform group-hover:scale-105 duration-300" priority />
+          <span className="text-xs font-medium text-muted-foreground mt-1.5 ml-1 uppercase tracking-wider">Portal do Cliente</span>
         </Link>
       </div>
 

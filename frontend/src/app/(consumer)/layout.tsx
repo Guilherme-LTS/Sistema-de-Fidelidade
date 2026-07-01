@@ -2,19 +2,22 @@
 
 import { ReactNode, useState } from "react"
 import { ConsumerAuthProvider } from "@/features/consumer/contexts/consumer-auth-context"
+import { ConsumerAuthGuard } from "@/features/consumer/components/consumer-auth-guard"
 import { ConsumerUserNav } from "@/features/consumer/components/consumer-user-nav"
 import { ConsumerSidebar } from "@/features/consumer/components/consumer-sidebar"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
+import Image from "next/image"
 
 export default function ConsumerLayout({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
     <ConsumerAuthProvider>
-      <div className="min-h-screen bg-muted/30">
-        {/* Desktop Sidebar (hidden on mobile) */}
+      <ConsumerAuthGuard>
+        <div className="min-h-screen bg-muted/30">
+          {/* Desktop Sidebar (hidden on mobile) */}
         <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30">
           <ConsumerSidebar />
         </div>
@@ -31,10 +34,15 @@ export default function ConsumerLayout({ children }: { children: ReactNode }) {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-64">
+                  <SheetTitle className="sr-only">Menu Principal</SheetTitle>
+                  <SheetDescription className="sr-only">Acesse seus restaurantes e perfil</SheetDescription>
                   <ConsumerSidebar onItemClick={() => setIsOpen(false)} />
                 </SheetContent>
               </Sheet>
-              <span className="font-bold text-sm">Fidelidade</span>
+              <div className="flex flex-col ml-2">
+                <Image src="/logo-light.png" alt="Pontus Logo" width={100} height={26} className="w-[90px] h-auto dark:hidden" />
+                <Image src="/logo-dark.png" alt="Pontus Logo" width={100} height={26} className="w-[90px] h-auto hidden dark:block" />
+              </div>
             </div>
             <div>
               <ConsumerUserNav />
@@ -54,6 +62,7 @@ export default function ConsumerLayout({ children }: { children: ReactNode }) {
           </main>
         </div>
       </div>
+      </ConsumerAuthGuard>
     </ConsumerAuthProvider>
   )
 }

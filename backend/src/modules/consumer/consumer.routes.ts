@@ -368,7 +368,7 @@ export async function consumerRoutes(app: FastifyInstance) {
           id: `earn_${t.id}`,
           type: "earn" as const,
           points: t.pointsEarned,
-          description: "Gasto na compra",
+          description: `Compra de R$ ${Number(t.amountSpent).toFixed(2).replace('.', ',')}`,
           createdAt: t.createdAt,
         })),
         ...spends.map(r => ({

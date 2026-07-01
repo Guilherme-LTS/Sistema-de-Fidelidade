@@ -117,40 +117,46 @@ export default function TenantDashboardPage(props: PageProps) {
         </Link>
       </div>
 
-      {/* Header com Cover Blur estilo referência */}
+      {/* Header Estilo Capa Spotify/Modern SaaS */}
       <div className="relative rounded-2xl overflow-hidden border shadow-sm bg-card">
-        {/* Background Blur */}
-        <div className="absolute inset-0 h-28 md:h-32 overflow-hidden bg-muted">
-          <div 
-            className="absolute inset-0 opacity-40 blur-xl scale-110"
-            style={{
-              backgroundImage: `url(${tenant.logoUrl || ''})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundColor: 'hsl(var(--primary))' // fallback color
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card" />
+        {/* Background Banner */}
+        <div className="absolute inset-0 h-32 md:h-40 overflow-hidden bg-muted">
+          {tenant.logoUrl ? (
+            <div 
+              className="absolute inset-0 opacity-80"
+              style={{
+                backgroundImage: `url(${tenant.logoUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-80" />
+          )}
+          {/* Subtle overlay to guarantee contrast */}
+          <div className="absolute inset-0 bg-black/30" />
+          {/* Gradient fade to background color */}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/80 to-transparent" />
         </div>
 
-        <div className="relative pt-12 md:pt-16 px-4 pb-6 md:px-8 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 text-center md:text-left">
+        <div className="relative pt-20 md:pt-24 px-4 pb-6 md:px-8 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 text-center md:text-left">
           {/* Logo container */}
-          <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-card shadow-lg flex items-center justify-center p-1 border-4 border-card shrink-0 z-10">
+          <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-card shadow-xl flex items-center justify-center p-1 border-4 border-card shrink-0 z-10 overflow-hidden">
             {tenant.logoUrl ? (
-              <img src={tenant.logoUrl} alt={tenant.name} className="w-full h-full rounded-xl object-cover" />
+              <img src={tenant.logoUrl} alt={tenant.name} className="w-full h-full rounded-full object-contain" />
             ) : (
-              <div className="w-full h-full rounded-xl bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold">
+              <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center text-primary text-4xl font-bold">
                 {tenant.name.substring(0, 2).toUpperCase()}
               </div>
             )}
           </div>
           
-          <div className="flex-1 space-y-1.5 md:space-y-1 z-10">
+          <div className="flex-1 space-y-1.5 md:space-y-1 z-10 md:pb-2">
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{tenant.name}</h1>
             {tenant.addressLine1 && (
-              <p className="text-muted-foreground text-sm flex items-center justify-center md:justify-start gap-1">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span className="line-clamp-2 md:line-clamp-1 max-w-[280px] sm:max-w-md">
+              <p className="text-muted-foreground text-sm flex items-center justify-center md:justify-start gap-1.5">
+                <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                <span className="line-clamp-2 md:line-clamp-1 max-w-[280px] sm:max-w-md font-medium">
                   {tenant.addressLine1}{tenant.addressNumber ? `, ${tenant.addressNumber}` : ''}
                   {tenant.addressCity ? ` - ${tenant.addressCity}` : ''}
                 </span>
@@ -315,28 +321,41 @@ export default function TenantDashboardPage(props: PageProps) {
                         let textColor = 'text-rose-600';
                         let Icon = XCircle;
                         let sign = '-';
+                        let title = item.description;
+                        let subtitle = new Date(item.createdAt).toLocaleString('pt-BR');
 
                         if (isEarn) {
                           bgColor = 'bg-emerald-100 text-emerald-600';
                           textColor = 'text-emerald-600';
                           Icon = CheckCircle2;
                           sign = '+';
+                          title = 'Pontos Acumulados';
+                          subtitle = `${item.description} • ${new Date(item.createdAt).toLocaleDateString('pt-BR')}`;
                         } else if (isExpire) {
                           bgColor = 'bg-orange-100 text-orange-600';
                           textColor = 'text-orange-600';
                           Icon = Hourglass;
                           sign = '-';
+                          title = 'Pontos Expirados';
+                          subtitle = `${item.description} • ${new Date(item.createdAt).toLocaleDateString('pt-BR')}`;
+                        } else if (item.type === 'spend') {
+                          bgColor = 'bg-accent/10 text-accent';
+                          textColor = 'text-accent';
+                          Icon = ArrowRight;
+                          sign = '-';
+                          title = 'Resgate Realizado';
+                          subtitle = `${item.description} • ${new Date(item.createdAt).toLocaleDateString('pt-BR')}`;
                         }
 
                         return (
-                          <div key={item.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                          <div key={item.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors border-b last:border-0 border-border/50">
                             <div className="flex items-start gap-3">
                               <div className={`mt-1 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${bgColor}`}>
                                 <Icon className="w-4 h-4" />
                               </div>
                               <div>
-                                <p className="text-sm font-medium line-clamp-2 leading-tight pr-2">{item.description}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">{new Date(item.createdAt).toLocaleString('pt-BR')}</p>
+                                <p className="text-sm font-semibold leading-tight pr-2 text-foreground">{title}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
                               </div>
                             </div>
                             <div className={`font-bold whitespace-nowrap pl-2 ${textColor}`}>

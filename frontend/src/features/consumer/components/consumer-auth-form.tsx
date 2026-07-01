@@ -5,9 +5,11 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { supabase } from "@/lib/supabase"
+import { supabaseConsumerClient as supabase } from "@/lib/supabase-clients"
 import { api } from "@/lib/api/client"
+import { setStoredConsumerToken as setStoredAccessToken } from "@/lib/auth/session"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -76,6 +78,7 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
   const [forgotMode, setForgotMode] = useState(false)
   const [passwordScore, setPasswordScore] = useState(0)
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -109,7 +112,13 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
       })
 
       if (res.data?.session) {
+        // [FIX] Força a limpeza de qualquer sessão residual (ex: admin) antes de injetar a nova
+        await supabase.auth.signOut()
         await supabase.auth.setSession(res.data.session)
+        // [FIX] Injetamos o token sincronicamente para evitar Race Condition na rota destino
+        setStoredAccessToken(res.data.session.access_token)
+        // Removemos query state antiga para forçar reload do dado mais novo
+        queryClient.removeQueries({ queryKey: ["consumer-dashboard"] })
       } else {
         throw new Error("Sessão não retornada pelo servidor.")
       }
@@ -134,7 +143,12 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
       })
 
       if (res.data?.session) {
+        // [FIX] Força a limpeza de qualquer sessão residual antes de injetar a nova
+        await supabase.auth.signOut()
         await supabase.auth.setSession(res.data.session)
+        // [FIX] Injetamos o token sincronicamente para evitar Race Condition
+        setStoredAccessToken(res.data.session.access_token)
+        queryClient.removeQueries({ queryKey: ["consumer-dashboard"] })
       } else {
         throw new Error("Sessão não retornada pelo servidor.")
       }
