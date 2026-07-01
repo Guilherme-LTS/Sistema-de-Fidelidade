@@ -163,11 +163,6 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate text-foreground">{membership.tenant_name}</p>
                   </div>
-                  <Button variant="ghost" size="icon" asChild className="shrink-0 h-8 w-8 text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
-                    <Link href={`/fidelidade/${membership.tenant_slug}`}>
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
                 </div>
 
                 {/* Saldo Principal */}
@@ -175,6 +170,14 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
                   <span className="text-3xl font-black tracking-tighter text-foreground">{membership.pontos_disponiveis}</span>
                   <span className="text-sm font-bold text-primary flex items-center gap-1">pts <Star className="h-3.5 w-3.5 fill-primary" /></span>
                 </div>
+
+                {/* Recompensa Disponível Highlight */}
+                {membership.has_redeemable_reward && (
+                  <div className="mt-1 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2.5 py-1 rounded-md border border-emerald-500/20 w-fit">
+                    <Gift className="w-3.5 h-3.5" />
+                    Você já pode resgatar prêmios!
+                  </div>
+                )}
 
                 {/* Metadados: Pendentes / A Expirar */}
                 {(membership.pontos_pendentes > 0 || membership.pontos_expirando > 0) && (

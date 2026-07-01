@@ -9,6 +9,7 @@ export interface ConsumerMembership {
   pontos_disponiveis: number
   pontos_pendentes: number
   pontos_expirando: number
+  has_redeemable_reward?: boolean
 }
 
 export interface ConsumerDashboardData {
