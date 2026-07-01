@@ -193,6 +193,7 @@ export async function publicRoutes(app: FastifyInstance) {
           id: rewards.id,
           name: rewards.name,
           description: rewards.description,
+          imageUrl: rewards.imageUrl,
           pointsCost: rewards.pointsCost
         })
         .from(rewards)

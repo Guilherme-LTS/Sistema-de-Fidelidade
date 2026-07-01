@@ -1,3 +1,4 @@
+import React from "react"
 import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
@@ -40,7 +41,9 @@ export default function AcessoConsumidorPage() {
         </div>
 
         <div className="w-full">
-          <ConsumerAuthForm tenantName="Geral" />
+          <React.Suspense fallback={<div className="flex justify-center p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <ConsumerAuthForm tenantName="Geral" />
+          </React.Suspense>
         </div>
         
         <p className="text-center text-sm text-muted-foreground pt-4">

@@ -6,10 +6,10 @@ import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
 type CriarRecompensaInput = {
   tenantId: string;
   name: string;
-  description?: string;
-  imageUrl?: string;
+  description?: string | null;
+  imageUrl?: string | null;
   pointsCost: number;
-  isActive?: boolean;
+  isActive?: boolean | null;
 };
 
 type AtualizarRecompensaInput = Partial<CriarRecompensaInput> & { id: number };

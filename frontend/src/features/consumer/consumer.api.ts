@@ -59,6 +59,7 @@ export interface TenantDashboardDetails {
     id: number
     name: string
     description: string | null
+    imageUrl?: string | null
     pointsCost: number
     isActive: boolean
     createdAt: string
@@ -109,6 +110,7 @@ export interface QuickCheckTenantResult {
     id: number
     name: string
     description: string | null
+    imageUrl?: string | null
     pointsCost: number
   }[]
 }
