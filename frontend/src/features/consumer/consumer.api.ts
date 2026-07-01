@@ -9,6 +9,7 @@ export interface ConsumerMembership {
   pontos_disponiveis: number
   pontos_pendentes: number
   pontos_expirando: number
+  has_redeemable_reward?: boolean
 }
 
 export interface ConsumerDashboardData {
@@ -58,6 +59,7 @@ export interface TenantDashboardDetails {
     id: number
     name: string
     description: string | null
+    imageUrl?: string | null
     pointsCost: number
     isActive: boolean
     createdAt: string
@@ -108,6 +110,7 @@ export interface QuickCheckTenantResult {
     id: number
     name: string
     description: string | null
+    imageUrl?: string | null
     pointsCost: number
   }[]
 }

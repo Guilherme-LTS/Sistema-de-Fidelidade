@@ -149,25 +149,57 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
         ) : (
           <div className="grid gap-3">
             {globalResult.memberships.map((membership) => (
-              <div key={membership.tenant_id} className="p-3 bg-card border rounded-xl flex items-center gap-3">
-                 {membership.tenant_logo ? (
-                  <img src={membership.tenant_logo} alt={membership.tenant_name} className="w-10 h-10 rounded-full object-cover border" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
-                    {membership.tenant_name.substring(0, 2).toUpperCase()}
+              <div key={membership.tenant_id} className="p-4 bg-card border rounded-xl flex flex-col gap-3 relative group hover:border-primary/30 transition-colors shadow-sm">
+                
+                {/* Header (Logo + Nome + Botão) */}
+                <div className="flex items-center gap-3">
+                  {membership.tenant_logo ? (
+                    <img src={membership.tenant_logo} alt={membership.tenant_name} className="w-10 h-10 rounded-full object-cover border" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
+                      {membership.tenant_name.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate text-foreground">{membership.tenant_name}</p>
+                  </div>
+                </div>
+
+                {/* Saldo Principal */}
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-3xl font-black tracking-tighter text-foreground">{membership.pontos_disponiveis}</span>
+                  <span className="text-sm font-bold text-primary flex items-center gap-1">pts <Star className="h-3.5 w-3.5 fill-primary" /></span>
+                </div>
+
+                {/* Recompensa Disponível Highlight */}
+                {membership.has_redeemable_reward && (
+                  <div className="mt-1 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2.5 py-1 rounded-md border border-emerald-500/20 w-fit">
+                    <Gift className="w-3.5 h-3.5" />
+                    Você já pode resgatar prêmios!
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{membership.tenant_name}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    {membership.pontos_disponiveis} <Star className="h-3 w-3 fill-primary/50" />
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon" asChild className="shrink-0 h-8 w-8">
-                  <Link href={`/fidelidade/${membership.tenant_slug}`}>
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
+
+                {/* Metadados: Pendentes / A Expirar */}
+                {(membership.pontos_pendentes > 0 || membership.pontos_expirando > 0) && (
+                  <div className="flex items-center gap-4 pt-3 border-t border-border/40 mt-1">
+                    {membership.pontos_pendentes > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                        <span className="text-[11px] font-medium text-muted-foreground">
+                          <strong className="text-foreground">{membership.pontos_pendentes}</strong> pendentes
+                        </span>
+                      </div>
+                    )}
+                    {membership.pontos_expirando > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse`} />
+                        <span className="text-[11px] font-medium text-muted-foreground">
+                          <strong className="text-amber-600 dark:text-amber-500">{membership.pontos_expirando}</strong> expirando
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

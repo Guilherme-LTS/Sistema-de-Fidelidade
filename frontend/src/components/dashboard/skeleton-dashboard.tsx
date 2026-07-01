@@ -19,7 +19,7 @@ export function SkeletonDashboard() {
         ))}
       </div>
 
-      <Card className="border-l-4 border-l-amber-500 bg-amber-500/5 shadow-sm">
+      <Card className="border-l-4 border-l-primary bg-primary/5 shadow-sm">
         <CardContent className="p-4 sm:p-6 flex items-start gap-4">
           <Skeleton className="h-9 w-9 rounded-full shrink-0" />
           <div className="space-y-2 w-full">

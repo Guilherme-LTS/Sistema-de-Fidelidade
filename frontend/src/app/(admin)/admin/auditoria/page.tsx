@@ -15,12 +15,7 @@ import { PageContainer } from "@/components/layout/page-container"
 export default function AuditoriaPage() {
   return (
     <AuthGuard allowedRoles={["admin"]}>
-      <PageContainer
-        title="Auditoria"
-        description="Histórico de eventos, logs de segurança e alterações no sistema."
-      >
-        <AuditoriaView />
-      </PageContainer>
+      <AuditoriaView />
     </AuthGuard>
   )
 }

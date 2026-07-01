@@ -76,25 +76,49 @@ export async function publicRoutes(app: FastifyInstance) {
       const nowAt = new Date().toISOString();
 
       const { rows } = await db.execute(sql`
-        WITH app_clock AS (SELECT ${nowAt}::timestamptz AS now_at)
+        WITH app_clock AS (SELECT ${nowAt}::timestamptz AS now_at),
+        customer_points AS (
+          SELECT 
+            t.id AS tenant_id,
+            t.name AS tenant_name,
+            t.slug AS tenant_slug,
+            t.logo_url AS tenant_logo,
+            c.id AS customer_id,
+            COALESCE(SUM(CASE
+              WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock)
+              THEN tr.remaining_points
+              ELSE 0
+            END), 0)::int AS pontos_disponiveis,
+            COALESCE(SUM(CASE
+              WHEN tr.available_at > (SELECT now_at FROM app_clock)
+              THEN tr.remaining_points
+              ELSE 0
+            END), 0)::int AS pontos_pendentes,
+            COALESCE(SUM(CASE
+              WHEN tr.available_at <= (SELECT now_at FROM app_clock) 
+                   AND tr.expires_at > (SELECT now_at FROM app_clock) 
+                   AND tr.expires_at <= (SELECT now_at FROM app_clock) + INTERVAL '30 days'
+              THEN tr.remaining_points
+              ELSE 0
+            END), 0)::int AS pontos_expirando
+          FROM customers c
+          INNER JOIN tenants t ON c.tenant_id = t.id
+          LEFT JOIN transactions tr ON tr.customer_id = c.id
+          WHERE c.consumer_profile_id = ${profile.id}
+            AND c.deleted_at IS NULL
+            AND t.is_active = true
+          GROUP BY t.id, t.name, t.slug, t.logo_url, c.id
+        )
         SELECT 
-          t.id AS tenant_id,
-          t.name AS tenant_name,
-          t.slug AS tenant_slug,
-          t.logo_url AS tenant_logo,
-          c.id AS customer_id,
-          COALESCE(SUM(CASE
-            WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock)
-            THEN tr.remaining_points
-            ELSE 0
-          END), 0)::int AS pontos_disponiveis
-        FROM customers c
-        INNER JOIN tenants t ON c.tenant_id = t.id
-        LEFT JOIN transactions tr ON tr.customer_id = c.id
-        WHERE c.consumer_profile_id = ${profile.id}
-          AND c.deleted_at IS NULL
-          AND t.is_active = true
-        GROUP BY t.id, t.name, t.slug, t.logo_url, c.id
+          cp.*,
+          EXISTS (
+            SELECT 1 FROM rewards r 
+            WHERE r.tenant_id = cp.tenant_id 
+              AND r.is_active = true 
+              AND r.deleted_at IS NULL
+              AND r.points_cost <= cp.pontos_disponiveis
+          ) AS has_redeemable_reward
+        FROM customer_points cp
       `);
 
       const firstName = profile.name ? profile.name.split(" ")[0] : "Cliente";
@@ -169,6 +193,7 @@ export async function publicRoutes(app: FastifyInstance) {
           id: rewards.id,
           name: rewards.name,
           description: rewards.description,
+          imageUrl: rewards.imageUrl,
           pointsCost: rewards.pointsCost
         })
         .from(rewards)

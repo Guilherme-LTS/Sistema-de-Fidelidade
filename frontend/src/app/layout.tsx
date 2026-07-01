@@ -1,18 +1,18 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Inter, Plus_Jakarta_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryProvider } from "@/components/query-provider"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-plus-jakarta" })
 
 export const metadata: Metadata = {
-  title: "Sistema de Fidelidade",
-  description: "Plataforma SaaS para gestao de fidelidade, clientes e recompensas.",
+  title: "Pontus | Fidelidade de Resultados",
+  description: "A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.",
   icons: {
     icon: [
       {
@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+      <body className={`${inter.variable} ${plusJakartaSans.variable} font-sans antialiased`}>
         <ThemeProvider defaultTheme="light" storageKey="tasko-theme">
           <QueryProvider>
             {children}

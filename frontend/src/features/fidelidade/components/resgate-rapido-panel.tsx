@@ -35,8 +35,8 @@ export function ResgateRapidoPanel() {
   }
 
   return (
-    <Card className="border-border shadow-sm bg-card overflow-hidden w-full h-full flex flex-col">
-      <CardHeader className="bg-primary/5 border-b border-border">
+    <Card className="p-0 border-border shadow-sm bg-card overflow-hidden w-full h-full flex flex-col">
+      <CardHeader className="bg-primary/5 border-b border-border min-h-[120px] pt-6 pb-6 px-6">
         <CardTitle className="text-xl flex items-center gap-2">
           <Gift className="h-5 w-5 text-primary" />
           Resgate Rápido

@@ -3,11 +3,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { supabase } from "@/lib/supabase"
+import { supabaseConsumerClient as supabase } from "@/lib/supabase-clients"
 import {
-  getStoredAccessToken,
-  setStoredAccessToken,
-  clearStoredAccessToken,
+  getStoredConsumerToken as getStoredAccessToken,
+  setStoredConsumerToken as setStoredAccessToken,
+  clearStoredConsumerToken as clearStoredAccessToken,
 } from "@/lib/auth/session"
 import { carregarDashboardConsumer, ConsumerDashboardData } from "../consumer.api"
 import { routes } from "@/config/routes"
@@ -99,7 +99,8 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
   const { 
     data: consumerData = null, 
     isLoading: isQueryLoading,
-    isError
+    isError,
+    error
   } = useQuery({
     queryKey: ["consumer-dashboard"],
     queryFn: carregarDashboardConsumer,
@@ -110,6 +111,7 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isError) {
+      console.error("[Consumer Auth] Query failed with error:", error)
       clearStoredAccessToken()
       setHasToken(false)
       queryClient.removeQueries({ queryKey: ["consumer-dashboard"] })
@@ -117,7 +119,7 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
         console.warn("[Consumer Auth] Erro ao deslogar após falha:", e)
       })
     }
-  }, [isError, queryClient])
+  }, [isError, error, queryClient])
 
   const login = async (email: string, password: string): Promise<ConsumerDashboardData> => {
     try {

@@ -46,9 +46,9 @@ export function ConsultaPontosPanel() {
   }
 
   return (
-    <Card className="border-border shadow-sm bg-card w-full">
-      <CardHeader className="bg-primary/5 border-b border-border">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <Card className="p-0 border-border shadow-sm bg-card overflow-hidden w-full h-full flex flex-col">
+      <CardHeader className="bg-primary/5 border-b border-border min-h-[120px] pt-6 pb-6 px-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 h-full">
           <div>
             <CardTitle className="text-xl flex items-center gap-2">
               <UserSearch className="h-5 w-5 text-primary" />
@@ -88,17 +88,17 @@ export function ConsultaPontosPanel() {
         </div>
       </CardHeader>
 
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex-1 flex flex-col">
         {!searchedCpf && (
-          <div className="p-12 text-center text-muted-foreground animate-fade-in">
-            <UserSearch className="mx-auto h-12 w-12 opacity-20 mb-4" />
+          <div className="p-12 text-center text-muted-foreground animate-fade-in flex-1 flex flex-col items-center justify-center">
+            <UserSearch className="h-12 w-12 opacity-20 mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-1">Busque um cliente</h3>
             <p>Informe o CPF acima para visualizar o extrato completo.</p>
           </div>
         )}
 
         {searchedCpf && isError && (
-          <div className="p-12 text-center text-destructive animate-fade-in flex flex-col items-center">
+          <div className="p-12 text-center text-destructive animate-fade-in flex-1 flex flex-col items-center justify-center">
             <AlertCircle className="h-12 w-12 opacity-50 mb-4" />
             <h3 className="text-lg font-medium mb-1">Cliente não encontrado</h3>
             <p className="text-sm opacity-80 mb-4">Verifique se o CPF foi digitado corretamente ou se o cliente possui cadastro.</p>
