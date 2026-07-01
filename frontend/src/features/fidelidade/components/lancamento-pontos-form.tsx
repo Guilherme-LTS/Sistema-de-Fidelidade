@@ -143,8 +143,8 @@ export function LancamentoPontosForm() {
   }
 
   return (
-    <Card className="border-border shadow-sm bg-card overflow-hidden w-full max-w-2xl mx-auto transition-all duration-300">
-      <CardHeader className="bg-primary/5 border-b border-border">
+    <Card className="p-0 border-border shadow-sm bg-card overflow-hidden w-full h-full flex flex-col transition-all duration-300">
+      <CardHeader className="bg-primary/5 border-b border-border min-h-[120px] pt-6 pb-6 px-6">
         <CardTitle className="text-xl flex items-center gap-2">
           <Coins className="h-5 w-5 text-primary" />
           Lançamento de Pontos
@@ -154,7 +154,7 @@ export function LancamentoPontosForm() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="p-6">
+      <CardContent className="p-6 flex-1 flex flex-col">
         {successData ? (
           <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
             <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
@@ -170,7 +170,7 @@ export function LancamentoPontosForm() {
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1 flex flex-col justify-between">
               <div className="space-y-4">
                 <FormField
                   control={form.control}

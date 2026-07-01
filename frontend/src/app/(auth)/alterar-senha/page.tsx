@@ -1,5 +1,6 @@
 import { AlterarSenhaForm } from "@/features/auth/components/alterar-senha-form"
-
+import { AuthProvider } from "@/lib/auth/auth-context"
+import { Suspense } from "react"
 export default function AlterarSenhaPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/30 p-6 relative overflow-hidden">
@@ -15,7 +16,11 @@ export default function AlterarSenhaPage() {
         </a>
       </div>
 
-      <AlterarSenhaForm />
+      <Suspense fallback={<div className="text-sm text-center text-muted-foreground z-10">Carregando...</div>}>
+        <AuthProvider>
+          <AlterarSenhaForm />
+        </AuthProvider>
+      </Suspense>
     </main>
   )
 }

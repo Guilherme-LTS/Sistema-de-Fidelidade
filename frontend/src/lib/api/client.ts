@@ -1,6 +1,6 @@
 import { clientEnv } from "@/config/env.client"
-import { getStoredAccessToken } from "@/lib/auth/session"
-import { supabase } from "@/lib/supabase"
+import { getStoredAdminToken, getStoredConsumerToken, clearStoredAdminToken, clearStoredConsumerToken } from "@/lib/auth/session"
+import { supabaseAdminClient, supabaseConsumerClient } from "@/lib/supabase-clients"
 
 type RequestOptions = RequestInit & {
   authToken?: string | null
@@ -8,7 +8,7 @@ type RequestOptions = RequestInit & {
 
 export class ApiError extends Error {
   constructor(
-    message: string,
+    public readonly message: string,
     public readonly status: number,
     public readonly payload?: unknown,
   ) {
@@ -20,10 +20,11 @@ export class ApiError extends Error {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { authToken, headers, ...requestInit } = options
   
-  // Obtém o token mantido atualizado pelo AuthContext
+  // Obtém o token mantido atualizado pelo respectivo AuthContext
   let token = authToken
+  const isConsumerPath = path.startsWith("/consumer") || path.startsWith("/public/consumer")
   if (token === undefined) {
-    token = getStoredAccessToken()
+    token = isConsumerPath ? getStoredConsumerToken() : getStoredAdminToken()
   }
 
   const headersToUse: HeadersInit = {
@@ -49,7 +50,6 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
         if (typeof errorObj === "object" && errorObj !== null) {
           if (errorObj.message) {
             message = errorObj.message
-            // Se for erro de validação e tiver detalhes, formata-os para o usuário
             if (errorObj.code === "VALIDATION_ERROR" && Array.isArray(errorObj.details)) {
               const detailsMsg = errorObj.details
                 .map((d: any) => d.message || `${d.path}: ${d.message}`)
@@ -71,24 +71,23 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
     if (response.status === 401 || response.status === 403) {
       if (typeof window !== "undefined") {
-        import("@/lib/auth/session").then(({ clearStoredAccessToken }) => {
-          clearStoredAccessToken()
-        })
-        supabase.auth.signOut().then(() => {
-          const currentPath = window.location.pathname
-          
-          if (!currentPath.includes("/login") && !currentPath.includes("/acesso")) {
-            // Se estiver no fluxo do consumidor (painel/perfil), redireciona pro acesso do consumidor
-            const isConsumerFlow = currentPath.startsWith("/painel") || currentPath.startsWith("/fidelidade") || currentPath.startsWith("/perfil")
-            const baseLoginUrl = isConsumerFlow ? "/acesso" : "/login"
-            
-            const redirectUrl = response.status === 403 
-              ? `${baseLoginUrl}?error=${encodeURIComponent(message)}` 
-              : `${baseLoginUrl}?expired=true`;
-            
-            window.location.href = redirectUrl
-          }
-        })
+        if (isConsumerPath) {
+          clearStoredConsumerToken()
+          supabaseConsumerClient.auth.signOut().then(() => {
+            const currentPath = window.location.pathname
+            if (!currentPath.includes("/acesso")) {
+              window.location.href = `/acesso?expired=true`
+            }
+          })
+        } else {
+          clearStoredAdminToken()
+          supabaseAdminClient.auth.signOut().then(() => {
+            const currentPath = window.location.pathname
+            if (!currentPath.includes("/login")) {
+              window.location.href = `/login?expired=true`
+            }
+          })
+        }
       }
     }
 

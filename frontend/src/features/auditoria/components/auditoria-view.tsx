@@ -13,6 +13,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { FileJson, Search, CalendarDays, Activity, User, ChevronLeft, ChevronRight, Hash, Database } from "lucide-react"
+import { PageContainer } from "@/components/layout/page-container"
 
 const actionTranslations: Record<string, string> = {
   LOGIN: "Login no Sistema",
@@ -298,13 +299,11 @@ export function AuditoriaView() {
   })
 
   return (
-    <div className="space-y-6 pb-10">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">Auditoria</h2>
-        <p className="text-muted-foreground text-sm">
-          Histórico completo de atividades, transações e alterações de segurança no sistema.
-        </p>
-      </div>
+    <PageContainer
+      title="Auditoria"
+      description="Histórico de eventos, logs de segurança e alterações no sistema."
+    >
+      <div className="space-y-6 pb-10">
 
       <Card className="shadow-sm border-border/50">
         <CardContent className="p-4 sm:p-5">
@@ -589,6 +588,7 @@ export function AuditoriaView() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PageContainer>
   )
 }

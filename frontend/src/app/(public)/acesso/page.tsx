@@ -1,46 +1,55 @@
+import React from "react"
 import { Metadata } from "next"
 import Link from "next/link"
-import { Gift, ArrowLeft } from "lucide-react"
+import Image from "next/image"
+import { ArrowLeft } from "lucide-react"
 import { ConsumerAuthForm } from "@/features/consumer/components/consumer-auth-form"
 
 export const metadata: Metadata = {
-  title: "Acesso do Consumidor | FidelidadePro",
+  title: "Acesso do Consumidor | Pontus",
   description: "Acesse seus pontos e recompensas em todos os restaurantes parceiros.",
 }
 
 export default function AcessoConsumidorPage() {
   return (
-    <div className="min-h-screen bg-muted/30 flex flex-col items-center justify-center p-4 relative">
-      
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Mesh Gradient Background */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[100px]" />
+        <div className="absolute top-[60%] -right-[10%] w-[50%] h-[50%] rounded-full bg-accent/5 blur-[100px]" />
+      </div>
+
       {/* Botão voltar genérico */}
-      <div className="absolute top-4 left-4 md:top-8 md:left-8">
+      <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
         <Link href="/" className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o início
+          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
         </Link>
       </div>
 
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Gift className="h-8 w-8 text-primary" />
+      <div className="w-full max-w-[420px] space-y-8 relative z-10">
+        <div className="text-center space-y-3">
+          <div className="mx-auto flex justify-center mb-8">
+            <Image src="/logo-light.png" alt="Pontus Logo" width={220} height={60} className="w-[200px] h-auto dark:hidden" priority />
+            <Image src="/logo-dark.png" alt="Pontus Logo" width={220} height={60} className="w-[200px] h-auto hidden dark:block" priority />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Meus Pontos</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Consulte seu saldo e resgate prêmios nos parceiros.
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Acesse sua conta</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Consulte seu saldo e resgate prêmios em parceiros.
             </p>
           </div>
         </div>
 
-        <div className="bg-card p-6 rounded-2xl shadow-xl border border-border">
-          {/* Reutilizamos o form, mas tenantName é genérico aqui, ou passamos null se a props permitir */}
-          <ConsumerAuthForm tenantName="Geral" />
+        <div className="w-full">
+          <React.Suspense fallback={<div className="flex justify-center p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <ConsumerAuthForm tenantName="Geral" />
+          </React.Suspense>
         </div>
         
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground pt-4">
           É dono de restaurante?{" "}
-          <Link href="/login" className="font-semibold text-primary hover:underline">
-            Entrar no painel do lojista
+          <Link href="/login" className="font-medium text-primary hover:text-primary/80 transition-colors">
+            Painel do Lojista &rarr;
           </Link>
         </p>
       </div>

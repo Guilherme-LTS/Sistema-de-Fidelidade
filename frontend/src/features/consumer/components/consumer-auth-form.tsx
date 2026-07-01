@@ -4,16 +4,19 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { supabase } from "@/lib/supabase"
+import { supabaseConsumerClient as supabase } from "@/lib/supabase-clients"
 import { api } from "@/lib/api/client"
+import { setStoredConsumerToken as setStoredAccessToken } from "@/lib/auth/session"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatCPF, getPasswordStrength } from "@/lib/masks"
+import { QuickCheckPanel } from "./quick-check-panel"
 
 function extractErrorMessage(err: any): string {
   if (!err) return "Erro interno do sistema. Tente novamente em alguns minutos."
@@ -66,13 +69,40 @@ type ForgotFormValues = z.infer<typeof forgotSchema>
 
 interface ConsumerAuthFormProps {
   tenantName: string
+  tenantSlug?: string
 }
 
-export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
+export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (searchParams.has("entrar")) return "login"
+    if (searchParams.has("cadastro")) return "signup"
+    return "quick-check"
+  })
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    const newParams = new URLSearchParams(searchParams.toString())
+    newParams.delete("pontos")
+    newParams.delete("entrar")
+    newParams.delete("cadastro")
+    
+    if (value === "login") newParams.set("entrar", "")
+    else if (value === "signup") newParams.set("cadastro", "")
+    else if (value === "quick-check") newParams.set("pontos", "")
+    
+    const queryStr = newParams.toString().replace(/=&/g, '&').replace(/=$/, '')
+    const targetUrl = queryStr ? `${pathname}?${queryStr}` : pathname
+    router.replace(targetUrl, { scroll: false })
+  }
+
   const [loading, setLoading] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
   const [passwordScore, setPasswordScore] = useState(0)
-  const router = useRouter()
+  const queryClient = useQueryClient()
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -106,7 +136,13 @@ export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
       })
 
       if (res.data?.session) {
+        // [FIX] Força a limpeza de qualquer sessão residual (ex: admin) antes de injetar a nova
+        await supabase.auth.signOut()
         await supabase.auth.setSession(res.data.session)
+        // [FIX] Injetamos o token sincronicamente para evitar Race Condition na rota destino
+        setStoredAccessToken(res.data.session.access_token)
+        // Removemos query state antiga para forçar reload do dado mais novo
+        queryClient.removeQueries({ queryKey: ["consumer-dashboard"] })
       } else {
         throw new Error("Sessão não retornada pelo servidor.")
       }
@@ -131,7 +167,12 @@ export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
       })
 
       if (res.data?.session) {
+        // [FIX] Força a limpeza de qualquer sessão residual antes de injetar a nova
+        await supabase.auth.signOut()
         await supabase.auth.setSession(res.data.session)
+        // [FIX] Injetamos o token sincronicamente para evitar Race Condition
+        setStoredAccessToken(res.data.session.access_token)
+        queryClient.removeQueries({ queryKey: ["consumer-dashboard"] })
       } else {
         throw new Error("Sessão não retornada pelo servidor.")
       }
@@ -205,13 +246,21 @@ export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
   }
 
   return (
-    <Tabs defaultValue="login" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-6">
-        <TabsTrigger value="login">Já tenho conta</TabsTrigger>
-        <TabsTrigger value="signup">Primeiro Acesso</TabsTrigger>
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsTrigger value="quick-check" className="text-xs sm:text-sm">Pontos</TabsTrigger>
+        <TabsTrigger value="login" className="text-xs sm:text-sm">Entrar</TabsTrigger>
+        <TabsTrigger value="signup" className="text-xs sm:text-sm">Criar Conta</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="login" className="space-y-4">
+      <TabsContent value="quick-check" className="mt-0">
+        <QuickCheckPanel 
+          tenantSlug={tenantSlug} 
+          onSwitchToLogin={() => handleTabChange("login")} 
+        />
+      </TabsContent>
+
+      <TabsContent value="login" className="space-y-4 mt-0">
         <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="login-identifier">CPF ou E-mail</Label>
@@ -259,7 +308,7 @@ export function ConsumerAuthForm({ tenantName }: ConsumerAuthFormProps) {
         </form>
       </TabsContent>
 
-      <TabsContent value="signup" className="space-y-4">
+      <TabsContent value="signup" className="space-y-4 mt-0">
         <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="signup-cpf">CPF</Label>

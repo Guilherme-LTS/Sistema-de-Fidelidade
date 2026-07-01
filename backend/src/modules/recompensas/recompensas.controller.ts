@@ -5,7 +5,8 @@ import { successResponse } from "../../shared/http/response.js";
 
 const criarRecompensaSchema = z.object({
   name: z.string().min(2),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
   pointsCost: z.coerce.number().positive(),
   isActive: z.boolean().optional(),
 });

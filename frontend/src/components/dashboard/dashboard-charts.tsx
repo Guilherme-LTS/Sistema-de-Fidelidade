@@ -28,17 +28,17 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <div className="space-y-2.5">
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#059669] shadow-[0_0_8px_rgba(5,150,105,0.5)]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,99,35,0.5)]" />
               <span className="text-muted-foreground">Emitidos</span>
             </div>
             <span className="font-semibold text-foreground">+{emitidos.toLocaleString('pt-BR')}</span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-accent shadow-[0_0_8px_rgba(232,118,44,0.5)]" />
               <span className="text-muted-foreground">Resgatados</span>
             </div>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">-{resgatados.toLocaleString('pt-BR')}</span>
+            <span className="font-semibold text-accent">-{resgatados.toLocaleString('pt-BR')}</span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center gap-2">
@@ -70,8 +70,8 @@ export function DashboardCharts({ data }: Props) {
   [sortedData])
 
   const chartConfig = {
-    emitidos: { label: "Pontos Emitidos", color: "#059669" }, // emerald-600 (Darker Green)
-    resgatados: { label: "Pontos Resgatados", color: "#10b981" }, // emerald-500 (Vibrant Green)
+    emitidos: { label: "Pontos Emitidos", color: "#006323" }, // primary
+    resgatados: { label: "Pontos Resgatados", color: "#E8762C" }, // accent
     expirados: { label: "Pontos Expirados", color: "#f43f5e" }, // rose-500 (Rose/Red)
   }
 
@@ -86,11 +86,11 @@ export function DashboardCharts({ data }: Props) {
           {/* Custom Rich Legend */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#059669] shadow-sm ring-1 ring-[#059669]/20" />
+              <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-sm ring-1 ring-primary/20" />
               <span className="font-medium text-muted-foreground">Emitidos</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-sm ring-1 ring-[#10b981]/20" />
+              <div className="w-2.5 h-2.5 rounded-full bg-accent shadow-sm ring-1 ring-accent/20" />
               <span className="font-medium text-muted-foreground">Resgatados</span>
             </div>
             <div className="flex items-center gap-2">

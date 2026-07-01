@@ -10,7 +10,8 @@ import { Recompensa } from "../recompensas.api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Gift, Plus, Pencil, Trash, AlertCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Gift, Plus, Pencil, Trash, Award, Image as ImageIcon, X } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -29,10 +30,15 @@ import {
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
+import { PageContainer } from "@/components/layout/page-container"
+import { supabaseAdminClient as supabase } from "@/lib/supabase-clients"
+import { useAuth } from "@/lib/auth/auth-context"
+import { toast } from "sonner"
 
 const recompensaSchema = z.object({
   name: z.string().min(2, "O nome deve ter no mínimo 2 caracteres."),
   description: z.string().optional(),
+  imageUrl: z.string().optional(),
   pointsCost: z.coerce.number().min(1, "O custo deve ser maior que zero."),
   isActive: z.boolean().default(true),
 })
@@ -40,16 +46,23 @@ const recompensaSchema = z.object({
 type RecompensaForm = z.infer<typeof recompensaSchema>
 
 export function CatalogoView() {
+  const { user } = useAuth()
   const { recompensas, isLoading, criar, atualizar, excluir } = useRecompensas()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRecompensa, setEditingRecompensa] = useState<Recompensa | null>(null)
   const [deletingRecompensa, setDeletingRecompensa] = useState<Recompensa | null>(null)
+  
+  // States for Image Upload
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const form = useForm<RecompensaForm>({
     resolver: zodResolver(recompensaSchema),
     defaultValues: {
       name: "",
       description: "",
+      imageUrl: "",
       pointsCost: 10,
       isActive: true,
     },
@@ -57,9 +70,12 @@ export function CatalogoView() {
 
   const openNewModal = () => {
     setEditingRecompensa(null)
+    setSelectedFile(null)
+    setPreviewUrl(null)
     form.reset({
       name: "",
       description: "",
+      imageUrl: "",
       pointsCost: 10,
       isActive: true,
     })
@@ -68,22 +84,104 @@ export function CatalogoView() {
 
   const openEditModal = (r: Recompensa) => {
     setEditingRecompensa(r)
+    setSelectedFile(null)
+    setPreviewUrl(r.imageUrl || null)
     form.reset({
       name: r.name,
       description: r.description || "",
+      imageUrl: r.imageUrl || "",
       pointsCost: r.pointsCost,
       isActive: r.isActive,
     })
     setIsModalOpen(true)
   }
 
-  const onSubmit = (data: RecompensaForm) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Formato inválido. Apenas JPG, PNG e WebP são aceitos.")
+        return
+      }
+      
+      const maxSizeInBytes = 2 * 1024 * 1024 // 2MB
+      if (file.size > maxSizeInBytes) {
+        toast.error("A imagem é muito grande. O limite máximo é de 2MB.")
+        return
+      }
+
+      setSelectedFile(file)
+      const objectUrl = URL.createObjectURL(file)
+      setPreviewUrl(objectUrl)
+    }
+  }
+
+  const clearImage = () => {
+    setSelectedFile(null)
+    setPreviewUrl(null)
+    form.setValue("imageUrl", "")
+  }
+
+  const deleteOldImage = async (url: string) => {
+    try {
+      const urlParts = url.split('/tenant-rewards/')
+      if (urlParts.length === 2) {
+        const path = urlParts[1]
+        await supabase.storage.from('tenant-rewards').remove([path])
+      }
+    } catch (e) {
+      console.error("Erro ao deletar imagem antiga", e)
+    }
+  }
+
+  const onSubmit = async (data: RecompensaForm) => {
+    let finalImageUrl = data.imageUrl
+
+    if (selectedFile && user?.tenant_id) {
+      setIsUploading(true)
+      try {
+        const fileExt = selectedFile.name.split('.').pop()
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+        const filePath = `${user.tenant_id}/${fileName}`
+
+        const { error } = await supabase.storage
+          .from("tenant-rewards")
+          .upload(filePath, selectedFile)
+          
+        if (error) throw error
+
+        const { data: publicUrlData } = supabase.storage
+          .from("tenant-rewards")
+          .getPublicUrl(filePath)
+        
+        finalImageUrl = publicUrlData.publicUrl
+      } catch (err) {
+        console.error("Erro no upload", err)
+        toast.error("Não foi possível fazer o upload da imagem.")
+        setIsUploading(false)
+        return // Aborta o processo se o upload falhou
+      } finally {
+        setIsUploading(false)
+      }
+    } else if (selectedFile && !user?.tenant_id) {
+      toast.error("Erro de sessão. ID do restaurante não encontrado.")
+      return
+    }
+
+    if (editingRecompensa && editingRecompensa.imageUrl && editingRecompensa.imageUrl !== finalImageUrl) {
+      // Clean up the old image from storage if it was changed or removed
+      await deleteOldImage(editingRecompensa.imageUrl)
+    }
+
+    const finalData = { ...data, imageUrl: finalImageUrl }
+
     if (editingRecompensa) {
-      atualizar.mutate({ id: editingRecompensa.id, payload: data }, {
+      atualizar.mutate({ id: editingRecompensa.id, payload: finalData }, {
         onSuccess: () => setIsModalOpen(false)
       })
     } else {
-      criar.mutate(data, {
+      criar.mutate(finalData, {
         onSuccess: () => setIsModalOpen(false)
       })
     }
@@ -91,6 +189,9 @@ export function CatalogoView() {
 
   const confirmDelete = () => {
     if (deletingRecompensa) {
+      if (deletingRecompensa.imageUrl) {
+        deleteOldImage(deletingRecompensa.imageUrl)
+      }
       excluir.mutate(deletingRecompensa.id, {
         onSuccess: () => setDeletingRecompensa(null)
       })
@@ -106,60 +207,85 @@ export function CatalogoView() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Catálogo de Recompensas</h2>
-          <p className="text-muted-foreground">
-            Gerencie os prêmios disponíveis para resgate.
-          </p>
-        </div>
+    <PageContainer
+      title="Catálogo de Recompensas"
+      description="Gerencie os prêmios disponíveis para resgate."
+      actions={
         <Button onClick={openNewModal}>
           <Plus className="mr-2 h-4 w-4" /> Nova Recompensa
         </Button>
-      </div>
+      }
+    >
+      <div className="space-y-6">
 
       {recompensas.length === 0 ? (
-        <div className="text-center p-12 border border-dashed rounded-lg">
-          <Gift className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">Nenhuma recompensa cadastrada</h3>
-          <p className="text-muted-foreground mb-4">Adicione prêmios para que os clientes possam resgatar.</p>
+        <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-lg bg-muted/10 animate-fade-in">
+          <Gift className="h-12 w-12 text-muted-foreground opacity-20 mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-1">Nenhuma recompensa cadastrada</h3>
+          <p className="text-muted-foreground mb-6">Adicione prêmios para que os clientes possam resgatar.</p>
           <Button variant="outline" onClick={openNewModal}>Criar a primeira recompensa</Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recompensas.map((r: Recompensa) => (
-            <Card key={r.id} className={`flex flex-col ${!r.isActive ? 'opacity-60' : ''}`}>
-              <CardHeader className="bg-primary/5 pb-4">
-                <div className="flex justify-between items-start">
-                  <div className="bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-full">
-                    {r.pointsCost} pts
+            <Card key={r.id} className={`p-0 overflow-hidden flex flex-col h-full transition-all duration-200 border-border shadow-sm group ${!r.isActive ? 'opacity-70 grayscale-[0.2]' : 'hover:shadow-md hover:border-primary/20'}`}>
+              <CardHeader className="p-0 border-b border-border relative min-h-[160px] flex flex-col justify-end overflow-hidden">
+                {r.imageUrl ? (
+                  <>
+                    {/* Fundo desfocado para preencher espaço de imagens com proporções diferentes */}
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60 dark:opacity-40"
+                      style={{ backgroundImage: `url(${r.imageUrl})` }}
+                    />
+                    {/* Imagem principal sem cortes (contain) */}
+                    <img 
+                      src={r.imageUrl} 
+                      alt={r.name}
+                      className="absolute inset-0 w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105 drop-shadow-lg"
+                    />
+                    {/* Gradiente escuro para garantir leitura do texto que fica por cima */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                    <Gift className="w-16 h-16 text-primary/20" />
                   </div>
-                  {!r.isActive && (
-                    <span className="text-xs bg-muted px-2 py-1 rounded border">Inativo</span>
-                  )}
+                )}
+                
+                <div className="relative p-6 pt-12 w-full">
+                  <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-4">
+                    <Badge variant="secondary" className={`${r.imageUrl ? 'bg-black/50 text-white hover:bg-black/70' : 'bg-primary/10 text-primary hover:bg-primary/20'} font-bold border-none px-3 py-1 text-sm flex items-center gap-1 backdrop-blur-md`}>
+                      <Award className="w-3.5 h-3.5" />
+                      {r.pointsCost} pts
+                    </Badge>
+                    {!r.isActive && (
+                      <Badge variant="outline" className={`text-xs border-none backdrop-blur-md ${r.imageUrl ? 'bg-black/50 text-white/80' : 'bg-muted/50 text-muted-foreground'}`}>Inativo</Badge>
+                    )}
+                  </div>
+                  <CardTitle className={`leading-tight text-xl ${r.imageUrl ? 'text-white' : 'text-foreground'}`}>{r.name}</CardTitle>
                 </div>
-                <CardTitle className="mt-4">{r.name}</CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 pt-4">
+              <CardContent className="flex-1 p-6 flex flex-col">
                 <CardDescription className="text-sm">
                   {r.description || "Nenhuma descrição informada."}
                 </CardDescription>
               </CardContent>
-              <CardFooter className="flex justify-between items-center border-t pt-4">
+              <CardFooter className="flex justify-between items-center border-t border-border bg-muted/10 p-4 px-6 mt-auto">
                 <div className="flex items-center space-x-2">
                   <Switch 
+                    id={`switch-${r.id}`}
                     checked={r.isActive} 
                     onCheckedChange={(checked) => toggleAtivo(r, checked)} 
                     disabled={atualizar.isPending}
+                    className="data-[state=checked]:bg-emerald-500"
                   />
-                  <Label className="text-xs">{r.isActive ? 'Ativo' : 'Pausado'}</Label>
+                  <Label htmlFor={`switch-${r.id}`} className="text-xs cursor-pointer select-none font-medium text-muted-foreground">{r.isActive ? 'Ativo' : 'Pausado'}</Label>
                 </div>
-                <div>
-                  <Button variant="ghost" size="sm" onClick={() => openEditModal(r)}>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => openEditModal(r)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => setDeletingRecompensa(r)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeletingRecompensa(r)}>
                     <Trash className="h-4 w-4" />
                   </Button>
                 </div>
@@ -170,16 +296,57 @@ export function CatalogoView() {
       )}
 
       {/* Modal de Criação / Edição */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        if (!open && isUploading) return // Prevent closing while uploading
+        setIsModalOpen(open)
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{editingRecompensa ? "Editar Recompensa" : "Nova Recompensa"}</DialogTitle>
             <DialogDescription>
-              Defina o nome, o custo em pontos e se o prêmio está disponível no catálogo ativo.
+              Defina os detalhes e uma imagem atraente para o prêmio.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+            
+            <div className="space-y-2">
+              <Label>Imagem (Opcional)</Label>
+              <div className="flex flex-col gap-3">
+                {previewUrl ? (
+                  <div className="relative w-full h-[120px] rounded-md overflow-hidden border border-border group">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${previewUrl})` }}
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button type="button" variant="destructive" size="sm" onClick={clearImage} className="h-8 text-xs">
+                        <Trash className="w-3.5 h-3.5 mr-1" /> Remover Imagem
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Label 
+                    htmlFor="image-upload" 
+                    className="flex flex-col items-center justify-center w-full h-[120px] rounded-md border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 cursor-pointer transition-colors"
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6 text-muted-foreground">
+                      <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                      <p className="text-sm font-medium">Clique para enviar uma foto</p>
+                      <p className="text-xs opacity-70">PNG, JPG até 5MB</p>
+                    </div>
+                    <Input 
+                      id="image-upload" 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleFileSelect}
+                    />
+                  </Label>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Nome do Prêmio</Label>
               <Input {...form.register("name")} placeholder="Ex: Casquinha Trufada" />
@@ -211,9 +378,9 @@ export function CatalogoView() {
             </div>
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={criar.isPending || atualizar.isPending}>
-                {criar.isPending || atualizar.isPending ? "Salvando..." : "Salvar"}
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={isUploading}>Cancelar</Button>
+              <Button type="submit" disabled={criar.isPending || atualizar.isPending || isUploading}>
+                {isUploading ? "Enviando Imagem..." : (criar.isPending || atualizar.isPending) ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
           </form>
@@ -238,5 +405,6 @@ export function CatalogoView() {
         </DialogContent>
       </Dialog>
     </div>
+    </PageContainer>
   )
 }

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Building2, Mail, Lock, Phone, User, Store, ArrowRight, ShieldCheck, MailCheck } from "lucide-react"
 
-import { supabase } from "@/lib/supabase"
+import { supabaseAdminClient as supabase } from "@/lib/supabase-clients"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
