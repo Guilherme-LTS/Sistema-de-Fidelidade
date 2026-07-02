@@ -222,3 +222,16 @@
 .animate-fade-in {
   animation: fade-in 0.2s ease-out forwards;
 }
+
+@keyframes barberpole {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 1rem 0;
+  }
+}
+
+.animate-barberpole {
+  animation: barberpole 1s linear infinite;
+}

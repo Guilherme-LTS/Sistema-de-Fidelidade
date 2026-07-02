@@ -10,6 +10,12 @@ export interface ConsumerMembership {
   pontos_pendentes: number
   pontos_expirando: number
   has_redeemable_reward?: boolean
+  rewards?: {
+    id: number
+    name: string
+    pointsCost: number
+    imageUrl?: string | null
+  }[]
 }
 
 export interface ConsumerDashboardData {
