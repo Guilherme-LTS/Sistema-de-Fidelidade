@@ -49,7 +49,6 @@ const finalFormSchema = z.object({
   document: z.string().refine((val) => isValidCpf(val), {
     message: "CPF inválido.",
   }),
-  nome: z.string().optional(),
   valorFormatado: z.string().min(4, "Informe um valor válido."),
   lgpdConsentimento: z.boolean().optional(),
   isNewCustomer: z.boolean().default(false),
@@ -77,7 +76,6 @@ export function LancamentoPontosForm() {
     resolver: zodResolver(finalFormSchema),
     defaultValues: {
       document: "",
-      nome: "",
       valorFormatado: "",
       lgpdConsentimento: false,
       isNewCustomer: false,
@@ -97,7 +95,7 @@ export function LancamentoPontosForm() {
         if (cliente) {
           setFoundCustomer(cliente)
           form.setValue("isNewCustomer", false)
-          form.clearErrors(["nome", "lgpdConsentimento"])
+          form.clearErrors(["lgpdConsentimento"])
         } else {
           setFoundCustomer(null)
           form.setValue("isNewCustomer", true)
@@ -122,7 +120,6 @@ export function LancamentoPontosForm() {
     const input = {
       document: limparCpf(values.document),
       valor: valorReal,
-      nome: values.isNewCustomer ? values.nome : undefined,
       lgpdConsentimento: values.isNewCustomer ? values.lgpdConsentimento : undefined,
     }
 
@@ -207,8 +204,14 @@ export function LancamentoPontosForm() {
                       {(foundCustomer.nome || "C")[0].toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{foundCustomer.nome || "Cliente sem nome"}</p>
-                      <p className="text-sm text-muted-foreground">Cliente já cadastrado no sistema</p>
+                      <p className="font-semibold text-foreground">{foundCustomer.nome || "Cliente cadastrado"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {foundCustomer.isGlobalOnly
+                          ? (foundCustomer.hasActiveAccount 
+                              ? "Conta ativa na plataforma (vínculo ao estabelecimento ao lançar)" 
+                              : "Pré-cadastro na plataforma (vínculo estabelecimento ao lançar)")
+                          : "Cliente já cadastrado neste restaurante"}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -217,21 +220,8 @@ export function LancamentoPontosForm() {
                   <div className="space-y-4 pt-4 border-t border-border animate-fade-in">
                     <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      Cliente Novo - Preencha os dados
+                      Cliente Novo - Autorização Necessária
                     </p>
-                    <FormField
-                      control={form.control}
-                      name="nome"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome Completo (Opcional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ex: João da Silva" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     <FormField
                       control={form.control}
                       name="lgpdConsentimento"
