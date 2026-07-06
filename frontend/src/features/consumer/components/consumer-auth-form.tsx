@@ -17,6 +17,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatCPF, getPasswordStrength } from "@/lib/masks"
 import { QuickCheckPanel } from "./quick-check-panel"
+import { Eye, EyeOff } from "lucide-react"
 
 function extractErrorMessage(err: any): string {
   if (!err) return "Erro interno do sistema. Tente novamente em alguns minutos."
@@ -83,6 +84,16 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
     return "quick-check"
   })
 
+  useEffect(() => {
+    const infoMsg = searchParams.get("info")
+    if (infoMsg === "first_confirmation") {
+      const timer = setTimeout(() => {
+        toast.info("Primeira confirmação realizada com sucesso! Por favor, acesse o outro e-mail para confirmar a alteração.", { duration: 8000 })
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams])
+
   const handleTabChange = (value: string) => {
     setActiveTab(value)
     const newParams = new URLSearchParams(searchParams.toString())
@@ -102,6 +113,9 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
   const [loading, setLoading] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
   const [passwordScore, setPasswordScore] = useState(0)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showSignupPassword, setShowSignupPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const queryClient = useQueryClient()
 
   const loginForm = useForm<LoginFormValues>({
@@ -292,12 +306,22 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
                 Esqueci minha senha
               </button>
             </div>
-            <Input
-              id="login-password"
-              type="password"
-              placeholder="••••••••"
-              {...loginForm.register("password")}
-            />
+            <div className="relative">
+              <Input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="pr-10"
+                {...loginForm.register("password")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             {loginForm.formState.errors.password && (
               <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
             )}
@@ -350,12 +374,22 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
           </div>
           <div className="space-y-2">
             <Label htmlFor="signup-password">Criar Senha</Label>
-            <Input
-              id="signup-password"
-              type="password"
-              placeholder="••••••••"
-              {...signupForm.register("password")}
-            />
+            <div className="relative">
+              <Input
+                id="signup-password"
+                type={showSignupPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="pr-10"
+                {...signupForm.register("password")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowSignupPassword(!showSignupPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showSignupPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             
             {watchPassword?.length > 0 && (
               <div className="flex gap-1 mt-1.5 h-1.5 w-full rounded-full overflow-hidden bg-muted">
@@ -373,12 +407,22 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
           
           <div className="space-y-2">
             <Label htmlFor="signup-confirm-password">Confirmar Senha</Label>
-            <Input
-              id="signup-confirm-password"
-              type="password"
-              placeholder="••••••••"
-              {...signupForm.register("confirmPassword")}
-            />
+            <div className="relative">
+              <Input
+                id="signup-confirm-password"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="pr-10"
+                {...signupForm.register("confirmPassword")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             {signupForm.formState.errors.confirmPassword && (
               <p className="text-xs text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>
             )}

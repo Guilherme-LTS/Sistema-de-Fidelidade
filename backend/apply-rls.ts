@@ -15,6 +15,9 @@ async function applyRLS() {
       `ALTER TABLE rewards ENABLE ROW LEVEL SECURITY;`,
       `ALTER TABLE redemptions ENABLE ROW LEVEL SECURITY;`,
       `ALTER TABLE redemption_items ENABLE ROW LEVEL SECURITY;`,
+      `ALTER TABLE expirations ENABLE ROW LEVEL SECURITY;`,
+      `ALTER TABLE expiration_items ENABLE ROW LEVEL SECURITY;`,
+      `ALTER TABLE invitations ENABLE ROW LEVEL SECURITY;`,
 
       // 2. Drop existing policies to recreate them cleanly
       `DROP POLICY IF EXISTS "tenant_isolation" ON tenants;`,
@@ -24,6 +27,9 @@ async function applyRLS() {
       `DROP POLICY IF EXISTS "tenant_isolation" ON rewards;`,
       `DROP POLICY IF EXISTS "tenant_isolation" ON redemptions;`,
       `DROP POLICY IF EXISTS "tenant_isolation" ON redemption_items;`,
+      `DROP POLICY IF EXISTS "tenant_isolation" ON expirations;`,
+      `DROP POLICY IF EXISTS "tenant_isolation" ON expiration_items;`,
+      `DROP POLICY IF EXISTS "tenant_isolation" ON invitations;`,
       `DROP POLICY IF EXISTS "consumer_profile_isolation" ON consumer_profiles;`,
       `DROP POLICY IF EXISTS "bypass_rls_for_service_role" ON consumer_profiles;`,
 
@@ -59,6 +65,26 @@ async function applyRLS() {
          redemption_id IN (
            SELECT id FROM redemptions WHERE tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid
          )
+       );`,
+
+      // Expirations: Isolated by tenant_id
+      `CREATE POLICY "tenant_isolation" ON expirations
+       USING (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid);`,
+
+      // Expiration Items: Isolated by checking the parent expiration's tenant_id
+      `CREATE POLICY "tenant_isolation" ON expiration_items
+       USING (
+         expiration_id IN (
+           SELECT id FROM expirations WHERE tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid
+         )
+       );`,
+
+      // Invitations: Isolated by tenant_id or matching email in claims
+      `CREATE POLICY "tenant_isolation" ON invitations
+       USING (
+         tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid
+         OR
+         email = NULLIF(current_setting('request.jwt.claims', true)::json->>'email', '')
        );`,
 
       // Consumer Profiles: Global table. Allow all operations since it is the global identity, 

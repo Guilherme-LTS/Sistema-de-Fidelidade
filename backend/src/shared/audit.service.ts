@@ -18,6 +18,7 @@ export type AuditAction =
   | 'ACTIVATE_USER'
   | 'DEACTIVATE_USER'
   | 'DELETE_USER'
+  | 'INVITE_USER'
   | 'LINK_GLOBAL_CUSTOMER'
 
 export type AuditStatus = 'SUCESSO' | 'FALHA'

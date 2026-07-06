@@ -12,6 +12,7 @@ const envSchema = z.object({
   SUPABASE_SECRET_KEY: z.string().min(10),
   ALLOWED_ORIGINS: z.string().transform((val) => val.split(",").map((s) => s.trim())),
   FRONTEND_URL: z.string().url(),
+  RESEND_API_KEY: z.string().startsWith("re_"),
 });
 
 const _env = envSchema.safeParse(process.env);

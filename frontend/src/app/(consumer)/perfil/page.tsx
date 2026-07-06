@@ -19,7 +19,17 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getPasswordStrength } from "@/lib/masks"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Bell } from "lucide-react"
+import { Bell, Eye, EyeOff } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 function extractErrorMessage(err: any): string {
   const apiMessage = err.response?.data?.error?.message || err.response?.data?.message;
@@ -28,15 +38,18 @@ function extractErrorMessage(err: any): string {
   return "Erro interno do sistema. Tente novamente.";
 }
 
-// Schemas
 const profileSchema = z.object({
   name: z.string().min(2, "Nome muito curto"),
-  email: z.string().email("E-mail inválido")
+  phone: z.string().optional(),
+})
+
+const emailSchema = z.object({
+  newEmail: z.string().email("E-mail inválido")
     .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Formato de e-mail inválido")
     .refine(val => !val || !val.endsWith("gmaill.com"), { message: "O domínio do e-mail parece inválido. Você quis dizer gmail.com?" })
     .refine(val => !val || !val.endsWith("hotmai.com"), { message: "O domínio do e-mail parece inválido. Você quis dizer hotmail.com?" })
     .refine(val => !val || !val.endsWith("yahool.com"), { message: "O domínio do e-mail parece inválido. Você quis dizer yahoo.com?" }),
-  phone: z.string().optional(),
+  password: z.string().min(1, "A senha é obrigatória para autorizar a alteração"),
 })
 
 const passwordSchema = z.object({
@@ -53,11 +66,17 @@ const passwordSchema = z.object({
 
 type ProfileValues = z.infer<typeof profileSchema>
 type PasswordValues = z.infer<typeof passwordSchema>
+type EmailValues = z.infer<typeof emailSchema>
 
 export default function PerfilPage() {
-  const { data: authData, updatePassword } = useConsumerAuth()
+  const { data: authData, updatePassword, updateEmail } = useConsumerAuth()
   const queryClient = useQueryClient()
   const [passwordScore, setPasswordScore] = useState(0)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showEmailPassword, setShowEmailPassword] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["consumer-dashboard"],
@@ -69,9 +88,13 @@ export default function PerfilPage() {
     resolver: zodResolver(profileSchema),
     values: {
       name: dashboardData?.profile.name || "",
-      email: dashboardData?.profile.email || "",
       phone: dashboardData?.profile.phone || "",
     }
+  })
+
+  const emailForm = useForm<EmailValues>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { newEmail: "", password: "" },
   })
 
   const passwordForm = useForm<PasswordValues>({
@@ -116,6 +139,32 @@ export default function PerfilPage() {
       toast.error(extractErrorMessage(err))
     }
   })
+
+  const updateEmailMutation = useMutation({
+    mutationFn: async (data: EmailValues) => {
+      await updateEmail(data.password, data.newEmail)
+    },
+    onSuccess: () => {
+      toast.success("Solicitação de alteração enviada! Confirme nos links enviados aos e-mails.")
+      emailForm.reset()
+    },
+    onError: (err: any) => {
+      toast.error(extractErrorMessage(err))
+    }
+  })
+
+  const onSubmitEmailClick = (e: React.FormEvent) => {
+    e.preventDefault()
+    emailForm.handleSubmit(() => {
+      setShowConfirmModal(true)
+    })(e)
+  }
+
+  const handleConfirmEmailChange = async () => {
+    setShowConfirmModal(false)
+    const values = emailForm.getValues()
+    updateEmailMutation.mutate(values)
+  }
 
   if (isLoading) {
     return (
@@ -165,10 +214,8 @@ export default function PerfilPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input id="email" type="email" {...profileForm.register("email")} />
-                {profileForm.formState.errors.email && (
-                  <p className="text-xs text-destructive">{profileForm.formState.errors.email.message}</p>
-                )}
+                <Input id="email" type="email" value={dashboardData?.profile.email || ""} disabled className="bg-muted/50" />
+                <p className="text-[10px] text-muted-foreground">O e-mail não pode ser alterado por aqui.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
@@ -198,7 +245,16 @@ export default function PerfilPage() {
           <form onSubmit={passwordForm.handleSubmit((d) => updatePasswordMutation.mutate({ currentPassword: d.currentPassword, newPassword: d.newPassword }))} className="space-y-4">
             <div className="space-y-2 md:w-1/2">
               <Label htmlFor="currentPassword">Senha Atual</Label>
-              <Input id="currentPassword" type="password" {...passwordForm.register("currentPassword")} />
+              <div className="relative">
+                <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} className="pr-10" {...passwordForm.register("currentPassword")} />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {passwordForm.formState.errors.currentPassword && (
                 <p className="text-xs text-destructive">{passwordForm.formState.errors.currentPassword.message}</p>
               )}
@@ -207,7 +263,16 @@ export default function PerfilPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Nova Senha</Label>
-                <Input id="newPassword" type="password" {...passwordForm.register("newPassword")} />
+                <div className="relative">
+                  <Input id="newPassword" type={showNewPassword ? "text" : "password"} className="pr-10" {...passwordForm.register("newPassword")} />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 
                 {watchNewPassword?.length > 0 && (
                   <div className="flex gap-1 mt-1.5 h-1.5 w-full rounded-full overflow-hidden bg-muted">
@@ -224,7 +289,16 @@ export default function PerfilPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-                <Input id="confirmPassword" type="password" {...passwordForm.register("confirmPassword")} />
+                <div className="relative">
+                  <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} className="pr-10" {...passwordForm.register("confirmPassword")} />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 {passwordForm.formState.errors.confirmPassword && (
                   <p className="text-xs text-destructive">{passwordForm.formState.errors.confirmPassword.message}</p>
                 )}
@@ -235,6 +309,48 @@ export default function PerfilPage() {
               <Button type="submit" variant="secondary" disabled={updatePasswordMutation.isPending || !passwordForm.formState.isDirty}>
                 {updatePasswordMutation.isPending ? <Spinner className="mr-2" /> : null}
                 Alterar Senha
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Alterar E-mail de Login</CardTitle>
+          <CardDescription>
+            Para sua segurança, a alteração exige a senha atual e exige a confirmação nos links enviados aos dois endereços de e-mail.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmitEmailClick} className="space-y-4">
+            <div className="space-y-2 md:w-1/2">
+              <Label htmlFor="newEmail">Novo E-mail</Label>
+              <Input id="newEmail" type="email" placeholder="novo@email.com" {...emailForm.register("newEmail")} />
+              {emailForm.formState.errors.newEmail && (
+                <p className="text-xs text-destructive">{emailForm.formState.errors.newEmail.message}</p>
+              )}
+            </div>
+            <div className="space-y-2 md:w-1/2">
+              <Label htmlFor="emailPassword">Senha Atual</Label>
+              <div className="relative">
+                <Input id="emailPassword" type={showEmailPassword ? "text" : "password"} className="pr-10" {...emailForm.register("password")} />
+                <button
+                  type="button"
+                  onClick={() => setShowEmailPassword(!showEmailPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showEmailPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {emailForm.formState.errors.password && (
+                <p className="text-xs text-destructive">{emailForm.formState.errors.password.message}</p>
+              )}
+            </div>
+            <div className="flex justify-end pt-4">
+              <Button type="submit" variant="secondary" disabled={updateEmailMutation.isPending || !emailForm.formState.isDirty}>
+                {updateEmailMutation.isPending ? <Spinner className="mr-2" /> : null}
+                Alterar E-mail
               </Button>
             </div>
           </form>
@@ -278,6 +394,31 @@ export default function PerfilPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar alteração de e-mail?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="text-sm text-muted-foreground">
+                Você está alterando seu e-mail de acesso para <strong className="text-foreground">{emailForm.getValues("newEmail")}</strong>.
+                <br /><br />
+                Para concluir esta alteração com segurança, <strong>você precisará clicar nos links de confirmação enviados para os dois endereços de e-mail</strong>:
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
+                  <li>O e-mail atual: <strong className="text-foreground">{dashboardData?.profile.email}</strong></li>
+                  <li>O novo e-mail: <strong className="text-foreground">{emailForm.getValues("newEmail")}</strong></li>
+                </ul>
+                <br />
+                Seu acesso continuará sendo feito com o e-mail atual até que ambos os links sejam confirmados.
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmEmailChange}>Enviar Solicitação</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

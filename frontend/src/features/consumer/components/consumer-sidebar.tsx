@@ -53,8 +53,8 @@ export function ConsumerSidebar({ onItemClick }: ConsumerSidebarProps) {
       {/* Header / Logo */}
       <div className="flex flex-col gap-1 mb-8 group cursor-pointer px-1">
         <Link href="/painel" className="flex flex-col" onClick={onItemClick}>
-          <Image src="/logo-light.png" alt="Pontus Logo" width={160} height={42} className="w-[140px] h-auto dark:hidden transition-transform group-hover:scale-105 duration-300" priority />
-          <Image src="/logo-dark.png" alt="Pontus Logo" width={160} height={42} className="w-[140px] h-auto hidden dark:block transition-transform group-hover:scale-105 duration-300" priority />
+          <Image src="/logo-light.png" alt="Pontus Logo" width={140} height={37} className="dark:hidden transition-transform group-hover:scale-105 duration-300" priority />
+          <Image src="/logo-dark.png" alt="Pontus Logo" width={140} height={37} className="hidden dark:block transition-transform group-hover:scale-105 duration-300" priority />
           <span className="text-xs font-medium text-muted-foreground mt-1.5 ml-1 uppercase tracking-wider">Portal do Cliente</span>
         </Link>
       </div>

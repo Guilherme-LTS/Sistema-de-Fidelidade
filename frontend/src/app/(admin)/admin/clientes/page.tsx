@@ -9,15 +9,13 @@ export default function ClientesPage() {
       title="Clientes"
       description="Gerencie seus clientes, visualize saldos e histórico de pontos."
     >
-      <div className="mt-4 md:mt-5">
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-96">
-            <Spinner className="h-8 w-8 text-primary" />
-          </div>
-        }>
-          <ClientesView />
-        </Suspense>
-      </div>
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-96">
+          <Spinner className="h-8 w-8 text-primary" />
+        </div>
+      }>
+        <ClientesView />
+      </Suspense>
     </PageContainer>
   )
 }

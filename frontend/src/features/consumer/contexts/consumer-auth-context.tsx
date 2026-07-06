@@ -11,6 +11,7 @@ import {
 } from "@/lib/auth/session"
 import { carregarDashboardConsumer, ConsumerDashboardData } from "../consumer.api"
 import { routes } from "@/config/routes"
+import { mapAuthError } from "@/lib/auth/error-mapping"
 
 interface ConsumerAuthContextType {
   data: ConsumerDashboardData | null
@@ -19,6 +20,7 @@ interface ConsumerAuthContextType {
   logout: () => Promise<void>
   sendPasswordReset: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
+  updateEmail: (currentPassword: string, newEmail: string) => Promise<void>
 }
 
 const ConsumerAuthContext = createContext<ConsumerAuthContextType | undefined>(undefined)
@@ -179,25 +181,50 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
   const sendPasswordReset = async (email: string) => {
     const origin = typeof window !== "undefined" ? window.location.origin : ""
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/acesso?recovery=1`, // Adjust to consumer reset if needed
+      redirectTo: `${origin}/auth/callback?next=/acesso?recovery=1`,
     })
 
     if (error) {
-      throw new Error(error.message)
+      throw mapAuthError(error)
     }
   }
 
   const updatePassword = async (password: string) => {
     const { error } = await supabase.auth.updateUser({ password })
     if (error) {
-      throw new Error(error.message)
+      throw mapAuthError(error)
+    }
+  }
+
+  const updateEmail = async (currentPassword: string, newEmail: string) => {
+    const currentEmail = consumerData?.profile.email
+    if (!currentEmail) {
+      throw new Error("E-mail do consumidor não identificado.")
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: currentEmail,
+      password: currentPassword,
+    })
+
+    if (signInError) {
+      throw new Error("A senha atual informada está incorreta.")
+    }
+
+    const origin = typeof window !== "undefined" ? window.location.origin : ""
+    const { error: updateError } = await supabase.auth.updateUser(
+      { email: newEmail },
+      { emailRedirectTo: `${origin}/auth/callback?next=/painel` }
+    )
+    if (updateError) {
+      throw mapAuthError(updateError)
     }
   }
 
   const loading = isInitializing || (hasToken && isQueryLoading)
 
   return (
-    <ConsumerAuthContext.Provider value={{ data: consumerData, loading, login, logout, sendPasswordReset, updatePassword }}>
+    <ConsumerAuthContext.Provider value={{ data: consumerData, loading, login, logout, sendPasswordReset, updatePassword, updateEmail }}>
       {children}
     </ConsumerAuthContext.Provider>
   )
