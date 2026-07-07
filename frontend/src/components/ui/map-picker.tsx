@@ -35,11 +35,43 @@ interface MapPickerProps {
   onLocationSelect: (lat: number, lng: number, details?: AddressDetails) => void
 }
 
-function LocationMarker({ position, setPosition, onLocationSelect }: any) {
+function LocationMarker({ position, setPosition, onLocationSelect, isGoogleLoaded }: any) {
   useMapEvents({
     click(e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
       setPosition(e.latlng)
-      onLocationSelect(e.latlng.lat, e.latlng.lng)
+      
+      if (isGoogleLoaded && window.google) {
+        try {
+          const geocoder = new window.google.maps.Geocoder()
+          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status === "OK" && results && results[0]) {
+              const result = results[0]
+              const addressComponents = result.address_components
+              const details: AddressDetails = {}
+
+              addressComponents.forEach(component => {
+                const types = component.types
+                if (types.includes("route")) details.street = component.long_name
+                if (types.includes("street_number")) details.number = component.long_name
+                if (types.includes("sublocality") || types.includes("sublocality_level_1")) details.neighborhood = component.long_name
+                if (types.includes("administrative_area_level_2")) details.city = component.long_name
+                if (types.includes("administrative_area_level_1")) details.state = component.short_name
+                if (types.includes("postal_code")) details.zipCode = component.long_name
+              })
+
+              onLocationSelect(lat, lng, details)
+            } else {
+              onLocationSelect(lat, lng)
+            }
+          })
+        } catch (error) {
+          onLocationSelect(lat, lng)
+        }
+      } else {
+        onLocationSelect(lat, lng)
+      }
     },
   })
 
@@ -222,7 +254,8 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
           <LocationMarker 
             position={position} 
             setPosition={setPosition} 
-            onLocationSelect={onLocationSelect} 
+            onLocationSelect={onLocationSelect}
+            isGoogleLoaded={isLoaded}
           />
           <MapUpdater center={position} />
         </MapContainer>

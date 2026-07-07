@@ -36,16 +36,45 @@ const formatPhone = (value: string) => {
     .slice(0, 15)
 }
 
+const socialLinkTransform = (base: string) => 
+  z.string()
+    .transform(val => {
+      if (!val) return "";
+      val = val.trim();
+      if (val.startsWith("http://") || val.startsWith("https://")) return val;
+      const username = val.startsWith("@") ? val.substring(1) : val;
+      return `${base}${username}`;
+    })
+    .pipe(z.string().url("URL ou formato inválido").or(z.literal("")))
+
+const websiteTransform = z.string()
+  .transform(val => {
+    if (!val) return "";
+    val = val.trim();
+    if (!val.startsWith("http://") && !val.startsWith("https://")) {
+      return `https://${val}`;
+    }
+    return val;
+  })
+  .pipe(z.string().url("URL inválida").or(z.literal("")))
+
 const formSchema = z.object({
-  name: z.string().min(2, "Nome da empresa é obrigatório"),
-  tradingName: z.string().optional(),
-  document: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email("E-mail inválido").optional().or(z.literal("")),
-  addressLine1: z.string().optional(),
-  addressNumber: z.string().optional(),
-  addressCity: z.string().optional(),
-  addressState: z.string().max(2, "Max 2 caracteres").optional().or(z.literal("")),
+  name: z.string().trim().min(2, "Nome da empresa é obrigatório"),
+  tradingName: z.string().trim().optional(),
+  document: z.string().refine(val => {
+    if (!val) return true;
+    return val.replace(/\D/g, "").length === 14;
+  }, "CNPJ incompleto ou inválido (deve ter 14 dígitos)").optional(),
+  phone: z.string().refine(val => {
+    if (!val) return true;
+    const digits = val.replace(/\D/g, "");
+    return digits.length >= 10 && digits.length <= 11;
+  }, "Telefone deve ter 10 ou 11 dígitos com DDD").optional(),
+  email: z.string().trim().email("E-mail inválido").optional().or(z.literal("")),
+  addressLine1: z.string().trim().optional(),
+  addressNumber: z.string().trim().optional(),
+  addressCity: z.string().trim().optional(),
+  addressState: z.string().trim().max(2, "Max 2 caracteres").optional().or(z.literal("")),
   latitude: z.union([z.string(), z.number()]).optional(),
   longitude: z.union([z.string(), z.number()]).optional(),
   logoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
@@ -55,10 +84,10 @@ const formSchema = z.object({
     close: z.string()
   })).optional(),
   socialLinks: z.object({
-    instagram: z.string().optional().or(z.literal("")),
-    facebook: z.string().optional().or(z.literal("")),
-    tiktok: z.string().optional().or(z.literal("")),
-    website: z.string().optional().or(z.literal("")),
+    instagram: socialLinkTransform("https://instagram.com/").optional(),
+    facebook: socialLinkTransform("https://facebook.com/").optional(),
+    tiktok: socialLinkTransform("https://tiktok.com/@").optional(),
+    website: websiteTransform.optional(),
   }).optional(),
 })
 
@@ -164,88 +193,93 @@ export function PerfilRestauranteTab() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-20">
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Razão Social <span className="text-destructive">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Restaurante S.A" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="tradingName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome Fantasia</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Opcional" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="document"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CNPJ</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="00.000.000/0000-00" 
-                        {...field} 
-                        onChange={(e) => field.onChange(formatCnpj(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="logoUrl"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Logo do Restaurante</FormLabel>
-                    <FormControl>
-                      <ImageUpload 
-                        value={field.value} 
-                        onChange={field.onChange} 
-                        tenantId={query.data?.id || "unknown"} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Informações Básicas */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Razão Social <span className="text-destructive">*</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="Restaurante S.A" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="tradingName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome Fantasia</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Opcional" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="document"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CNPJ</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="00.000.000/0000-00" 
+                          {...field} 
+                          onChange={(e) => field.onChange(formatCnpj(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="logoUrl"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Logo do Restaurante</FormLabel>
+                      <FormControl>
+                        <ImageUpload 
+                          value={field.value} 
+                          onChange={field.onChange} 
+                          tenantId={query.data?.id || "unknown"} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <Separator />
-            <h3 className="text-lg font-medium">Contatos</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail Corporativo</FormLabel>
-                    <FormControl>
-                      <Input placeholder="contato@empresa.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            
+            {/* Contatos */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Contatos</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>E-mail Corporativo</FormLabel>
+                      <FormControl>
+                        <Input placeholder="contato@empresa.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <FormField
                 control={form.control}
                 name="phone"
@@ -263,12 +297,14 @@ export function PerfilRestauranteTab() {
                   </FormItem>
                 )}
               />
+              </div>
             </div>
 
             <Separator />
-            <h3 className="text-lg font-medium">Localização</h3>
             
+            {/* Localização */}
             <div className="space-y-4">
+              <h3 className="text-lg font-medium">Localização</h3>
               <div>
                 <p className="text-sm text-muted-foreground mb-4">
                   Pesquise seu estabelecimento pelo nome ou endereço para preenchermos seus dados automaticamente.
@@ -345,7 +381,12 @@ export function PerfilRestauranteTab() {
                       <FormItem>
                         <FormLabel>UF</FormLabel>
                         <FormControl>
-                          <Input placeholder="SP" maxLength={2} {...field} />
+                          <Input 
+                            placeholder="SP" 
+                            maxLength={2} 
+                            {...field} 
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -356,22 +397,24 @@ export function PerfilRestauranteTab() {
             </div>
 
             <Separator />
-            <h3 className="text-lg font-medium">Redes Sociais</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FormField
-                control={form.control}
-                name="socialLinks.instagram"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Instagram</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://instagram.com/..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Redes Sociais */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Redes Sociais</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="socialLinks.instagram"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Instagram</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://instagram.com/..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <FormField
                 control={form.control}
                 name="socialLinks.facebook"
@@ -411,81 +454,125 @@ export function PerfilRestauranteTab() {
                   </FormItem>
                 )}
               />
-            </div>
+                </div>
+              </div>
 
             <Separator />
-            <h3 className="text-lg font-medium">Horário de Funcionamento</h3>
             
-            <div className="space-y-4 border rounded-md p-4 bg-muted/10">
-              <div className="grid grid-cols-[1fr_80px_100px_100px] gap-4 items-center text-sm font-medium text-muted-foreground mb-2 px-2">
-                <div>Dia</div>
+            {/* Horário de Funcionamento */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Horário de Funcionamento</h3>
+              <div className="space-y-4 border border-border rounded-xl p-4 bg-muted/5">
+                <div className="hidden md:grid grid-cols-[1fr_80px_100px_100px] gap-4 items-center text-sm font-semibold text-muted-foreground mb-2 px-2">
+                <div>Dia da Semana</div>
                 <div className="text-center">Status</div>
                 <div className="text-center">Abertura</div>
                 <div className="text-center">Fechamento</div>
               </div>
               
-              {DAYS_OF_WEEK.map((day) => (
-                <div key={day.id} className="grid grid-cols-[1fr_80px_100px_100px] gap-4 items-center p-2 hover:bg-muted/30 rounded-lg transition-colors">
-                  <div className="font-medium">{day.label}</div>
-                  
-                  <FormField
-                    control={form.control}
-                    name={`businessHours.${day.id}.active`}
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-center space-y-0">
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name={`businessHours.${day.id}.open`}
-                    render={({ field }) => (
-                      <FormItem className="space-y-0">
-                        <FormControl>
-                          <Input 
-                            type="time" 
-                            {...field} 
-                            disabled={!form.watch(`businessHours.${day.id}.active`)}
-                            className="text-center"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name={`businessHours.${day.id}.close`}
-                    render={({ field }) => (
-                      <FormItem className="space-y-0">
-                        <FormControl>
-                          <Input 
-                            type="time" 
-                            {...field} 
-                            disabled={!form.watch(`businessHours.${day.id}.active`)}
-                            className="text-center"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              ))}
+              <div className="space-y-3 md:space-y-1">
+                {DAYS_OF_WEEK.map((day) => (
+                  <div key={day.id} className="flex flex-col md:grid md:grid-cols-[1fr_80px_100px_100px] gap-3 md:gap-4 md:items-center p-3 md:p-2 border md:border-transparent rounded-lg hover:bg-muted/30 transition-colors bg-card md:bg-transparent shadow-sm md:shadow-none">
+                    
+                    <div className="flex justify-between items-center w-full md:block">
+                      <span className="font-medium text-foreground">{day.label}</span>
+                      <div className="md:hidden">
+                        <FormField
+                          control={form.control}
+                          name={`businessHours.${day.id}.active`}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0">
+                              <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="hidden md:flex justify-center">
+                      <FormField
+                        control={form.control}
+                        name={`businessHours.${day.id}.active`}
+                        render={({ field }) => (
+                          <FormItem className="space-y-0">
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 md:contents">
+                      <div className="flex-1 md:block">
+                        <FormField
+                          control={form.control}
+                          name={`businessHours.${day.id}.open`}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0">
+                              <FormControl>
+                                <Input 
+                                  type="time" 
+                                  {...field} 
+                                  disabled={!form.watch(`businessHours.${day.id}.active`)}
+                                  className="text-center font-medium"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <span className="text-muted-foreground text-sm md:hidden">até</span>
+                      <div className="flex-1 md:block">
+                        <FormField
+                          control={form.control}
+                          name={`businessHours.${day.id}.close`}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0">
+                              <FormControl>
+                                <Input 
+                                  type="time" 
+                                  {...field} 
+                                  disabled={!form.watch(`businessHours.${day.id}.active`)}
+                                  className="text-center font-medium"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            </div>
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={!form.formState.isDirty || mutation.isPending}>
-                {mutation.isPending ? <Spinner className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Salvar Alterações
-              </Button>
-            </div>
+            {form.formState.isDirty && (
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-sm border border-border shadow-2xl p-2 rounded-full flex items-center justify-between sm:justify-start gap-2 animate-in slide-in-from-bottom-10 fade-in duration-300 w-[calc(100%-2rem)] sm:w-auto">
+                <span className="text-sm font-semibold ml-4 text-foreground hidden sm:inline-block whitespace-nowrap">
+                  Alterações não salvas
+                </span>
+                <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => form.reset()} 
+                    className="rounded-full px-4 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    Descartar
+                  </Button>
+                  <Button type="submit" size="sm" disabled={mutation.isPending} className="rounded-full px-6 shadow-sm">
+                    {mutation.isPending ? <Spinner className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Salvar Alterações
+                  </Button>
+                </div>
+              </div>
+            )}
           </form>
         </Form>
       </CardContent>
