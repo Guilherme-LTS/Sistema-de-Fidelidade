@@ -66,6 +66,7 @@ export class ClientesService {
         document: consumerProfiles.document,
         nome: consumerProfiles.name,
         consumerProfileId: consumerProfiles.id,
+        authUserId: consumerProfiles.authUserId,
       })
       .from(customers)
       .innerJoin(consumerProfiles, eq(customers.consumerProfileId, consumerProfiles.id))
@@ -139,6 +140,95 @@ export class ClientesService {
       document: profile.document,
       nome: profile.name,
       consumerProfileId: profile.id,
+    };
+  }
+
+  async buscarPerfilGlobalPorCpf(document: string) {
+    const cpfValidation = validateAndCleanCPF(document);
+    if (!cpfValidation.isValid) {
+      throw new AppError(cpfValidation.error || "CPF inválido.");
+    }
+
+    const result = await db
+      .select({
+        consumerProfileId: consumerProfiles.id,
+        document: consumerProfiles.document,
+        nome: consumerProfiles.name,
+        authUserId: consumerProfiles.authUserId,
+      })
+      .from(consumerProfiles)
+      .where(eq(consumerProfiles.document, cpfValidation.cleaned))
+      .limit(1);
+
+    if (result.length === 0) return null;
+    return result[0];
+  }
+
+  async obterStatusClientePorCpf(tenantId: string, document: string) {
+    const cpfValidation = validateAndCleanCPF(document);
+    if (!cpfValidation.isValid) {
+      throw new AppError(cpfValidation.error || "CPF inválido.");
+    }
+
+    const local = await this.buscarPorCpf(tenantId, cpfValidation.cleaned);
+    if (local) {
+      return {
+        id: local.id,
+        document: local.document,
+        nome: local.nome,
+        consumerProfileId: local.consumerProfileId,
+        existsGlobally: true,
+        hasActiveAccount: !!local.authUserId,
+        isGlobalOnly: false,
+      };
+    }
+
+    const globalProfile = await this.buscarPerfilGlobalPorCpf(cpfValidation.cleaned);
+    if (globalProfile) {
+      return {
+        id: null,
+        document: globalProfile.document,
+        nome: globalProfile.nome,
+        consumerProfileId: globalProfile.consumerProfileId,
+        existsGlobally: true,
+        hasActiveAccount: !!globalProfile.authUserId,
+        isGlobalOnly: true,
+      };
+    }
+
+    return null;
+  }
+
+  async vincularPerfilExistente(tenantId: string, profile: { consumerProfileId: string; document: string; nome: string | null }) {
+    const [cliente] = await db.insert(customers).values({
+      tenantId,
+      consumerProfileId: profile.consumerProfileId,
+    }).onConflictDoUpdate({
+      target: [customers.tenantId, customers.consumerProfileId],
+      set: {
+        updatedAt: new Date().toISOString(),
+      }
+    }).returning();
+
+    // Registrar o vínculo na auditoria (Opcional, mas recomendado)
+    await logAuditEvent({
+      tenantId,
+      operatorId: "SISTEMA", // Pode ser substituído se passarmos o operador
+      action: "LINK_GLOBAL_CUSTOMER",
+      entityType: "CUSTOMER",
+      entityId: String(cliente.id),
+      metadata: {
+        clienteId: cliente.id,
+        clienteNome: profile.nome,
+        clienteCpf: profile.document,
+      }
+    });
+
+    return {
+      id: cliente.id,
+      document: profile.document,
+      nome: profile.nome,
+      consumerProfileId: profile.consumerProfileId,
     };
   }
 

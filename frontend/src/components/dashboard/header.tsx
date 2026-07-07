@@ -85,7 +85,7 @@ export function Header({ title, description, actions }: HeaderProps) {
           <p className="text-xs md:text-sm text-muted-foreground">{description}</p>
         </div>
 
-        {actions && <div className="flex flex-col sm:flex-row gap-2">{actions}</div>}
+        {actions && <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">{actions}</div>}
       </div>
     </header>
   )

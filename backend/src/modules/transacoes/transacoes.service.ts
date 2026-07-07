@@ -58,14 +58,23 @@ export class TransacoesService {
     let cliente: any = await clientesService.buscarPorCpf(input.tenantId, cleanedDoc);
 
     if (!cliente) {
-      if (!input.nome || input.lgpdConsentimento !== true) {
-        throw new AppError("Cliente não encontrado. Para cadastrar um novo, envie 'nome' e aceite a LGPD.");
+      // 1. Tenta buscar na base global de clientes (já aceitou LGPD na plataforma)
+      const perfilGlobal = await clientesService.buscarPerfilGlobalPorCpf(cleanedDoc);
+
+      if (perfilGlobal) {
+        // Se existe globalmente, vincula o cliente ao restaurante automaticamente
+        cliente = await clientesService.vincularPerfilExistente(input.tenantId, perfilGlobal);
+      } else {
+        // 2. Não existe globalmente, precisamos do aceite da LGPD para criar o perfil
+        if (input.lgpdConsentimento !== true) {
+          throw new AppError("Cliente não encontrado na base. Para cadastrá-lo, é necessário o aceite da LGPD.");
+        }
+        cliente = await clientesService.cadastrarCliente(input.tenantId, input.authUserId || "SISTEMA", {
+          document: cleanedDoc,
+          nome: input.nome, // O nome agora é 100% opcional, o próprio cliente preencherá no portal
+          lgpdConsentimento: input.lgpdConsentimento,
+        });
       }
-      cliente = await clientesService.cadastrarCliente(input.tenantId, input.authUserId || "SISTEMA", {
-        document: cleanedDoc,
-        nome: input.nome,
-        lgpdConsentimento: input.lgpdConsentimento,
-      });
     }
 
     // Inserir a transação

@@ -2,7 +2,7 @@
 
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Sidebar } from "./sidebar"
 
 export function MobileNav() {
@@ -15,6 +15,8 @@ export function MobileNav() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0 w-64">
+        <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+        <SheetDescription className="sr-only">Acesse os módulos do sistema de fidelidade.</SheetDescription>
         <Sidebar />
       </SheetContent>
     </Sheet>

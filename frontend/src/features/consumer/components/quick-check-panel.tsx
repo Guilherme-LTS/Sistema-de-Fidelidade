@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { Search, Store, Star, Gift, ArrowRight } from "lucide-react"
+import { Search, Store, Star, Gift, ArrowRight, ChevronDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +31,11 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
   const [loading, setLoading] = useState(false)
   const [globalResult, setGlobalResult] = useState<QuickCheckGlobalResult | null>(null)
   const [tenantResult, setTenantResult] = useState<QuickCheckTenantResult | null>(null)
+  const [expandedTenants, setExpandedTenants] = useState<Record<string, boolean>>({})
+
+  const toggleTenant = (tenantId: string) => {
+    setExpandedTenants(prev => ({ ...prev, [tenantId]: !prev[tenantId] }))
+  }
 
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchSchema),
@@ -97,20 +102,45 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
             <h3 className="font-semibold text-sm flex items-center gap-2">
               <Gift className="h-4 w-4" /> Recompensas Disponíveis
             </h3>
-            <div className="grid gap-2">
+            <div className="grid gap-2 animate-in fade-in duration-300">
               {tenantResult.rewards.map(reward => {
+                const percent = Math.min(100, Math.round((tenantResult.points / reward.pointsCost) * 100));
                 const isRedeemable = tenantResult.points >= reward.pointsCost;
+                
                 return (
-                  <div key={reward.id} className={`p-3 rounded-xl border flex justify-between items-center ${isRedeemable ? 'bg-card border-primary/20' : 'bg-muted/30 border-border opacity-70'}`}>
-                    <div>
-                      <p className="font-medium text-sm">{reward.name}</p>
-                      {!isRedeemable && (
-                        <p className="text-xs text-muted-foreground">Faltam {reward.pointsCost - tenantResult.points} pts</p>
+                  <div key={reward.id} className="relative overflow-hidden rounded-lg border bg-card p-3 shadow-sm transition-all hover:bg-muted/20">
+                    <div className="flex items-center gap-3">
+                      {/* Imagem ou Ícone */}
+                      {reward.imageUrl ? (
+                        <div className="w-10 h-10 shrink-0 rounded-md overflow-hidden bg-background border flex items-center justify-center">
+                          <img src={reward.imageUrl} alt={reward.name} className="w-full h-full object-contain" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 shrink-0 rounded-md bg-primary/10 flex items-center justify-center">
+                          <Gift className="w-5 h-5 text-primary" />
+                        </div>
                       )}
+                      
+                      {/* Detalhes */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate" title={reward.name}>
+                          {reward.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {reward.pointsCost} pontos
+                        </p>
+                      </div>
+                      
+                      {/* Status Status Text (Right) */}
+                      <div className="text-right shrink-0">
+                        <p className={`text-[11px] font-semibold ${isRedeemable ? "text-emerald-500" : "text-muted-foreground"}`}>
+                          {isRedeemable ? "Pronto para resgatar!" : `Faltam ${reward.pointsCost - tenantResult.points} pts`}
+                        </p>
+                      </div>
                     </div>
-                    <Badge variant={isRedeemable ? "default" : "secondary"} className="whitespace-nowrap ml-2">
-                      {reward.pointsCost} pts
-                    </Badge>
+                    
+                    {/* Barra de Progresso Animada e com Melhor Contraste */}
+                    <ProgressBar percent={percent} isRedeemable={isRedeemable} />
                   </div>
                 )
               })}
@@ -200,6 +230,68 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
                     )}
                   </div>
                 )}
+
+                {/* Lista de Recompensas (Expandable) */}
+                {membership.rewards && membership.rewards.length > 0 && (
+                  <div className="mt-1">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => toggleTenant(membership.tenant_id)}
+                      className="w-full text-xs h-8 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {expandedTenants[membership.tenant_id] ? "Ocultar prêmios" : `Ver ${membership.rewards.length} prêmios disponíveis`}
+                      <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${expandedTenants[membership.tenant_id] ? "rotate-180" : ""}`} />
+                    </Button>
+
+                    <div 
+                      className={`grid transition-all duration-300 ease-in-out ${expandedTenants[membership.tenant_id] ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}
+                    >
+                      <div className="overflow-hidden flex flex-col gap-2">
+                        {membership.rewards.map(reward => {
+                          const percent = Math.min(100, Math.round((membership.pontos_disponiveis / reward.pointsCost) * 100));
+                          const isRedeemable = membership.pontos_disponiveis >= reward.pointsCost;
+
+                          return (
+                            <div key={reward.id} className="relative overflow-hidden rounded-lg border bg-muted/20 p-3 shadow-sm transition-all hover:bg-muted/40">
+                              <div className="flex items-center gap-3">
+                                {/* Imagem ou Ícone */}
+                                {reward.imageUrl ? (
+                                  <div className="w-10 h-10 shrink-0 rounded-md overflow-hidden bg-background border flex items-center justify-center">
+                                    <img src={reward.imageUrl} alt={reward.name} className="w-full h-full object-contain" />
+                                  </div>
+                                ) : (
+                                  <div className="w-10 h-10 shrink-0 rounded-md bg-primary/10 flex items-center justify-center">
+                                    <Gift className="w-5 h-5 text-primary" />
+                                  </div>
+                                )}
+                                
+                                {/* Detalhes */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-foreground truncate" title={reward.name}>
+                                    {reward.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {reward.pointsCost} pontos
+                                  </p>
+                                </div>
+                                
+                                {/* Status Status Text (Right) */}
+                                <div className="text-right shrink-0">
+                                  <p className={`text-[11px] font-semibold ${isRedeemable ? "text-emerald-500" : "text-muted-foreground"}`}>
+                                    {isRedeemable ? "Pronto para resgatar!" : `Faltam ${reward.pointsCost - membership.pontos_disponiveis} pts`}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Barra de Progresso Animada e com Melhor Contraste */}
+                              <ProgressBar percent={percent} isRedeemable={isRedeemable} />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -261,5 +353,40 @@ function Badge({ children, variant, className }: { children: React.ReactNode, va
     } ${className || ""}`}>
       {children}
     </span>
+  )
+}
+
+function ProgressBar({ percent, isRedeemable }: { percent: number; isRedeemable: boolean }) {
+  // In remove the width state animation, as the user didn't want the bar to fill up
+  // "Não quero que a barra fique aumentando e diminuindo o percentual. O progresso continua representando o valor real"
+  return (
+    <div className="mt-3 relative h-4 w-full rounded-full bg-muted overflow-hidden border border-border/50">
+      <div 
+        className={`absolute left-0 top-0 h-full ${isRedeemable ? 'bg-emerald-700' : 'bg-emerald-400'}`}
+        style={{ width: `${percent}%` }}
+      >
+        {/* Padrão listrado com animação contínua (barber pole) */}
+        {!isRedeemable && percent > 0 && (
+          <div 
+            className="absolute inset-0 opacity-45 animate-barberpole" 
+            style={{ 
+              backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,0.45) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0.45) 75%, transparent 75%, transparent)', 
+              backgroundSize: '0.6rem 0.6rem' 
+            }} 
+          />
+        )}
+      </div>
+      <div className="absolute inset-0 flex items-center px-2">
+        <span 
+          className="text-[10px] font-black text-white tracking-wide" 
+          style={{ 
+            textShadow: '0px 1px 2px rgba(0,0,0,0.8), 0px 0px 1px rgba(0,0,0,0.5)',
+            WebkitTextStroke: '0.5px rgba(0,0,0,0.3)'
+          }}
+        >
+          {percent}%
+        </span>
+      </div>
+    </div>
   )
 }

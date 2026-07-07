@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { KeyRound, Lock } from "lucide-react"
+import { KeyRound, Lock, Eye, EyeOff } from "lucide-react"
 
 import { getPasswordStrength } from "@/lib/masks"
 import { useAuth } from "@/lib/auth/auth-context"
@@ -33,6 +33,8 @@ type PasswordFormValues = z.infer<typeof passwordSchema>
 export function AlterarSenhaForm() {
   const [carregando, setCarregando] = useState(false)
   const [passwordScore, setPasswordScore] = useState(0)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { updatePassword, user } = useAuth()
   const router = useRouter()
 
@@ -102,11 +104,18 @@ export function AlterarSenhaForm() {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                className="pl-10 h-10 border-border focus:shadow-md transition-all duration-200"
+                className="pl-10 pr-10 h-10 border-border focus:shadow-md transition-all duration-200"
                 {...form.register("password")}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
 
             {/* Força da Senha */}
@@ -133,11 +142,18 @@ export function AlterarSenhaForm() {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="confirmPassword"
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 placeholder="••••••••"
-                className="pl-10 h-10 border-border focus:shadow-md transition-all duration-200"
+                className="pl-10 pr-10 h-10 border-border focus:shadow-md transition-all duration-200"
                 {...form.register("confirmPassword")}
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
             {form.formState.errors.confirmPassword && (
               <p className="text-xs text-destructive mt-1">

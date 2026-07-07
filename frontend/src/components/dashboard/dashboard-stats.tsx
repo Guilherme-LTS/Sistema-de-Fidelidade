@@ -41,7 +41,7 @@ export function DashboardStatsCards({ stats }: Props) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.clientes.total}</div>
-          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+          <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 break-words">
             <GrowthBadge growth={stats.clientes.crescimento} />
             <span>em relação ao período anterior</span>
           </p>
@@ -57,7 +57,7 @@ export function DashboardStatsCards({ stats }: Props) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.pontos.saldoCirculante.toLocaleString("pt-BR")}</div>
-          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+          <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-1 break-words">
             <Activity className="h-3 w-3" />
             Saldo atual disponível nas carteiras
           </p>
@@ -73,7 +73,7 @@ export function DashboardStatsCards({ stats }: Props) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.pontos.resgatados.toLocaleString("pt-BR")}</div>
-          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+          <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 break-words">
             <GrowthBadge growth={stats.pontos.resgatadosCrescimento} />
             <span>({stats.recompensas.resgatesMes} prêmios)</span>
           </p>
@@ -92,7 +92,7 @@ export function DashboardStatsCards({ stats }: Props) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.pontos.expirados.toLocaleString("pt-BR")}</div>
-          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap break-words">
             <GrowthBadge growth={stats.pontos.expiradosCrescimento} invert={true} />
             {stats.pontos.expirandoEmBreve > 0 && (
               <TooltipProvider>

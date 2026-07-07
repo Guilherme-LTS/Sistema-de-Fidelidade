@@ -165,7 +165,11 @@ export function UsuariosView() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {usuario.isActive ? (
+                      {usuario.status === "pending" ? (
+                        <span className="flex items-center gap-1.5 text-amber-500 text-sm font-medium">
+                          <span className="animate-pulse h-2 w-2 rounded-full bg-amber-500" /> Pendente
+                        </span>
+                      ) : usuario.isActive ? (
                         <span className="flex items-center gap-1.5 text-emerald-600 text-sm font-medium">
                           <Check className="w-4 h-4" /> Ativo
                         </span>
@@ -188,23 +192,29 @@ export function UsuariosView() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[180px]">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openModalForEdit(usuario)}>
-                            Editar permissões
-                          </DropdownMenuItem>
+                          {usuario.status !== "pending" && (
+                            <DropdownMenuItem onClick={() => openModalForEdit(usuario)}>
+                              Editar permissões
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => toggleStatus(usuario)}
-                            className={usuario.isActive ? "text-amber-600 focus:text-amber-600 focus:bg-amber-100/50" : "text-emerald-600 focus:text-emerald-600 focus:bg-emerald-100/50"}
-                          >
-                            {usuario.isActive ? "Desativar acesso" : "Reativar acesso"}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                          {usuario.status !== "pending" && (
+                            <>
+                              <DropdownMenuItem 
+                                onClick={() => toggleStatus(usuario)}
+                                className={usuario.isActive ? "text-amber-600 focus:text-amber-600 focus:bg-amber-100/50" : "text-emerald-600 focus:text-emerald-600 focus:bg-emerald-100/50"}
+                              >
+                                {usuario.isActive ? "Desativar acesso" : "Reativar acesso"}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           <DropdownMenuItem 
                             onClick={() => setDeleteUsuario(usuario)}
                             className="text-destructive focus:text-destructive focus:bg-destructive/10"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir funcionário
+                            {usuario.status === "pending" ? "Revogar convite" : "Excluir funcionário"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -226,11 +236,23 @@ export function UsuariosView() {
       <AlertDialog open={!!deleteUsuario} onOpenChange={(open) => !open && setDeleteUsuario(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir funcionário</AlertDialogTitle>
+            <AlertDialogTitle>
+              {deleteUsuario?.status === "pending" ? "Revogar convite" : "Excluir funcionário"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o acesso de <strong>{deleteUsuario?.name}</strong> ({deleteUsuario?.email})? 
-              <br/><br/>
-              O histórico de ações deste funcionário será mantido para auditoria, mas ele não poderá mais acessar o sistema.
+              {deleteUsuario?.status === "pending" ? (
+                <>
+                  Tem certeza que deseja revogar o convite enviado para <strong>{deleteUsuario?.email}</strong>? 
+                  <br/><br/>
+                  O token de convite será invalidado e ele não poderá mais concluir o cadastro com este convite.
+                </>
+              ) : (
+                <>
+                  Tem certeza que deseja excluir o acesso de <strong>{deleteUsuario?.name}</strong> ({deleteUsuario?.email})? 
+                  <br/><br/>
+                  O histórico de ações deste funcionário será mantido para auditoria, mas ele não poderá mais acessar o sistema.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -244,7 +266,7 @@ export function UsuariosView() {
               }}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
-              Sim, excluir funcionário
+              {deleteUsuario?.status === "pending" ? "Sim, revogar convite" : "Sim, excluir funcionário"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

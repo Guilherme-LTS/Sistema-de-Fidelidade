@@ -6,9 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Building2, Mail, Lock, Phone, User, Store, ArrowRight, ShieldCheck, MailCheck } from "lucide-react"
+import { Building2, Mail, Lock, Phone, User, Store, ArrowRight, ShieldCheck, MailCheck, Eye, EyeOff } from "lucide-react"
 
 import { supabaseAdminClient as supabase } from "@/lib/supabase-clients"
+import { mapAuthError } from "@/lib/auth/error-mapping"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -43,8 +44,9 @@ type SignupFormValues = z.infer<typeof signupSchema>
 
 export function CadastroForm() {
   const [carregando, setCarregando] = useState(false)
-  const [sucesso, setSucesso] = useState(false)
   const [passwordScore, setPasswordScore] = useState(0)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
 
   const form = useForm<SignupFormValues>({
@@ -88,6 +90,7 @@ export function CadastroForm() {
         email: values.email,
         password: values.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin/dashboard`,
           data: {
             tenantName: values.tenantName,
             adminName: values.adminName,
@@ -101,48 +104,15 @@ export function CadastroForm() {
         if (error.message.includes("User already registered")) {
           throw new Error("Este e-mail já está cadastrado em nosso sistema.")
         }
-        throw new Error(error.message)
+        throw mapAuthError(error)
       }
 
-      setSucesso(true)
+      router.push(`/confirmacao-pendente?email=${encodeURIComponent(values.email)}`)
     } catch (err: any) {
       toast.error(err.message || "Erro ao realizar cadastro.")
     } finally {
       setCarregando(false)
     }
-  }
-
-  if (sucesso) {
-    return (
-      <Card className="w-full max-w-lg shadow-2xl border-border bg-card/65 backdrop-blur-md rounded-2xl relative overflow-hidden transition-all duration-300">
-        <div className="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-primary via-emerald-500 to-teal-500" />
-        
-        <CardHeader className="space-y-2 text-center pt-8 pb-4">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20">
-              <MailCheck className="h-8 w-8 text-emerald-500" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-            Quase lá!
-          </CardTitle>
-          <CardDescription className="text-base text-muted-foreground px-4 mt-2">
-            Enviamos um e-mail de confirmação para <strong>{form.getValues("email")}</strong>. 
-            <br/><br/>
-            Por favor, clique no link recebido para validar sua conta e começar a usar o Fidelidade Pro.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="pt-4 pb-8 flex justify-center">
-          <Button 
-            variant="outline" 
-            className="w-full max-w-xs"
-            onClick={() => router.push(routes.auth.login)}
-          >
-            Ir para o Login
-          </Button>
-        </CardFooter>
-      </Card>
-    )
   }
 
   return (
@@ -278,11 +248,18 @@ export function CadastroForm() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 h-10 border-border focus:shadow-md transition-all duration-200"
+                  className="pl-10 pr-10 h-10 border-border focus:shadow-md transition-all duration-200"
                   {...form.register("password")}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               
               {/* Força da Senha */}
@@ -309,11 +286,18 @@ export function CadastroForm() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 h-10 border-border focus:shadow-md transition-all duration-200"
+                  className="pl-10 pr-10 h-10 border-border focus:shadow-md transition-all duration-200"
                   {...form.register("confirmPassword")}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               {form.formState.errors.confirmPassword && (
                 <p className="text-xs text-destructive mt-1">{form.formState.errors.confirmPassword.message}</p>

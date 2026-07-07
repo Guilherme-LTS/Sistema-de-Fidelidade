@@ -92,12 +92,6 @@ export async function consumerRoutes(app: FastifyInstance) {
     const bodySchema = z.object({
       name: z.string().min(2, "Nome muito curto").optional(),
       phone: z.string().optional(),
-      email: z.string().email("E-mail inválido")
-        .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Formato de e-mail inválido")
-        .refine(val => !val || !val.endsWith("gmaill.com"), { message: "O domínio do e-mail parece inválido. Você quis dizer gmail.com?" })
-        .refine(val => !val || !val.endsWith("hotmai.com"), { message: "O domínio do e-mail parece inválido. Você quis dizer hotmail.com?" })
-        .refine(val => !val || !val.endsWith("yahool.com"), { message: "O domínio do e-mail parece inválido. Você quis dizer yahoo.com?" })
-        .optional(),
     });
 
     const parsed = bodySchema.safeParse(request.body);
@@ -105,23 +99,13 @@ export async function consumerRoutes(app: FastifyInstance) {
       return reply.status(400).send(errorResponse("Dados inválidos.", "VALIDATION_ERROR"));
     }
 
-    const { name, phone, email } = parsed.data;
+    const { name, phone } = parsed.data;
 
     try {
       if (name || phone !== undefined) {
         await db.update(consumerProfiles)
           .set({ name, phone, updatedAt: new Date().toISOString() })
           .where(eq(consumerProfiles.authUserId, userId));
-      }
-
-      if (email && email !== request.consumer?.email) {
-        const { error } = await supabaseAuthGateway.admin.updateUserById(userId, { email });
-        if (error) {
-          if (error.message.includes("Email address already exists")) {
-            return reply.status(409).send(errorResponse("Este e-mail já está em uso.", "CONFLICT"));
-          }
-          throw error;
-        }
       }
 
       return successResponse({ message: "Perfil atualizado com sucesso." });

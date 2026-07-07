@@ -117,7 +117,22 @@ export async function publicRoutes(app: FastifyInstance) {
               AND r.is_active = true 
               AND r.deleted_at IS NULL
               AND r.points_cost <= cp.pontos_disponiveis
-          ) AS has_redeemable_reward
+          ) AS has_redeemable_reward,
+          COALESCE(
+            (
+              SELECT json_agg(json_build_object(
+                'id', r.id,
+                'name', r.name,
+                'pointsCost', r.points_cost,
+                'imageUrl', r.image_url
+              ) ORDER BY r.points_cost ASC)
+              FROM rewards r
+              WHERE r.tenant_id = cp.tenant_id
+                AND r.is_active = true
+                AND r.deleted_at IS NULL
+            ), 
+            '[]'::json
+          ) AS rewards
         FROM customer_points cp
       `);
 

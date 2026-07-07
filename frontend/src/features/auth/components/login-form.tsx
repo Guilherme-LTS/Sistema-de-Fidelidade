@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import { LogIn, ArrowLeft, Mail, Lock } from "lucide-react"
+import { LogIn, ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react"
 
 import { useAuth } from "@/lib/auth/auth-context"
 import { Button } from "@/components/ui/button"
@@ -31,6 +31,7 @@ type ForgotFormValues = z.infer<typeof forgotSchema>
 export function LoginForm() {
   const [forgotMode, setForgotMode] = useState(false)
   const [carregando, setCarregando] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const { login, sendPasswordReset } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -43,7 +44,10 @@ export function LoginForm() {
     const errorMsg = searchParams.get("error")
     if (errorMsg) {
       const timer = setTimeout(() => {
-        toast.error(errorMsg, { duration: 5000 })
+        let msg = "Ocorreu um erro inesperado."
+        if (errorMsg === "pkce_recovery") msg = "O link de recuperação expirou ou é inválido. Solicite novamente."
+        if (errorMsg === "unknown") msg = "Não foi possível validar seu acesso. Tente novamente."
+        toast.error(msg, { duration: 5000 })
       }, 300)
       return () => clearTimeout(timer)
     }
@@ -51,6 +55,13 @@ export function LoginForm() {
     if (searchParams.get("expired") === "true") {
       const timer = setTimeout(() => {
         toast.warning("Sessão expirada. Por favor, faça login novamente.")
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+
+    if (searchParams.get("info") === "first_confirmation") {
+      const timer = setTimeout(() => {
+        toast.info("Primeira confirmação realizada com sucesso! Por favor, acesse o outro e-mail para confirmar a alteração.", { duration: 8000 })
       }, 300)
       return () => clearTimeout(timer)
     }
@@ -193,11 +204,18 @@ export function LoginForm() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 h-10 border-border focus:shadow-md transition-all duration-200"
+                  className="pl-10 pr-10 h-10 border-border focus:shadow-md transition-all duration-200"
                   {...loginForm.register("password")}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               {loginForm.formState.errors.password && (
                 <p className="text-xs text-destructive mt-1">

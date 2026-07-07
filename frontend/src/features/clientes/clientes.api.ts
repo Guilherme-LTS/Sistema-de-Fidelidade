@@ -1,9 +1,12 @@
 import { api } from "@/lib/api/client"
 
 export interface Cliente {
-  id: string
-  nome: string
+  id: string | null
+  nome: string | null
   document: string
+  isGlobalOnly?: boolean
+  existsGlobally?: boolean
+  hasActiveAccount?: boolean
 }
 
 export interface ClienteDetails extends Cliente {

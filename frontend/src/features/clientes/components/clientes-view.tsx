@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { toast } from "sonner"
 import { useDebounce } from "@/hooks/use-debounce"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { useClientes, useClienteComExtrato } from "../hooks/use-clientes"
 import { Cliente, limparCpf } from "../clientes.api"
 import { ClienteModal } from "./cliente-modal"
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Table,
   TableBody,
@@ -34,7 +36,8 @@ import {
   Clock, 
   AlertTriangle,
   FileText,
-  Edit2
+  Edit2,
+  ArrowLeft
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -60,6 +63,9 @@ export function ClientesView() {
   
   // Documento selecionado (CPF)
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null)
+  
+  // Responsividade
+  const isMobile = useIsMobile()
   
   // Modal de edição
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -131,10 +137,10 @@ export function ClientesView() {
   const totalPaginas = listData?.totalPaginas || 1
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4">
       {/* Barra de Filtros / Ações */}
-      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-card p-4 rounded-xl border border-border">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-card p-3 rounded-xl border border-border">
+        <div className="flex items-center gap-2 px-1">
           <span className="text-sm font-semibold text-foreground">Pesquisa e Filtros</span>
         </div>
         
@@ -154,15 +160,18 @@ export function ClientesView() {
       </div>
 
       {/* Grid Principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Painel da Esquerda: Lista de Resultados (col-span-4) */}
-        <Card className="lg:col-span-4 flex flex-col h-[600px] border-border bg-card overflow-hidden">
-          <CardHeader className="py-4 border-b border-border bg-muted/30">
+        <Card className={cn(
+          "lg:col-span-4 flex flex-col gap-0 max-h-[calc(100vh-200px)] min-h-[min-content] p-0 border-border bg-card overflow-hidden",
+          isMobile && selectedDoc ? "hidden" : "flex"
+        )}>
+          <CardHeader className="py-4 px-3 md:px-4 border-b border-border bg-muted/30 shrink-0 m-0">
             <CardTitle className="text-sm font-semibold text-foreground uppercase tracking-wider">
               Resultados ({clientesExibidos.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto p-0 flex flex-col justify-between">
+          <CardContent className="flex-1 overflow-y-auto p-0 m-0 flex flex-col justify-between">
             <div>
               {isLoadingList && clientesExibidos.length === 0 ? (
                 <div className="flex justify-center items-center h-48">
@@ -182,25 +191,33 @@ export function ClientesView() {
                         type="button"
                         onClick={() => handleSelectCliente(cliente)}
                         className={cn(
-                          "w-full text-left p-4 hover:bg-muted/50 transition-all duration-200 flex items-center justify-between group border-l-2 cursor-pointer",
+                          "relative overflow-hidden w-full text-left p-3 md:p-4 hover:bg-muted/50 transition-all duration-200 flex items-center justify-between group cursor-pointer",
                           isSelected 
-                            ? "bg-primary/5 border-l-primary" 
-                            : "border-l-transparent"
+                            ? "bg-primary/5" 
+                            : "bg-transparent"
                         )}
                       >
-                        <div className="space-y-1">
-                          <p className={cn(
-                            "text-sm font-semibold transition-colors",
-                            isSelected ? "text-primary" : "text-foreground group-hover:text-primary"
-                          )}>
-                            {cliente.nome || "Nome não cadastrado"}
-                          </p>
-                          <p className="text-xs text-muted-foreground font-mono">
-                            {cliente.document}
-                          </p>
+                        {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />}
+                        <div className="flex items-center gap-3 min-w-0 flex-1 pl-1">
+                          <Avatar className="h-9 w-9 shrink-0 border border-border/50 bg-muted/30">
+                            <AvatarFallback className="text-xs font-semibold text-foreground/70">
+                              {cliente.nome ? cliente.nome.substring(0, 2).toUpperCase() : "CL"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col items-start min-w-0 flex-1">
+                            <p className={cn(
+                              "text-sm font-semibold truncate w-full text-left transition-colors",
+                              isSelected ? "text-primary" : "text-foreground group-hover:text-primary"
+                            )}>
+                              {cliente.nome || "Nome não cadastrado"}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground font-mono truncate w-full text-left mt-0.5">
+                              {cliente.document}
+                            </p>
+                          </div>
                         </div>
                         <ChevronRight className={cn(
-                          "h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary",
+                          "h-4 w-4 shrink-0 ml-2 text-muted-foreground transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary",
                           isSelected && "text-primary translate-x-1"
                         )} />
                       </button>
@@ -240,34 +257,50 @@ export function ClientesView() {
         </Card>
 
         {/* Painel da Direita: Detalhes do Cliente e Extrato (col-span-8) */}
-        <Card className="lg:col-span-8 flex flex-col min-h-[600px] border-border bg-card overflow-hidden">
+        <Card className={cn(
+          "lg:col-span-8 flex flex-col gap-0 h-[calc(100vh-200px)] min-h-[500px] p-0 border-border bg-card overflow-hidden",
+          isMobile && !selectedDoc ? "hidden" : "flex"
+        )}>
           {isLoadingDetails ? (
             <div className="flex-1 flex justify-center items-center h-96">
               <Spinner className="h-8 w-8 text-primary" />
             </div>
           ) : clienteAtivo ? (
             <div className="flex flex-col h-full animate-fade-in">
-              <CardHeader className="border-b border-border bg-muted/10 pb-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
-                      {clienteAtivo.nome || `CPF ${clienteAtivo.document}`}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => setIsModalOpen(true)}>
+              <CardHeader className="border-b border-border bg-muted/10 p-4 md:p-5 m-0 shrink-0">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                  <div className="min-w-0 w-full">
+                    {isMobile && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="-ml-3 mb-2 text-muted-foreground hover:text-primary flex items-center gap-1 h-8"
+                        onClick={() => setSelectedDoc(null)}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Voltar
+                      </Button>
+                    )}
+                    <CardTitle className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
+                      <span className="truncate">{clienteAtivo.nome || `CPF ${clienteAtivo.document}`}</span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" onClick={() => setIsModalOpen(true)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>
                     </CardTitle>
-                    <CardDescription className="text-xs md:text-sm mt-1">
+                    <CardDescription className="text-xs md:text-sm mt-1 truncate">
                       CPF: <span className="font-mono">{clienteAtivo.document}</span> • ID: #{clienteAtivo.id}
                     </CardDescription>
                   </div>
-                  <ResgateModal 
-                    document={clienteAtivo.document} 
-                    pontosDisponiveis={clienteAtivo.pontosDisponiveis ?? 0} 
-                  />
+                  <div className="shrink-0 w-full sm:w-auto">
+                    <ResgateModal 
+                      document={clienteAtivo.document} 
+                      pontosDisponiveis={clienteAtivo.pontosDisponiveis ?? 0} 
+                    />
+                  </div>
                 </div>
 
                 {/* Cards de Métricas Rápidas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
                   {/* Pontos Disponíveis */}
                   <div className="bg-card p-4 rounded-xl border border-border shadow-sm flex items-center gap-3">
                     <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
@@ -314,9 +347,9 @@ export function ClientesView() {
                 </div>
               </CardHeader>
 
-              <CardContent className="p-4 md:p-6 flex-1">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
+              <CardContent className="p-4 md:p-5 flex-1 flex flex-col min-h-0 m-0">
+                <div className="flex flex-col flex-1 min-h-0 space-y-4">
+                  <div className="flex items-center gap-2 shrink-0">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                       Extrato de Movimentações
@@ -324,13 +357,14 @@ export function ClientesView() {
                   </div>
 
                   {extratoAtivo.length === 0 ? (
-                    <div className="text-center p-12 text-muted-foreground border border-dashed border-border rounded-xl bg-muted/10">
+                    <div className="text-center p-12 text-muted-foreground border border-dashed border-border rounded-xl bg-muted/10 shrink-0">
                       Nenhuma movimentação registrada para este cliente.
                     </div>
                   ) : (
-                    <div className="border border-border rounded-xl overflow-hidden shadow-sm bg-card">
-                      <Table>
-                        <TableHeader className="bg-muted/50">
+                    <div className="border border-border rounded-xl overflow-y-auto shadow-sm bg-card flex-1">
+                      {/* Tabela para Desktop */}
+                      <Table className="hidden md:table">
+                        <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
                           <TableRow>
                             <TableHead className="w-[120px] text-xs font-bold uppercase">Data</TableHead>
                             <TableHead className="text-xs font-bold uppercase">Descrição</TableHead>
@@ -366,6 +400,39 @@ export function ClientesView() {
                           })}
                         </TableBody>
                       </Table>
+                      
+                      {/* Cards para Mobile */}
+                      <div className="flex flex-col md:hidden divide-y divide-border">
+                        {extratoAtivo.map((item, index) => {
+                          const isCredit = item.tipo === "credito"
+                          const isExpire = item.tipo === "expirado"
+                          
+                          let textColor = isCredit ? "text-emerald-600" : "text-rose-500"
+                          let bgColor = isCredit ? "bg-emerald-500/10" : "bg-rose-500/10"
+                          if (isExpire) {
+                            textColor = "text-orange-500"
+                            bgColor = "bg-orange-500/10"
+                          }
+                          
+                          const sign = isCredit ? "+" : "-"
+
+                          return (
+                            <div key={index} className="p-3 flex items-center justify-between hover:bg-muted/20 transition-colors min-w-0 gap-3">
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className="text-xs text-muted-foreground mb-0.5">
+                                  {formatarData(item.data)}
+                                </span>
+                                <span className="text-sm font-medium text-foreground truncate">
+                                  {item.descricao}
+                                </span>
+                              </div>
+                              <div className={cn("shrink-0 px-2 py-1 rounded-md text-sm font-bold", textColor, bgColor)}>
+                                {sign}{item.pontos}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>

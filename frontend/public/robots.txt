@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /$
+Allow: /cadastro
+Disallow: /admin/
+Disallow: /clientes/
+Disallow: /configuracoes/
+Disallow: /auth/
+Disallow: /api/
+
+Sitemap: https://usepontus.com.br/sitemap.xml
