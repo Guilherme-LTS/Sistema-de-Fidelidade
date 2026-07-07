@@ -33,21 +33,18 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pontus | Fidelidade de Resultados",
+    description: "A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.",
+    images: ["/logo-dark.png"],
+  },
   icons: {
     icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
+      { url: "/icon-light-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" }
     ],
+    shortcut: "/icon-light-32x32.png",
     apple: "/apple-icon.png",
   },
 }
@@ -59,6 +56,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "Pontus",
+              "operatingSystem": "All",
+              "applicationCategory": "BusinessApplication",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "BRL",
+              },
+              "description":
+                "A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.",
+            }),
+          }}
+        />
+      </head>
       <body className={`${inter.variable} ${plusJakartaSans.variable} font-sans antialiased`}>
         <ThemeProvider defaultTheme="light" storageKey="tasko-theme">
           <QueryProvider>
