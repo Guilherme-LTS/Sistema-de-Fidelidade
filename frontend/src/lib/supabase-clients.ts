@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js"
+import { createBrowserClient } from "@supabase/ssr"
 import { clientEnv } from "@/config/env.client"
 
 const supabaseUrl = clientEnv.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co"
@@ -10,22 +10,16 @@ if (!clientEnv.NEXT_PUBLIC_SUPABASE_URL || !clientEnv.NEXT_PUBLIC_SUPABASE_PUBLI
   }
 }
 
-// 1. Cliente para Lojistas/Admin - Usa persistência padrão no localStorage
-export const supabaseAdminClient = createClient(supabaseUrl, supabasePublishableKey, {
-  auth: {
-    persistSession: true,
-    storageKey: "supabase-admin-session",
-    detectSessionInUrl: true,
-    flowType: "pkce",
+// 1. Cliente para Lojistas/Admin - Usa Cookies específicos para Lojistas
+export const supabaseAdminClient = createBrowserClient(supabaseUrl, supabasePublishableKey, {
+  cookieOptions: {
+    name: "sb-admin-session",
   }
 })
 
-// 2. Cliente para Consumidores - Usa persistência própria para não colidir
-export const supabaseConsumerClient = createClient(supabaseUrl, supabasePublishableKey, {
-  auth: {
-    persistSession: true,
-    storageKey: "supabase-consumer-session",
-    detectSessionInUrl: false,
-    flowType: "pkce",
+// 2. Cliente para Consumidores - Usa Cookies específicos para Consumidores para não colidir
+export const supabaseConsumerClient = createBrowserClient(supabaseUrl, supabasePublishableKey, {
+  cookieOptions: {
+    name: "sb-consumer-session",
   }
 })

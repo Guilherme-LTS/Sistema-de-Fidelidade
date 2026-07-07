@@ -76,7 +76,7 @@ export function DashboardCharts({ data }: Props) {
   }
 
   return (
-    <Card className="overflow-hidden border-border/40 shadow-sm transition-all hover:shadow-md bg-card/50 backdrop-blur-sm">
+    <Card className="col-span-1 lg:col-span-2 min-w-0 overflow-hidden border-border/40 shadow-sm transition-all hover:shadow-md bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

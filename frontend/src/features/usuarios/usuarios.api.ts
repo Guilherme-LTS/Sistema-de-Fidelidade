@@ -9,12 +9,13 @@ export interface Usuario {
   phone: string | null
   role: "admin" | "operador" | "novato"
   isActive: boolean
+  status?: "active" | "pending" | "declined" | "revoked"
   createdAt: string
   updatedAt: string
 }
 
 export interface CriarUsuarioDTO {
-  name: string
+  name?: string
   email: string
   password?: string
   role: "admin" | "operador" | "novato"

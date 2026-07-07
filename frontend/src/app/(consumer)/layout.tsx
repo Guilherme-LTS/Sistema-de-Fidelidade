@@ -34,14 +34,14 @@ export default function ConsumerLayout({ children }: { children: ReactNode }) {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-64">
-                  <SheetTitle className="sr-only">Menu Principal</SheetTitle>
-                  <SheetDescription className="sr-only">Acesse seus restaurantes e perfil</SheetDescription>
+                  <SheetTitle className="sr-only">Menu do Consumidor</SheetTitle>
+                  <SheetDescription className="sr-only">Acesse seu perfil e benefícios.</SheetDescription>
                   <ConsumerSidebar onItemClick={() => setIsOpen(false)} />
                 </SheetContent>
               </Sheet>
               <div className="flex flex-col ml-2">
-                <Image src="/logo-light.png" alt="Pontus Logo" width={100} height={26} className="w-[90px] h-auto dark:hidden" />
-                <Image src="/logo-dark.png" alt="Pontus Logo" width={100} height={26} className="w-[90px] h-auto hidden dark:block" />
+                <Image src="/logo-light.png" alt="Pontus Logo" width={90} height={23} className="dark:hidden" />
+                <Image src="/logo-dark.png" alt="Pontus Logo" width={90} height={23} className="hidden dark:block" />
               </div>
             </div>
             <div>

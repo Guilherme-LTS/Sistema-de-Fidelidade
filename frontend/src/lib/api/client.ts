@@ -27,9 +27,15 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     token = isConsumerPath ? getStoredConsumerToken() : getStoredAdminToken()
   }
 
+  let activeTenantId: string | null = null
+  if (typeof window !== "undefined" && !isConsumerPath) {
+    activeTenantId = localStorage.getItem("activeTenantId")
+  }
+
   const headersToUse: HeadersInit = {
     ...(requestInit.body ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(activeTenantId ? { "x-tenant-id": activeTenantId } : {}),
     ...headers,
   }
 

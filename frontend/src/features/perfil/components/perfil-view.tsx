@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Save, Lock } from "lucide-react"
+import { Save, Lock, Eye, EyeOff } from "lucide-react"
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
@@ -15,6 +15,16 @@ import { toast } from "sonner"
 import { apiRequest } from "@/lib/api/client"
 import { useAuth } from "@/lib/auth/auth-context"
 import { usePerfil } from "../hooks/use-perfil"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const formatPhone = (value: string) => {
   return value
@@ -38,8 +48,13 @@ const passwordFormSchema = z.object({
   path: ["confirmPassword"],
 })
 
+const emailFormSchema = z.object({
+  newEmail: z.string().email("E-mail inválido").min(1, "O novo e-mail é obrigatório"),
+  password: z.string().min(1, "A senha é obrigatória para autorizar a alteração"),
+})
+
 export function PerfilView() {
-  const { user } = useAuth()
+  const { user, updateEmail } = useAuth()
   const { mutation } = usePerfil()
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -69,12 +84,26 @@ export function PerfilView() {
   }
 
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const passwordForm = useForm<z.infer<typeof passwordFormSchema>>({
     resolver: zodResolver(passwordFormSchema),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+    },
+  })
+
+  const [isChangingEmail, setIsChangingEmail] = useState(false)
+  const [showEmailPassword, setShowEmailPassword] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const emailForm = useForm<z.infer<typeof emailFormSchema>>({
+    resolver: zodResolver(emailFormSchema),
+    defaultValues: {
+      newEmail: "",
+      password: "",
     },
   })
 
@@ -95,6 +124,32 @@ export function PerfilView() {
     } finally {
       setIsChangingPassword(false)
     }
+  }
+
+  const onEmailSubmit = async (values: z.infer<typeof emailFormSchema>) => {
+    try {
+      setIsChangingEmail(true)
+      await updateEmail(values.password, values.newEmail)
+      toast.success("Solicitação de alteração enviada! Confirme nos links enviados aos e-mails.")
+      emailForm.reset()
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao solicitar alteração de e-mail.")
+    } finally {
+      setIsChangingEmail(false)
+    }
+  }
+
+  const onSubmitEmailClick = (e: React.FormEvent) => {
+    e.preventDefault()
+    emailForm.handleSubmit(() => {
+      setShowConfirmModal(true)
+    })(e)
+  }
+
+  const handleConfirmEmailChange = async () => {
+    setShowConfirmModal(false)
+    const values = emailForm.getValues()
+    await onEmailSubmit(values)
   }
 
   if (!user) {
@@ -156,7 +211,7 @@ export function PerfilView() {
                   <FormControl>
                     <Input value={user.email || ""} disabled className="bg-muted" />
                   </FormControl>
-                  <FormDescription>Seu e-mail é utilizado para login e não pode ser alterado por aqui.</FormDescription>
+                  <FormDescription>Seu e-mail é utilizado para login e pode ser alterado na seção abaixo.</FormDescription>
                 </FormItem>
                 <FormItem>
                   <FormLabel>Nível de Acesso</FormLabel>
@@ -191,24 +246,57 @@ export function PerfilView() {
             </div>
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4 max-w-sm">
-                <FormField control={passwordForm.control} name="currentPassword" render={({field}) => (
+                 <FormField control={passwordForm.control} name="currentPassword" render={({field}) => (
                   <FormItem>
                     <FormLabel>Senha Atual</FormLabel>
-                    <FormControl><Input type="password" {...field} /></FormControl>
+                    <FormControl>
+                      <div className="relative">
+                        <Input type={showCurrentPassword ? "text" : "password"} className="pr-10" {...field} />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}/>
                 <FormField control={passwordForm.control} name="newPassword" render={({field}) => (
                   <FormItem>
                     <FormLabel>Nova Senha</FormLabel>
-                    <FormControl><Input type="password" {...field} /></FormControl>
+                    <FormControl>
+                      <div className="relative">
+                        <Input type={showNewPassword ? "text" : "password"} className="pr-10" {...field} />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}/>
                 <FormField control={passwordForm.control} name="confirmPassword" render={({field}) => (
                   <FormItem>
                     <FormLabel>Confirmar Nova Senha</FormLabel>
-                    <FormControl><Input type="password" {...field} /></FormControl>
+                    <FormControl>
+                      <div className="relative">
+                        <Input type={showConfirmPassword ? "text" : "password"} className="pr-10" {...field} />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}/>
@@ -221,8 +309,79 @@ export function PerfilView() {
               </form>
             </Form>
           </div>
+
+          <div className="border rounded-lg p-4 bg-muted/5 space-y-4 mt-6">
+            <div>
+              <p className="font-medium text-foreground">Alterar E-mail de Login</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Para sua segurança, a alteração exige a senha atual e exige a confirmação nos links enviados aos dois endereços de e-mail.
+              </p>
+            </div>
+            <Form {...emailForm}>
+              <form onSubmit={onSubmitEmailClick} className="space-y-4 max-w-sm">
+                <FormField control={emailForm.control} name="newEmail" render={({field}) => (
+                  <FormItem>
+                    <FormLabel>Novo E-mail</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="novo@email.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <FormField control={emailForm.control} name="password" render={({field}) => (
+                  <FormItem>
+                    <FormLabel>Senha Atual</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input type={showEmailPassword ? "text" : "password"} className="pr-10" {...field} />
+                        <button
+                          type="button"
+                          onClick={() => setShowEmailPassword(!showEmailPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showEmailPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <div className="pt-2">
+                  <Button type="submit" disabled={isChangingEmail} className="w-full sm:w-auto">
+                    {isChangingEmail ? <Spinner className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Atualizar E-mail
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar alteração de e-mail?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="text-sm text-muted-foreground">
+                Você está alterando seu e-mail de acesso para <strong className="text-foreground">{emailForm.getValues("newEmail")}</strong>.
+                <br /><br />
+                Para concluir esta alteração com segurança, <strong>você precisará clicar nos links de confirmação enviados para os dois endereços de e-mail</strong>:
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
+                  <li>O e-mail atual: <strong className="text-foreground">{user?.email}</strong></li>
+                  <li>O novo e-mail: <strong className="text-foreground">{emailForm.getValues("newEmail")}</strong></li>
+                </ul>
+                <br />
+                Seu acesso continuará sendo feito com o e-mail atual até que ambos os links sejam confirmados.
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmEmailChange}>Enviar Solicitação</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -102,78 +102,101 @@ export function ProgramaFidelidadeTab() {
         </Alert>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <h3 className="text-lg font-medium">Prazos e Validade</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="carenciaPontos"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Carência (Dias)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Número de dias após a compra para o ponto ficar disponível para resgate.
-                      Use 0 para disponibilidade imediata.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="expiracaoPontos"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expiração (Dias)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Prazo total de validade dos pontos após a carência antes de sumirem da carteira do cliente.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-20">
+            
+            {/* Prazos e Validade */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Prazos e Validade</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="carenciaPontos"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Carência (Dias)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Número de dias após a compra para o ponto ficar disponível para resgate.
+                        Use 0 para disponibilidade imediata.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="expiracaoPontos"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Expiração (Dias)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Prazo total de validade dos pontos após a carência antes de sumirem da carteira do cliente.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <Separator />
-            <h3 className="text-lg font-medium">Regra de Acúmulo</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="valorConversaoFormatado"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor gasto para 1 ponto</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="R$ 1,00" 
-                        {...field} 
-                        onChange={(e) => field.onChange(applyMoneyMask(e.target.value))}
-                        className="text-lg font-medium text-emerald-600 dark:text-emerald-400"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Insira o valor em Reais (R$) necessário para o cliente acumular exatamente 1 ponto.
-                      Exemplo: R$ 5,00 gastos = 1 ponto ganho.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Regra de Acúmulo */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Regra de Acúmulo</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="valorConversaoFormatado"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor gasto para 1 ponto</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="R$ 1,00" 
+                          {...field} 
+                          onChange={(e) => field.onChange(applyMoneyMask(e.target.value))}
+                          className="text-lg font-medium text-emerald-600 dark:text-emerald-400"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Insira o valor em Reais (R$) necessário para o cliente acumular exatamente 1 ponto.
+                        Exemplo: R$ 5,00 gastos = 1 ponto ganho.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={!form.formState.isDirty || mutation.isPending}>
-                {mutation.isPending ? <Spinner className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Salvar Regras
-              </Button>
-            </div>
+            {form.formState.isDirty && (
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-sm border border-border shadow-2xl p-2 rounded-full flex items-center justify-between sm:justify-start gap-2 animate-in slide-in-from-bottom-10 fade-in duration-300 w-[calc(100%-2rem)] sm:w-auto">
+                <span className="text-sm font-semibold ml-4 text-foreground hidden sm:inline-block whitespace-nowrap">
+                  Alterações não salvas
+                </span>
+                <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => form.reset()} 
+                    className="rounded-full px-4 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    Descartar
+                  </Button>
+                  <Button type="submit" size="sm" disabled={mutation.isPending} className="rounded-full px-6 shadow-sm">
+                    {mutation.isPending ? <Spinner className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Salvar Regras
+                  </Button>
+                </div>
+              </div>
+            )}
           </form>
         </Form>
       </CardContent>

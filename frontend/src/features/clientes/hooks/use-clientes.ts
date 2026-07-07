@@ -15,5 +15,6 @@ export function useClienteComExtrato(cpf: string | null) {
     queryKey: ["cliente-extrato", cpfLimpo],
     queryFn: () => consultarClienteComExtrato(cpfLimpo),
     enabled: cpfLimpo.length === 11,
+    retry: false,
   })
 }

@@ -14,8 +14,8 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image src="/logo-light.png" alt="Pontus" width={180} height={48} className="w-[180px] h-auto dark:hidden" priority />
-            <Image src="/logo-dark.png" alt="Pontus" width={180} height={48} className="w-[180px] h-auto hidden dark:block" priority />
+            <Image src="/logo-light.png" alt="Pontus" width={180} height={48} className="dark:hidden" priority />
+            <Image src="/logo-dark.png" alt="Pontus" width={180} height={48} className="hidden dark:block" priority />
           </div>
           
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
@@ -250,8 +250,8 @@ export default function LandingPage() {
           
           <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-4">
             <div className="flex items-center gap-2">
-              <Image src="/logo-light.png" alt="Pontus" width={220} height={59} className="w-[220px] h-auto dark:hidden" priority />
-            <Image src="/logo-dark.png" alt="Pontus" width={220} height={59} className="w-[220px] h-auto hidden dark:block" priority />
+              <Image src="/logo-light.png" alt="Pontus" width={220} height={59} className="dark:hidden" priority />
+            <Image src="/logo-dark.png" alt="Pontus" width={220} height={59} className="hidden dark:block" priority />
             </div>
             <p className="text-sm text-muted-foreground max-w-xs">
               A plataforma definitiva de retenção e fidelização para restaurantes e negócios locais.

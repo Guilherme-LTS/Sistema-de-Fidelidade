@@ -1,12 +1,13 @@
 import { db } from "../../infra/database/db.js";
-import { tenantUsers } from "../../infra/database/schema.js";
+import { tenantUsers, invitations, tenants } from "../../infra/database/schema.js";
 import { eq, and, isNull } from "drizzle-orm";
 import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
 import { supabaseAuthGateway } from "../../infra/auth/supabase-auth.gateway.js";
 import { logAuditEvent } from "../../shared/audit.service.js";
+import { EmailService } from "../../infra/email/email.service.js";
 
 interface CriarUsuarioDTO {
-  name: string;
+  name?: string;
   email: string;
   password?: string;
   role: "admin" | "operador" | "novato";
@@ -37,72 +38,81 @@ export class UsuariosService {
       }
     }
 
-    return usuarios.map(u => ({
+    const mappedUsuarios = usuarios.map(u => ({
       ...u,
       email: u.userId ? emailMap.get(u.userId) : null,
     }));
+
+    const pendingInvites = await db.query.invitations.findMany({
+      where: and(eq(invitations.tenantId, tenantId), eq(invitations.status, "pending")),
+    });
+
+    const mappedInvites = pendingInvites.map(inv => ({
+      id: inv.id,
+      tenantId: inv.tenantId!,
+      userId: null,
+      name: "Convidado (Pendente)",
+      phone: null,
+      role: inv.role,
+      isActive: false,
+      status: "pending" as const,
+      createdAt: inv.createdAt!,
+      updatedAt: inv.updatedAt!,
+      deletedAt: null,
+      email: inv.email,
+    }));
+
+    return [...mappedUsuarios, ...mappedInvites];
   }
 
   async criar(tenantId: string, operatorId: string, data: CriarUsuarioDTO) {
-    let authUserId: string | null = null;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
-    const { data: authData, error: authError } = await supabaseAuthGateway.admin.createUser({
-      email: data.email,
-      password: data.password || "Restaurante@123",
-      email_confirm: true,
-      app_metadata: {
-        tenant_id: tenantId,
-        role: data.role,
-      },
+    const existingInvite = await db.query.invitations.findFirst({
+      where: and(eq(invitations.tenantId, tenantId), eq(invitations.email, data.email), eq(invitations.status, "pending"))
     });
 
-    if (authError) {
-      if (authError.message.toLowerCase().includes("already registered") || authError.message.toLowerCase().includes("already exists")) {
-        const { sql } = await import("drizzle-orm");
-        const result = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${data.email} LIMIT 1`);
-        if (result.rows && result.rows.length > 0) {
-          authUserId = result.rows[0].id as string;
-        } else {
-          throw new AppError("Erro ao vincular usuário existente. Tente novamente mais tarde.", 400);
-        }
-      } else {
-        throw new AppError("Não foi possível criar o usuário. Verifique se o e-mail é válido ou se já está em uso.", 400);
+    if (existingInvite) {
+      throw new AppError("Já existe um convite pendente para este e-mail neste restaurante.", 400);
+    }
+
+    const { sql } = await import("drizzle-orm");
+    const result = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${data.email} LIMIT 1`);
+    if (result.rows && result.rows.length > 0) {
+      const authUserId = result.rows[0].id as string;
+      const existingTenantUser = await db.query.tenantUsers.findFirst({
+        where: and(eq(tenantUsers.tenantId, tenantId), eq(tenantUsers.userId, authUserId), isNull(tenantUsers.deletedAt)),
+      });
+
+      if (existingTenantUser) {
+        throw new AppError("Este usuário já faz parte da sua equipe.", 400);
       }
-    } else {
-      authUserId = authData.user.id;
     }
 
-    if (!authUserId) {
-      throw new AppError("Erro na criação das credenciais de acesso.", 500);
-    }
+    const tenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
 
-    // Verifica se já existe um vínculo ativo
-    const existingTenantUser = await db.query.tenantUsers.findFirst({
-      where: and(eq(tenantUsers.tenantId, tenantId), eq(tenantUsers.userId, authUserId), isNull(tenantUsers.deletedAt)),
-    });
-
-    if (existingTenantUser) {
-      throw new AppError("Este usuário já faz parte da sua equipe.", 400);
-    }
-
-    const [novoUsuario] = await db.insert(tenantUsers).values({
+    const [novoConvite] = await db.insert(invitations).values({
       tenantId,
-      userId: authUserId,
-      name: data.name,
+      email: data.email,
       role: data.role,
-      isActive: true,
+      expiresAt: expiresAt.toISOString(),
+      status: "pending"
     }).returning();
+
+    const emailService = EmailService.getInstance();
+    await emailService.sendInvitation(data.email, novoConvite.token, tenant?.name || 'Restaurante', data.role);
 
     await logAuditEvent({
       tenantId,
       operatorId,
-      action: "CREATE_USER",
-      entityType: "USUARIO",
-      entityId: novoUsuario.id,
-      metadata: { name: data.name, role: data.role, email: data.email },
+      action: "INVITE_USER",
+      entityType: "CONVITE",
+      entityId: novoConvite.id,
+      metadata: { role: data.role, email: data.email },
     });
 
-    return { ...novoUsuario, email: data.email };
+    return { id: novoConvite.id, email: data.email, name: data.name, role: data.role, status: "pending", isActive: false };
   }
 
   async atualizar(tenantId: string, operatorId: string, id: string, data: AtualizarUsuarioDTO) {
@@ -172,25 +182,42 @@ export class UsuariosService {
       where: and(eq(tenantUsers.id, id), eq(tenantUsers.tenantId, tenantId), isNull(tenantUsers.deletedAt)),
     });
 
-    if (!usuario) {
-      throw new NotFoundError("Usuário não encontrado.");
+    if (usuario) {
+      await db.update(tenantUsers)
+        .set({ deletedAt: new Date().toISOString(), isActive: false })
+        .where(eq(tenantUsers.id, id));
+
+      await logAuditEvent({
+        tenantId,
+        operatorId,
+        action: "DELETE_USER",
+        entityType: "USUARIO",
+        entityId: id,
+        metadata: { name: usuario.name },
+      });
+      return;
     }
 
-    await db.update(tenantUsers)
-      .set({ deletedAt: new Date().toISOString(), isActive: false })
-      .where(eq(tenantUsers.id, id));
-
-    // Removido a deleção física do auth.users (Soft Delete & Opção B)
-    // Mantemos o usuário vivo globalmente para que ele possa continuar acessando outros tenants se existir.
-
-    await logAuditEvent({
-      tenantId,
-      operatorId,
-      action: "DELETE_USER",
-      entityType: "USUARIO",
-      entityId: id,
-      metadata: { name: usuario.name },
+    const invite = await db.query.invitations.findFirst({
+      where: and(eq(invitations.id, id), eq(invitations.tenantId, tenantId)),
     });
+
+    if (invite) {
+      await db.delete(invitations)
+        .where(eq(invitations.id, id));
+
+      await logAuditEvent({
+        tenantId,
+        operatorId,
+        action: "DELETE_USER",
+        entityType: "CONVITE",
+        entityId: id,
+        metadata: { email: invite.email },
+      });
+      return;
+    }
+
+    throw new NotFoundError("Usuário ou convite não encontrado.");
   }
 }
 

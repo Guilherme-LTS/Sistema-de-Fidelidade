@@ -12,7 +12,7 @@ import { Usuario } from "../usuarios.api"
 import { AlertCircle } from "lucide-react"
 
 const formSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional().or(z.literal("")),
   email: z.string()
     .email("E-mail com formato inválido")
     .refine((e) => !e.endsWith("."), "O e-mail não pode terminar com ponto")
@@ -21,10 +21,7 @@ const formSchema = z.object({
       "Domínio incompleto (ex: está faltando .com ou .com.br)"
     )
     .optional().or(z.literal("")),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres").optional().or(z.literal("")),
   role: z.enum(["admin", "operador", "novato"]),
-}).superRefine((data, ctx) => {
-  // Apenas validar a obrigatoriedade no frontend superficialmente
 })
 
 interface UsuarioModalProps {
@@ -50,7 +47,6 @@ export function UsuarioModal({ open, onOpenChange, usuario }: UsuarioModalProps)
     defaultValues: {
       name: "",
       email: "",
-      password: "",
       role: "operador" as "admin" | "operador" | "novato",
     },
   })
@@ -61,14 +57,12 @@ export function UsuarioModal({ open, onOpenChange, usuario }: UsuarioModalProps)
         reset({
           name: usuario.name,
           email: usuario.email || "",
-          password: "",
           role: usuario.role,
         })
       } else {
         reset({
           name: "",
           email: "",
-          password: "",
           role: "operador",
         })
       }
@@ -83,10 +77,10 @@ export function UsuarioModal({ open, onOpenChange, usuario }: UsuarioModalProps)
       )
     } else {
       if (!data.email) {
-        return; // Impede envio sem email na criação
+        return
       }
       criar.mutate(
-        { name: data.name, email: data.email, password: data.password || undefined, role: data.role },
+        { email: data.email, role: data.role },
         { onSuccess: () => onOpenChange(false) }
       )
     }
@@ -104,44 +98,33 @@ export function UsuarioModal({ open, onOpenChange, usuario }: UsuarioModalProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Usuário" : "Novo Usuário"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Membro" : "Convidar Membro"}</DialogTitle>
           <DialogDescription>
             {isEditing 
               ? "Edite as permissões ou o nome do usuário da sua equipe." 
-              : "Crie um novo acesso para um funcionário. O e-mail será usado para o login."}
+              : "Informe o e-mail do funcionário para enviar um convite. Ele poderá definir a senha ao aceitar."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome completo</Label>
-            <Input id="name" placeholder="Ex: João Silva" {...register("name")} />
-            {errors.name && <span className="text-xs text-destructive">{errors.name.message?.toString()}</span>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail {isEditing && "(Não editável)"}</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="Ex: joao@restaurante.com" 
-              {...register("email")} 
-              disabled={isEditing}
-            />
-            {errors.email && <span className="text-xs text-destructive">{errors.email.message?.toString()}</span>}
-          </div>
+          {isEditing && (
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome completo</Label>
+              <Input id="name" placeholder="Ex: João Silva" {...register("name")} />
+              {errors.name && <span className="text-xs text-destructive">{errors.name.message?.toString()}</span>}
+            </div>
+          )}
 
           {!isEditing && (
             <div className="space-y-2">
-              <Label htmlFor="password">Senha provisória (Opcional)</Label>
+              <Label htmlFor="email">E-mail do Funcionário</Label>
               <Input 
-                id="password" 
-                type="text" 
-                placeholder="Se vazio, será gerada uma senha padrão" 
-                {...register("password")} 
+                id="email" 
+                type="email" 
+                placeholder="Ex: joao@restaurante.com" 
+                {...register("email")} 
               />
-              <p className="text-xs text-muted-foreground">Senha padrão: Restaurante@123</p>
-              {errors.password && <span className="text-xs text-destructive">{errors.password.message?.toString()}</span>}
+              {errors.email && <span className="text-xs text-destructive">{errors.email.message?.toString()}</span>}
             </div>
           )}
 
@@ -168,7 +151,7 @@ export function UsuarioModal({ open, onOpenChange, usuario }: UsuarioModalProps)
               Cancelar
             </Button>
             <Button type="submit" disabled={criar.isPending || atualizar.isPending || (!isEditing && !isValid)}>
-              {isEditing ? "Salvar alterações" : "Criar usuário"}
+              {isEditing ? "Salvar alterações" : "Enviar Convite"}
             </Button>
           </DialogFooter>
         </form>

@@ -8,6 +8,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { routes } from "@/config/routes"
 import { useAuth } from "@/lib/auth/auth-context"
+import { WorkspaceSwitcher } from "./workspace-switcher"
 
 const sidebarGroups = [
   {
@@ -56,11 +57,13 @@ export function Sidebar() {
         <div className="flex items-center gap-2 px-2 group cursor-pointer">
           <Link href={routes.admin.dashboard} className="flex items-center gap-2.5">
             <div className="flex items-center gap-2">
-              <Image src="/logo-light.png" alt="Pontus Logo" width={200} height={23} className="w-[200px] h-auto dark:hidden" priority />
-              <Image src="/logo-dark.png" alt="Pontus Logo" width={200} height={23} className="w-[200px] h-auto hidden dark:block" priority />
+              <Image src="/logo-light.png" alt="Pontus Logo" width={200} height={23} className="dark:hidden" priority />
+              <Image src="/logo-dark.png" alt="Pontus Logo" width={200} height={23} className="hidden dark:block" priority />
             </div>
           </Link>
         </div>
+
+        <WorkspaceSwitcher />
 
         <div className="space-y-4">
           {sidebarGroups.map((group) => {

@@ -29,8 +29,8 @@ export default function AcessoConsumidorPage() {
       <div className="w-full max-w-[420px] space-y-8 relative z-10">
         <div className="text-center space-y-3">
           <div className="mx-auto flex justify-center mb-8">
-            <Image src="/logo-light.png" alt="Pontus Logo" width={220} height={60} className="w-[200px] h-auto dark:hidden" priority />
-            <Image src="/logo-dark.png" alt="Pontus Logo" width={220} height={60} className="w-[200px] h-auto hidden dark:block" priority />
+            <Image src="/logo-light.png" alt="Pontus Logo" width={200} height={55} className="dark:hidden" priority />
+            <Image src="/logo-dark.png" alt="Pontus Logo" width={200} height={55} className="hidden dark:block" priority />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Acesse sua conta</h1>

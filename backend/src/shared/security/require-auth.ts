@@ -44,21 +44,58 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
     throw new UnauthorizedError("Token inválido ou expirado.");
   }
 
+  const requestedTenantId = request.headers["x-tenant-id"] as string | undefined;
+
   // 2. Consultar o banco de dados para recuperar o perfil de funcionário (tenant_users) e tenant ativos
   const tenantUserRecord = await db.query.tenantUsers.findFirst({
-    where: (tu, { eq, and, isNull }) =>
-      and(
+    where: (tu, { eq, and, isNull }) => {
+      const conditions = [
         eq(tu.userId, supabaseUser.id),
         eq(tu.isActive, true),
+        eq(tu.status, "active"),
         isNull(tu.deletedAt)
-      ),
+      ];
+      if (requestedTenantId) {
+        conditions.push(eq(tu.tenantId, requestedTenantId));
+      }
+      return and(...conditions);
+    },
     with: {
       tenant: true,
     },
   });
 
   if (!tenantUserRecord || !tenantUserRecord.tenant?.isActive) {
-    throw new ForbiddenError("Seu acesso ao sistema foi desativado. Entre em contato com o proprietário da conta ou administrador.");
+    // 2.1. Verificar se o usuário possui QUALQUER registro histórico de tenant (desativado ou inativo)
+    const anyRecord = await db.query.tenantUsers.findFirst({
+      where: (tu, { eq, and, isNull }) =>
+        and(eq(tu.userId, supabaseUser.id), isNull(tu.deletedAt))
+    });
+
+    if (anyRecord) {
+      throw new ForbiddenError("Seu acesso ao sistema foi desativado. Entre em contato com o proprietário da conta ou administrador.");
+    }
+
+    // 2.2. Se não possuir nenhum registro, trata-se de um novato legítimo (ex: convite pendente)
+    const isAllowedNovatoRoute = 
+      request.url.includes("/auth/invitations") || 
+      request.url.includes("/auth/me") || 
+      request.url.includes("/auth/tenants");
+
+    if (isAllowedNovatoRoute) {
+      request.user = {
+        authUserId: supabaseUser.id,
+        tenantUserId: "",
+        tenantId: "",
+        tenantName: "",
+        role: "novato",
+        email: supabaseUser.email,
+        name: supabaseUser.user_metadata?.name || supabaseUser.email?.split("@")[0] || "Usuário",
+      };
+      return;
+    }
+    
+    throw new ForbiddenError("Acesso pendente de ativação de convite.");
   }
 
   // 3. Montar e injetar o AuthenticatedUser no request

@@ -62,13 +62,13 @@ export function RecentActivity({ activities }: Props) {
               }
 
               return (
-                <div key={act.id} className="flex items-center gap-4">
-                  <div className={`p-2 rounded-full ${bg}`}>
+                <div key={act.id} className="flex items-center gap-4 min-w-0">
+                  <div className={`shrink-0 p-2 rounded-full ${bg}`}>
                     <Icon className={`w-4 h-4 ${iconColor}`} />
                   </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">{text}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <p className="text-sm font-medium leading-none truncate">{text}</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {act.createdAt 
                         ? new Date(act.createdAt).toLocaleString("pt-BR", {
                             day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"

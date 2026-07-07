@@ -38,9 +38,22 @@ export const tenantUsers = pgTable("tenant_users", {
   phone: varchar("phone"),
   role: varchar("role").notNull().$type<"admin" | "operador" | "novato">(),
   isActive: boolean("is_active").default(true),
+  status: varchar("status", { length: 50 }).default("active").$type<"active" | "pending" | "declined">().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+});
+
+export const invitations = pgTable("invitations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
+  email: varchar("email", { length: 255 }).notNull(),
+  role: varchar("role").notNull().$type<"admin" | "operador" | "novato">(),
+  token: uuid("token").defaultRandom().notNull().unique(),
+  status: varchar("status", { length: 50 }).default("pending").$type<"pending" | "accepted" | "expired" | "revoked">().notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow(),
 });
 
 export const consumerProfiles = pgTable("consumer_profiles", {
@@ -74,11 +87,19 @@ export const customers = pgTable("customers", {
 export const tenantsRelations = relations(tenants, ({ many }) => ({
   users: many(tenantUsers),
   customers: many(customers),
+  invitations: many(invitations),
 }));
 
 export const tenantUsersRelations = relations(tenantUsers, ({ one }) => ({
   tenant: one(tenants, {
     fields: [tenantUsers.tenantId],
+    references: [tenants.id],
+  }),
+}));
+
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [invitations.tenantId],
     references: [tenants.id],
   }),
 }));
