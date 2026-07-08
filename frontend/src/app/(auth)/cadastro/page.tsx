@@ -19,8 +19,8 @@ export default function CadastroPage() {
       <div className="w-full max-w-[560px] relative z-10 py-12 md:py-0">
         <div className="text-center mb-8">
           <div className="mx-auto flex justify-center">
-            <Image src="/logo-light.png" alt="Pontus Logo" width={200} height={55} className="dark:hidden" priority />
-            <Image src="/logo-dark.png" alt="Pontus Logo" width={200} height={55} className="hidden dark:block" priority />
+            <Image src="/logo-light.png" alt="Pontus Logo" width={200} height={55} className="dark:hidden" priority  style={{ width: "auto", height: "auto" }} />
+            <Image src="/logo-dark.png" alt="Pontus Logo" width={200} height={55} className="hidden dark:block" priority  style={{ width: "auto", height: "auto" }} />
           </div>
         </div>
 

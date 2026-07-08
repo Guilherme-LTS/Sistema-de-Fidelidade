@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { useFidelidadeConfig } from "../../hooks/use-configuracoes"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Textarea } from "@/components/ui/textarea"
 
 const applyMoneyMask = (value: string) => {
   let v = value.replace(/\D/g, "")
@@ -32,6 +33,7 @@ const formSchema = z.object({
   carenciaPontos: z.coerce.number().min(0, "Mínimo 0 dias").max(365, "Máximo 1 ano"),
   expiracaoPontos: z.coerce.number().min(0, "Mínimo 0 dias").max(1825, "Máximo 5 anos"),
   valorConversaoFormatado: z.string().min(4, "Informe um valor válido."),
+  regulationNotes: z.string().optional(),
 })
 
 export function ProgramaFidelidadeTab() {
@@ -43,6 +45,7 @@ export function ProgramaFidelidadeTab() {
       carenciaPontos: 0,
       expiracaoPontos: 90,
       valorConversaoFormatado: "R$ 1,00",
+      regulationNotes: "",
     },
   })
 
@@ -54,6 +57,7 @@ export function ProgramaFidelidadeTab() {
         carenciaPontos: query.data.carenciaPontos ?? 0,
         expiracaoPontos: query.data.expiracaoPontos ?? 90,
         valorConversaoFormatado: applyMoneyMask(cents.toString()),
+        regulationNotes: query.data.regulationNotes ?? "",
       })
     }
   }, [query.data, form])
@@ -73,6 +77,7 @@ export function ProgramaFidelidadeTab() {
       carenciaPontos: values.carenciaPontos,
       expiracaoPontos: values.expiracaoPontos,
       pointsConversionReal: unmasked,
+      regulationNotes: values.regulationNotes,
     }, {
       onSuccess: () => {
         form.reset(values)
@@ -173,6 +178,33 @@ export function ProgramaFidelidadeTab() {
                   )}
                 />
               </div>
+            </div>
+
+            <Separator />
+
+            {/* Observações do Regulamento */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Termos e Regulamento</h3>
+              <FormField
+                control={form.control}
+                name="regulationNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações ou Regras Especiais</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Ex.: O acúmulo de pontos não é cumulativo com outras promoções. Válido apenas para consumo no local." 
+                        className="min-h-[100px] resize-y"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Adicione particularidades ou regras específicas do seu estabelecimento. Esse texto aparecerá na central de informações do cliente.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {form.formState.isDirty && (

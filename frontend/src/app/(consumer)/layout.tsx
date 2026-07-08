@@ -40,8 +40,8 @@ export default function ConsumerLayout({ children }: { children: ReactNode }) {
                 </SheetContent>
               </Sheet>
               <div className="flex flex-col ml-2">
-                <Image src="/logo-light.png" alt="Pontus Logo" width={90} height={23} className="dark:hidden" />
-                <Image src="/logo-dark.png" alt="Pontus Logo" width={90} height={23} className="hidden dark:block" />
+                <Image src="/logo-light.png" alt="Pontus Logo" width={90} height={23} className="dark:hidden"  style={{ width: "auto", height: "auto" }} />
+                <Image src="/logo-dark.png" alt="Pontus Logo" width={90} height={23} className="hidden dark:block"  style={{ width: "auto", height: "auto" }} />
               </div>
             </div>
             <div>

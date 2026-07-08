@@ -100,12 +100,14 @@ export class ClientesService {
       name: input.nome,
       lgpdConsent: input.lgpdConsentimento,
       consentDate: new Date().toISOString(),
+      consentOperatorId: operatorId && operatorId !== "SISTEMA" ? operatorId : null,
     }).onConflictDoUpdate({
       target: [consumerProfiles.document],
       set: {
         name: input.nome,
         lgpdConsent: input.lgpdConsentimento,
         consentDate: new Date().toISOString(),
+        consentOperatorId: operatorId && operatorId !== "SISTEMA" ? operatorId : null,
         updatedAt: new Date().toISOString(),
       }
     }).returning();

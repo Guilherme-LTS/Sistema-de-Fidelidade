@@ -248,6 +248,10 @@ export async function consumerRoutes(app: FastifyInstance) {
           latitude: tenant.latitude,
           longitude: tenant.longitude,
           socialLinks: tenant.socialLinks || null,
+          pointsConversionReal: tenant.pointsConversionReal ? Number(tenant.pointsConversionReal) : 1.00,
+          loyaltyGracePeriodDays: tenant.loyaltyGracePeriodDays || 0,
+          loyaltyExpirationDays: tenant.loyaltyExpirationDays || 90,
+          regulationNotes: tenant.regulationNotes || null,
           businessHours: tenant.businessHours || {
             monday: { active: false, open: "08:00", close: "18:00" },
             tuesday: { active: false, open: "08:00", close: "18:00" },

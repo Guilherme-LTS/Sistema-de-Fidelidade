@@ -1,9 +1,10 @@
+import 'dotenv/config';
 import pkg from 'pg';
 const { Client } = pkg;
 
 async function main() {
   const client = new Client({
-    connectionString: "postgresql://postgres.hzzujdjgyqnlhtrsfagz:guilherme27.fernando10@aws-1-sa-east-1.pooler.supabase.com:6543/postgres"
+    connectionString: process.env.DATABASE_URL
   });
 
   await client.connect();
@@ -19,6 +20,7 @@ async function main() {
       v_phone text;
       v_is_consumer text;
       v_name text;
+      v_slug text;
     BEGIN
       -- Read from raw_user_meta_data
       v_tenant_name := NEW.raw_user_meta_data->>'tenantName';
@@ -30,11 +32,17 @@ async function main() {
 
       -- FLOW 1: B2B Signup (Restaurant Owner)
       IF v_tenant_name IS NOT NULL THEN
+        -- Generate slug: replace non-alphanumeric with hyphens, trim, and append 8 chars of id
+        v_slug := lower(regexp_replace(v_tenant_name, '[^a-zA-Z0-9]+', '-', 'g'));
+        v_slug := regexp_replace(v_slug, '^-|-$', '', 'g');
+        v_slug := v_slug || '-' || substring(NEW.id::text from 1 for 8);
+
         -- Insert into tenants
-        INSERT INTO public.tenants (id, name, document, phone, email)
+        INSERT INTO public.tenants (id, name, slug, document, phone, email)
         VALUES (
           NEW.id, 
           v_tenant_name, 
+          v_slug,
           v_document, 
           v_phone, 
           NEW.email
@@ -74,6 +82,11 @@ async function main() {
     CREATE TRIGGER on_auth_user_created
       AFTER INSERT ON auth.users
       FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+    -- Migrate existing null slugs
+    UPDATE public.tenants
+    SET slug = regexp_replace(lower(regexp_replace(name, '[^a-zA-Z0-9]+', '-', 'g')), '^-|-$', '', 'g') || '-' || substring(id::text from 1 for 8)
+    WHERE slug IS NULL;
   `;
 
   try {
