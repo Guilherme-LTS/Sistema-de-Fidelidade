@@ -57,8 +57,8 @@ export function Sidebar() {
         <div className="flex items-center gap-2 px-2 group cursor-pointer">
           <Link href={routes.admin.dashboard} className="flex items-center gap-2.5">
             <div className="flex items-center gap-2">
-              <Image src="/logo-light.png" alt="Pontus Logo" width={200} height={23} className="dark:hidden" priority />
-              <Image src="/logo-dark.png" alt="Pontus Logo" width={200} height={23} className="hidden dark:block" priority />
+              <Image src="/logo-light.png" alt="Pontus Logo" width={200} height={23} className="dark:hidden" priority  style={{ width: "auto", height: "auto" }} />
+              <Image src="/logo-dark.png" alt="Pontus Logo" width={200} height={23} className="hidden dark:block" priority  style={{ width: "auto", height: "auto" }} />
             </div>
           </Link>
         </div>

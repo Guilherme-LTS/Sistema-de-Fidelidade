@@ -36,6 +36,7 @@ export interface FidelidadeInput {
   carenciaPontos: number
   expiracaoPontos: number
   pointsConversionReal: number
+  regulationNotes?: string
 }
 
 // APIs

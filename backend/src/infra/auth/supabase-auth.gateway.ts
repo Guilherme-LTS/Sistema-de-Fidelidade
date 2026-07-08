@@ -71,6 +71,18 @@ export class SupabaseAuthGateway {
       throw error;
     }
   }
+
+  /**
+   * Dispara o e-mail nativo de recuperação de senha do Supabase.
+   */
+  async resetPasswordForEmail(email: string, redirectTo: string): Promise<void> {
+    const { error } = await this.client.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+    if (error) {
+      throw error;
+    }
+  }
 }
 
 export const supabaseAuthGateway = new SupabaseAuthGateway();
