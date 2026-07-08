@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import Link from "next/link"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { supabaseConsumerClient as supabase } from "@/lib/supabase-clients"
@@ -17,7 +18,8 @@ import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatCPF, getPasswordStrength } from "@/lib/masks"
 import { QuickCheckPanel } from "./quick-check-panel"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, MailCheck, Lock } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 
 function extractErrorMessage(err: any): string {
   if (!err) return "Erro interno do sistema. Tente novamente em alguns minutos."
@@ -55,6 +57,9 @@ const signupSchema = z.object({
     .regex(/[A-Z]/, "A senha deve conter pelo menos uma letra maiúscula.")
     .regex(/[0-9]/, "A senha deve conter pelo menos um número."),
   confirmPassword: z.string(),
+  termsConsent: z.boolean().refine((val) => val === true, {
+    message: "Você deve aceitar a Política de Privacidade.",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem.",
   path: ["confirmPassword"],
@@ -112,6 +117,8 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
 
   const [loading, setLoading] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
+  const [forgotStatus, setForgotStatus] = useState<"IDLE" | "SUCCESS_EMAIL_SENT" | "POINTS_ONLY">("IDLE")
+  const [forgotMaskedEmail, setForgotMaskedEmail] = useState<string>("")
   const [passwordScore, setPasswordScore] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [showSignupPassword, setShowSignupPassword] = useState(false)
@@ -125,7 +132,7 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
 
   const signupForm = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { name: "", cpf: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { name: "", cpf: "", email: "", password: "", confirmPassword: "", termsConsent: false },
     mode: "onChange",
   })
 
@@ -203,11 +210,26 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
   const onForgotSubmit = async (values: ForgotFormValues) => {
     setLoading(true)
     try {
-      const res = await api.post<{ success: boolean; message: string }>("/public/consumer/recover-password", {
+      const res = await api.post<{
+        success: boolean;
+        message?: string;
+        data: {
+          status: "SUCCESS_EMAIL_SENT" | "POINTS_ONLY";
+          message: string;
+          maskedEmail?: string;
+        }
+      }>("/public/consumer/recover-password", {
         identifier: values.identifier
       })
-      toast.success(res.message || "Enviamos um link para redefinir sua senha!")
-      setForgotMode(false)
+      
+      const payload = res.data;
+      if (payload.status === "POINTS_ONLY") {
+        setForgotStatus("POINTS_ONLY")
+      } else {
+        setForgotStatus("SUCCESS_EMAIL_SENT")
+        setForgotMaskedEmail(payload.maskedEmail || "")
+        toast.success(payload.message || "Link enviado com sucesso!")
+      }
     } catch (err: any) {
       toast.error(extractErrorMessage(err))
     } finally {
@@ -216,11 +238,54 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
   }
 
   if (forgotMode) {
+    if (forgotStatus !== "IDLE") {
+      return (
+        <div className="space-y-4 text-center py-4">
+          <div className="flex justify-center mb-4">
+            <div className="h-14 w-14 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
+              {forgotStatus === "SUCCESS_EMAIL_SENT" ? (
+                <MailCheck className="h-7 w-7 text-primary" />
+              ) : (
+                <Lock className="h-7 w-7 text-amber-500" />
+              )}
+            </div>
+          </div>
+          <h3 className="font-bold text-lg text-foreground">
+            {forgotStatus === "SUCCESS_EMAIL_SENT" ? "E-mail de Recuperação Enviado" : "Senha Não Cadastrada"}
+          </h3>
+          {forgotStatus === "SUCCESS_EMAIL_SENT" ? (
+            <p className="text-sm text-muted-foreground leading-relaxed px-2">
+              Enviamos um link para redefinição de senha para o e-mail <strong className="text-foreground font-semibold">{forgotMaskedEmail}</strong>. Verifique sua caixa de entrada e pasta de spam.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground leading-relaxed px-2">
+              Seu CPF possui pontos cadastrados no restaurante, mas você ainda não criou uma senha de acesso. Vá na aba <strong className="text-foreground font-semibold">&quot;Criar Conta&quot;</strong> para cadastrar sua senha.
+            </p>
+          )}
+          <Button 
+            type="button" 
+            className="w-full mt-6" 
+            onClick={() => {
+              setForgotMode(false)
+              const oldStatus = forgotStatus
+              setForgotStatus("IDLE")
+              setForgotMaskedEmail("")
+              if (oldStatus === "POINTS_ONLY") {
+                handleTabChange("signup")
+              }
+            }}
+          >
+            {forgotStatus === "POINTS_ONLY" ? "Ir para Criar Conta" : "Voltar para o login"}
+          </Button>
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-4">
         <div className="text-center space-y-1 mb-4">
           <h3 className="font-semibold text-lg">Recuperar Senha</h3>
-          <p className="text-sm text-muted-foreground">Insira seu e-mail para receber o link de acesso.</p>
+          <p className="text-sm text-muted-foreground">Insira seu e-mail ou CPF para receber o link de acesso.</p>
         </div>
         <form onSubmit={forgotForm.handleSubmit(onForgotSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -428,7 +493,30 @@ export function ConsumerAuthForm({ tenantName, tenantSlug }: ConsumerAuthFormPro
             )}
           </div>
 
-          <Button type="submit" className="w-full mt-2" disabled={loading}>
+          <div className="flex items-start gap-2 pt-2">
+            <Checkbox 
+              id="signup-terms" 
+              checked={signupForm.watch("termsConsent")}
+              onCheckedChange={(checked) => signupForm.setValue("termsConsent", checked === true, { shouldValidate: true })}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label 
+                htmlFor="signup-terms" 
+                className="text-xs text-muted-foreground font-normal leading-relaxed select-none cursor-pointer"
+              >
+                Declaro que li e concordo com os{" "}
+                <Link href="/regulamento" className="text-primary font-medium hover:underline">Termos de Uso</Link>{" "}
+                e{" "}
+                <Link href="/privacidade" className="text-primary font-medium hover:underline">Política de Privacidade</Link>{" "}
+                da plataforma.
+              </Label>
+              {signupForm.formState.errors.termsConsent && (
+                <p className="text-xs text-destructive">{signupForm.formState.errors.termsConsent.message}</p>
+              )}
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full mt-4" disabled={loading}>
             {loading ? <Spinner className="mr-2" /> : "Ver Meus Pontos"}
           </Button>
         </form>

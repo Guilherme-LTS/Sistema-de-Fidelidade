@@ -25,6 +25,7 @@ type FidelidadeInput = {
   carenciaPontos: number;
   expiracaoPontos: number;
   pointsConversionReal: number;
+  regulationNotes?: string;
 };
 
 export class ConfiguracoesService {
@@ -83,6 +84,7 @@ export class ConfiguracoesService {
         loyaltyGracePeriodDays: true,
         loyaltyExpirationDays: true,
         pointsConversionReal: true,
+        regulationNotes: true,
       }
     });
 
@@ -92,6 +94,7 @@ export class ConfiguracoesService {
       carenciaPontos: tenant.loyaltyGracePeriodDays || 0,
       expiracaoPontos: tenant.loyaltyExpirationDays || 90,
       pointsConversionReal: tenant.pointsConversionReal ? Number(tenant.pointsConversionReal) : 1.00,
+      regulationNotes: tenant.regulationNotes || "",
     };
   }
 
@@ -102,6 +105,7 @@ export class ConfiguracoesService {
         loyaltyGracePeriodDays: true,
         loyaltyExpirationDays: true,
         pointsConversionReal: true,
+        regulationNotes: true,
       }
     });
 
@@ -112,6 +116,7 @@ export class ConfiguracoesService {
         loyaltyGracePeriodDays: input.carenciaPontos,
         loyaltyExpirationDays: input.expiracaoPontos,
         pointsConversionReal: input.pointsConversionReal.toString(),
+        regulationNotes: input.regulationNotes || null,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tenants.id, tenantId))

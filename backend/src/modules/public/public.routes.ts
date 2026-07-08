@@ -348,7 +348,12 @@ export async function publicRoutes(app: FastifyInstance) {
       });
 
       if (createError) {
-        if (createError.message?.includes("User already registered") || createError.message?.includes("Email address already exists")) {
+        const msg = createError.message?.toLowerCase() || "";
+        if (
+          msg.includes("already registered") ||
+          msg.includes("already exists") ||
+          msg.includes("already been registered")
+        ) {
           return reply.status(409).send(errorResponse("O e-mail informado já está em uso.", "CONFLICT"));
         }
         throw createError;
@@ -356,6 +361,17 @@ export async function publicRoutes(app: FastifyInstance) {
 
       if (user) {
         createdUserId = user.id;
+
+        // Update the consumer profile created by the trigger to store the LGPD consent info
+        await db.update(consumerProfiles)
+          .set({
+            lgpdConsent: true,
+            consentDate: new Date().toISOString(),
+            consentIp: request.ip,
+            consentUserAgent: request.headers['user-agent'] || null,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(consumerProfiles.authUserId, user.id));
       }
 
       // 2. The DB Trigger (handle_new_user) will create the consumer_profiles entry automatically.
@@ -383,6 +399,16 @@ export async function publicRoutes(app: FastifyInstance) {
     }
   });
 
+  // Função auxiliar para mascarar o e-mail preservando privacidade (LGPD)
+  function maskEmail(emailStr: string): string {
+    const [localPart, domain] = emailStr.split("@");
+    if (!localPart || !domain) return emailStr;
+    if (localPart.length <= 2) {
+      return `${localPart[0]}***@${domain}`;
+    }
+    return `${localPart.substring(0, 3)}***@${domain}`;
+  }
+
   app.post("/consumer/recover-password", async (request, reply) => {
     const recoverSchema = z.object({
       identifier: z.string().min(1),
@@ -394,7 +420,9 @@ export async function publicRoutes(app: FastifyInstance) {
     }
 
     const { identifier } = parsed.data;
-    let email = identifier;
+    let email = identifier.includes("@") ? identifier : null;
+    let hasPointsOnly = false;
+    let hasAccount = false;
 
     const numericIdentifier = identifier.replace(/\D/g, "");
     if (numericIdentifier.length === 11) {
@@ -405,10 +433,28 @@ export async function publicRoutes(app: FastifyInstance) {
           .where(eq(consumerProfiles.document, numericIdentifier))
           .limit(1);
 
-        if (profile && profile.authUserId) {
-          const { data: { user }, error: adminError } = await supabaseAuthGateway.admin.getUserById(profile.authUserId);
-          if (!adminError && user && user.email) {
-            email = user.email;
+        if (profile) {
+          if (profile.authUserId) {
+            const { data: { user }, error: adminError } = await supabaseAuthGateway.admin.getUserById(profile.authUserId);
+            if (!adminError && user && user.email) {
+              email = user.email;
+              hasAccount = true;
+            }
+          } else {
+            hasPointsOnly = true;
+          }
+        }
+      } catch (error) {
+        request.log.error(error);
+      }
+    } else if (email) {
+      // Se informou um e-mail diretamente, vamos validar se existe alguma conta associada a ele
+      try {
+        const { data: { users }, error: listError } = await supabaseAuthGateway.admin.listUsers();
+        if (!listError && users) {
+          const matchedUser = users.find(u => u.email?.toLowerCase() === email!.toLowerCase());
+          if (matchedUser) {
+            hasAccount = true;
           }
         }
       } catch (error) {
@@ -416,35 +462,35 @@ export async function publicRoutes(app: FastifyInstance) {
       }
     }
 
-    // Mesmo que falhe ou não ache o e-mail, fingimos sucesso para evitar enumeração.
-    if (email && email.includes("@")) {
+    // Se temos um e-mail válido e o perfil existe, disparamos a recuperação real
+    if (hasAccount && email && email.includes("@")) {
       try {
-        // Envia o link de recuperação. O auth config do Supabase deve estar configurado para redirecionar para a URL correta do frontend.
-        await supabaseAuthGateway.admin.generateLink({
-          type: 'recovery',
-          email: email,
-          options: {
-            redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/alterar-senha`
-          }
-        }).then(async ({ data, error }) => {
-          if (data && data.properties && data.properties.action_link) {
-            // Se estivessemos usando um provedor de e-mail customizado, enviaríamos aqui.
-            // Mas para garantir o disparo, podemos usar a função padrão se preferirmos:
-            // return supabaseAuthGateway.auth.resetPasswordForEmail(email)
-            // Wait, supabase-js admin.generateLink does NOT send an email automatically unless we send it.
-            // Let's just use the standard resetPasswordForEmail, which handles email sending!
-          }
+        const redirectTo = `${process.env.FRONTEND_URL || "http://localhost:3000"}/alterar-senha`;
+        await supabaseAuthGateway.resetPasswordForEmail(email, redirectTo);
+        
+        return successResponse({
+          status: "SUCCESS_EMAIL_SENT",
+          message: "Link de redefinição de senha enviado com sucesso.",
+          maskedEmail: maskEmail(email),
         });
-
-        // The correct approach to SEND the email natively is to use the auth client or admin API.
-        // Actually, let's just create a regular Supabase Client or use generateLink and send via our own mailer? No, we don't have a mailer set up.
-        // Let's just use `resetPasswordForEmail` through standard Auth (it might not be available in admin).
-        // Let's implement it inside supabaseAuthGateway.
       } catch (e) {
         request.log.error(e);
+        return reply.status(500).send(errorResponse("Erro ao enviar e-mail de recuperação.", "INTERNAL_ERROR"));
       }
     }
 
-    return successResponse({ message: "Se o cadastro existir, enviamos um link de recuperação para o e-mail vinculado." });
+    if (hasPointsOnly) {
+      return successResponse({
+        status: "POINTS_ONLY",
+        message: "Seu CPF possui pontos cadastrados, mas você ainda não criou uma senha de acesso. Vá na aba 'Criar Conta' para cadastrar sua senha.",
+      });
+    }
+
+    // Como a verificação por CPF já é pública por design na aplicação (aba "Pontos"),
+    // podemos retornar 404 de forma amigável se não encontrarmos nada
+    return reply.status(404).send(errorResponse(
+      "Nenhuma conta ou pontos encontrados para este CPF/E-mail. Verifique os dados ou crie uma conta.",
+      "NOT_FOUND"
+    ));
   });
 }

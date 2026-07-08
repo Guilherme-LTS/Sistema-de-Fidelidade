@@ -4,12 +4,14 @@ import { use, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { carregarTenantConsumer, carregarExtratoConsumer } from "@/features/consumer/consumer.api"
 import { Spinner } from "@/components/ui/spinner"
-import { LogOut, MapPin, Store, Gift, ChevronLeft, ChevronRight, Lock, Map, Clock, ArrowRight, Instagram, Facebook, Music2, MessageCircle, ArrowLeft, History, Star, Receipt, CheckCircle2, XCircle, Hourglass, Globe } from "lucide-react"
+import { LogOut, MapPin, Store, Gift, ChevronLeft, ChevronRight, Lock, Map, Clock, ArrowRight, Instagram, Facebook, Music2, MessageCircle, ArrowLeft, History, Star, Receipt, CheckCircle2, XCircle, Hourglass, Globe, Phone, Mail } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface PageProps {
   params: Promise<{
@@ -537,9 +539,164 @@ export default function TenantDashboardPage(props: PageProps) {
                 </div>
               </TooltipProvider>
               
-              <Button className="w-full mt-2 h-12 text-sm" variant="default">
-                Regulamento do Programa
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="w-full mt-2 h-12 text-sm font-semibold" variant="default">
+                    Regulamento do Programa
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[calc(100%-2rem)] sm:w-full max-w-2xl max-h-[85vh] overflow-y-auto flex flex-col p-5 sm:p-6 rounded-2xl gap-4">
+                  <DialogHeader className="space-y-1">
+                    <DialogTitle className="text-xl font-bold flex items-center gap-2 text-primary">
+                      <Store className="w-5 h-5" /> Regulamento de Fidelidade
+                    </DialogTitle>
+                    <DialogDescription className="text-xs">
+                      Termos, regras de pontuação e políticas de privacidade da loja {tenant.name}.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <Tabs defaultValue="regras" className="w-full mt-4 flex-1">
+                    <TabsList className="grid grid-cols-4 w-full h-11 bg-muted/40 rounded-xl p-1 border border-border/30">
+                      <TabsTrigger value="regras" className="rounded-lg text-xs font-semibold gap-1.5 data-[state=active]:shadow-sm">
+                        Regras
+                      </TabsTrigger>
+                      <TabsTrigger value="premios" className="rounded-lg text-xs font-semibold gap-1.5 data-[state=active]:shadow-sm">
+                        Prêmios
+                      </TabsTrigger>
+                      <TabsTrigger value="suporte" className="rounded-lg text-xs font-semibold gap-1.5 data-[state=active]:shadow-sm">
+                        Suporte
+                      </TabsTrigger>
+                      <TabsTrigger value="privacidade" className="rounded-lg text-xs font-semibold gap-1.5 data-[state=active]:shadow-sm">
+                        LGPD
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {/* Tab 1: Regras */}
+                    <TabsContent value="regras" className="space-y-4 mt-5 focus-visible:outline-none">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex flex-col items-center text-center">
+                          <span className="text-2xl font-black text-primary">
+                            R$ {tenant.pointsConversionReal.toFixed(2).replace(".", ",")}
+                          </span>
+                          <span className="text-xs text-muted-foreground mt-1 font-semibold">Equivale a 1 ponto</span>
+                        </div>
+                        <div className="bg-slate-500/5 border border-slate-500/10 rounded-xl p-4 flex flex-col items-center text-center">
+                          <span className="text-2xl font-black text-slate-700 dark:text-slate-300">
+                            {tenant.loyaltyGracePeriodDays === 0 ? "Imediata" : `${tenant.loyaltyGracePeriodDays} dias`}
+                          </span>
+                          <span className="text-xs text-muted-foreground mt-1 font-semibold">Carência de resgate</span>
+                        </div>
+                        <div className="bg-slate-500/5 border border-slate-500/10 rounded-xl p-4 flex flex-col items-center text-center">
+                          <span className="text-2xl font-black text-slate-700 dark:text-slate-300">
+                            {tenant.loyaltyExpirationDays === 0 ? "Sem expiração" : `${tenant.loyaltyExpirationDays} dias`}
+                          </span>
+                          <span className="text-xs text-muted-foreground mt-1 font-semibold">Validade dos pontos</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 pt-2 text-sm leading-relaxed text-muted-foreground">
+                        <h4 className="font-bold text-foreground text-sm">Funcionamento Geral:</h4>
+                        <ul className="list-disc pl-5 space-y-1.5 text-xs">
+                          <li>Os pontos são concedidos mediante a identificação do seu CPF no momento do pagamento no caixa.</li>
+                          <li>Os pontos acumulados são de uso pessoal, intransferíveis e não podem ser convertidos em dinheiro.</li>
+                          {tenant.loyaltyGracePeriodDays > 0 && (
+                            <li>Após acumular pontos, eles ficarão em estado "Pendente" por {tenant.loyaltyGracePeriodDays} dias antes de ficarem "Disponíveis" para troca.</li>
+                          )}
+                          {tenant.loyaltyExpirationDays > 0 && (
+                            <li>Fique atento: os pontos expiram automaticamente após {tenant.loyaltyExpirationDays} dias de sua data de lançamento.</li>
+                          )}
+                        </ul>
+                      </div>
+
+                      {tenant.regulationNotes && (
+                        <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 space-y-2 mt-2">
+                          <h4 className="font-bold text-amber-700 dark:text-amber-400 text-xs flex items-center gap-1.5">
+                            <Star className="w-3.5 h-3.5 fill-current" /> Observações do Estabelecimento:
+                          </h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+                            {tenant.regulationNotes}
+                          </p>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    {/* Tab 2: Prêmios */}
+                    <TabsContent value="premios" className="space-y-3 mt-5 focus-visible:outline-none max-h-[45vh] overflow-y-auto pr-1">
+                      <h4 className="font-bold text-foreground text-sm mb-2">Recompensas do Restaurante:</h4>
+                      {rewards.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-6">Nenhum prêmio ativo cadastrado no momento.</p>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {rewards.map((reward) => (
+                            <div key={reward.id} className="flex justify-between items-center p-3 bg-muted/20 border border-border/40 rounded-xl gap-4">
+                              <div className="space-y-0.5">
+                                <p className="font-bold text-xs text-foreground">{reward.name}</p>
+                                {reward.description && <p className="text-[10px] text-muted-foreground line-clamp-1">{reward.description}</p>}
+                              </div>
+                              <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold py-1 px-2.5 rounded-full whitespace-nowrap shrink-0">
+                                {reward.pointsCost} pts
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    {/* Tab 3: Suporte */}
+                    <TabsContent value="suporte" className="space-y-4 mt-5 focus-visible:outline-none">
+                      <div className="space-y-3">
+                        <h4 className="font-bold text-foreground text-sm">Canais de Atendimento do Restaurante:</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          {tenant.phone && (
+                            <div className="flex items-center gap-2 p-3 bg-muted/30 border border-border/30 rounded-xl">
+                              <Phone className="w-4 h-4 text-primary" />
+                              <span className="font-medium text-muted-foreground">{tenant.phone}</span>
+                            </div>
+                          )}
+                          {tenant.email && (
+                            <div className="flex items-center gap-2 p-3 bg-muted/30 border border-border/30 rounded-xl">
+                              <Mail className="w-4 h-4 text-primary" />
+                              <span className="font-medium text-muted-foreground truncate">{tenant.email}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <h4 className="font-bold text-foreground text-sm">Endereço e Contato Local:</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                          <span>
+                            {tenant.addressLine1 ? (
+                              `${tenant.addressLine1}, nº ${tenant.addressNumber || "S/N"} - ${tenant.addressCity || ""} - ${tenant.addressState || ""}`
+                            ) : (
+                              "Endereço físico não informado pelo estabelecimento."
+                            )}
+                          </span>
+                        </p>
+                      </div>
+                    </TabsContent>
+
+                    {/* Tab 4: Privacidade & LGPD */}
+                    <TabsContent value="privacidade" className="space-y-4 mt-5 focus-visible:outline-none text-xs leading-relaxed text-muted-foreground">
+                      <div className="space-y-3">
+                        <h4 className="font-bold text-foreground text-xs flex items-center gap-1">
+                          <Lock className="w-3.5 h-3.5 text-primary" /> Como cuidamos dos seus dados pessoais:
+                        </h4>
+                        <p>
+                          Para que o programa de fidelidade funcione, o estabelecimento **{tenant.name}** (na qualidade de Controlador de Dados) e a plataforma **Pontus** (na qualidade de Operador de Tecnologia) coletam e tratam o seu CPF, seu nome e seu histórico de compras/pontuação.
+                        </p>
+                        <p>
+                          A base jurídica utilizada para o processamento de seus saldos e concessão de benefícios é a **Execução de Contrato (Art. 7, V da LGPD)**. Seus dados são armazenados de forma segura, criptografados no banco de dados e nunca serão comercializados.
+                        </p>
+                        <p>
+                          Você tem o direito de solicitar a confirmação do tratamento, o acesso aos seus dados, a retificação de inconsistências ou a exclusão da sua conta a qualquer momento. Para exercer seus direitos, você pode contatar o encarregado de dados Pontus pelo canal de privacidade no portal do cliente ou falar diretamente com o estabelecimento parceiro.
+                        </p>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 

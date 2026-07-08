@@ -60,6 +60,10 @@ export interface TenantDashboardDetails {
     longitude: number | null
     businessHours?: Record<string, { active: boolean; open: string; close: string }>
     socialLinks?: { instagram?: string; facebook?: string; tiktok?: string; website?: string }
+    pointsConversionReal: number
+    loyaltyGracePeriodDays: number
+    loyaltyExpirationDays: number
+    regulationNotes: string | null
   }
   rewards: {
     id: number

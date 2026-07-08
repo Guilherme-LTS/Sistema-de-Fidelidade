@@ -33,6 +33,7 @@ const fidelidadeSchema = z.object({
   carenciaPontos: z.number().min(0),
   expiracaoPontos: z.number().min(0),
   pointsConversionReal: z.number().positive("O valor de conversão deve ser maior que zero."),
+  regulationNotes: z.string().optional().or(z.literal("")),
 });
 
 export class ConfiguracoesController {
