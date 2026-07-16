@@ -5,6 +5,7 @@ import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
 import { supabaseAuthGateway } from "../../infra/auth/supabase-auth.gateway.js";
 import { logAuditEvent } from "../../shared/audit.service.js";
 import { EmailService } from "../../infra/email/email.service.js";
+import { planLimitService } from "../billing/plan-limit.service.js";
 
 interface CriarUsuarioDTO {
   name?: string;
@@ -92,6 +93,10 @@ export class UsuariosService {
 
     const tenant = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
 
+    if (data.role === "operador") {
+      await planLimitService.checkOperatorLimit(tenantId);
+    }
+
     const [novoConvite] = await db.insert(invitations).values({
       tenantId,
       email: data.email,
@@ -124,10 +129,15 @@ export class UsuariosService {
       throw new NotFoundError("Usuário não encontrado.");
     }
 
-    if (data.role && data.role !== usuario.role && usuario.userId) {
-      await supabaseAuthGateway.admin.updateUserById(usuario.userId, {
-        app_metadata: { tenant_id: tenantId, role: data.role },
-      });
+    if (data.role && data.role !== usuario.role) {
+      if (data.role === "operador") {
+        await planLimitService.checkOperatorLimit(tenantId);
+      }
+      if (usuario.userId) {
+        await supabaseAuthGateway.admin.updateUserById(usuario.userId, {
+          app_metadata: { tenant_id: tenantId, role: data.role },
+        });
+      }
     }
 
     const [usuarioAtualizado] = await db.update(tenantUsers)
@@ -158,6 +168,10 @@ export class UsuariosService {
 
     if (!usuario) {
       throw new NotFoundError("Usuário não encontrado.");
+    }
+
+    if (isActive && !usuario.isActive && usuario.role === "operador") {
+      await planLimitService.checkOperatorLimit(tenantId);
     }
 
     const [usuarioAtualizado] = await db.update(tenantUsers)

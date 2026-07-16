@@ -6,6 +6,8 @@ type RequestOptions = RequestInit & {
   authToken?: string | null
 }
 
+import { toast } from "sonner"
+
 export class ApiError extends Error {
   constructor(
     public readonly message: string,
@@ -94,6 +96,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
             }
           })
         }
+      }
+    }
+
+    if (response.status === 402) {
+      if (typeof window !== "undefined") {
+        toast.error("Operação suspensa. Regularize sua assinatura para realizar novas ações.");
       }
     }
 

@@ -1,9 +1,10 @@
 import { eq, and, or, ilike, desc, count, sql } from "drizzle-orm";
 import { db } from "../../infra/database/db.js";
-import { customers, consumerProfiles } from "../../infra/database/schema.js";
+import { customers, consumerProfiles, tenants } from "../../infra/database/schema.js";
 import { validateAndCleanCPF } from "../../shared/validators/cpf.js";
 import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
 import { logAuditEvent } from "../../shared/audit.service.js";
+import { planLimitService } from "../billing/plan-limit.service.js";
 
 export class ClientesService {
   async listarClientes(tenantId: string, params: { busca?: string; page: number; limit: number }) {
@@ -94,55 +95,75 @@ export class ClientesService {
 
     const cleanedDoc = cpfValidation.cleaned;
 
-    // 1. Criar ou atualizar consumer_profile
-    let [profile] = await db.insert(consumerProfiles).values({
-      document: cleanedDoc,
-      name: input.nome,
-      lgpdConsent: input.lgpdConsentimento,
-      consentDate: new Date().toISOString(),
-      consentOperatorId: operatorId && operatorId !== "SISTEMA" ? operatorId : null,
-    }).onConflictDoUpdate({
-      target: [consumerProfiles.document],
-      set: {
+    const result = await db.transaction(async (tx) => {
+      // 1. Lock do Tenant para evitar condições de corrida (Race Conditions)
+      await tx
+        .select({ id: tenants.id })
+        .from(tenants)
+        .where(eq(tenants.id, tenantId))
+        .for("update");
+
+      // 2. Criar ou atualizar consumer_profile
+      let [profile] = await tx.insert(consumerProfiles).values({
+        document: cleanedDoc,
         name: input.nome,
         lgpdConsent: input.lgpdConsentimento,
         consentDate: new Date().toISOString(),
         consentOperatorId: operatorId && operatorId !== "SISTEMA" ? operatorId : null,
-        updatedAt: new Date().toISOString(),
-      }
-    }).returning();
+      }).onConflictDoUpdate({
+        target: [consumerProfiles.document],
+        set: {
+          name: input.nome,
+          lgpdConsent: input.lgpdConsentimento,
+          consentDate: new Date().toISOString(),
+          consentOperatorId: operatorId && operatorId !== "SISTEMA" ? operatorId : null,
+          updatedAt: new Date().toISOString(),
+        }
+      }).returning();
 
-    // 2. Criar ou atualizar customer
-    const [cliente] = await db.insert(customers).values({
-      tenantId,
-      consumerProfileId: profile.id,
-    }).onConflictDoUpdate({
-      target: [customers.tenantId, customers.consumerProfileId],
-      set: {
-        updatedAt: new Date().toISOString(),
-      }
-    }).returning();
+      // 3. Criar ou atualizar customer
+      const existingCustomer = await tx.query.customers.findFirst({
+        where: and(
+          eq(customers.tenantId, tenantId),
+          eq(customers.consumerProfileId, profile.id)
+        ),
+      });
 
-    // 3. Registrar na Auditoria
+
+
+      const [cliente] = await tx.insert(customers).values({
+        tenantId,
+        consumerProfileId: profile.id,
+      }).onConflictDoUpdate({
+        target: [customers.tenantId, customers.consumerProfileId],
+        set: {
+          updatedAt: new Date().toISOString(),
+        }
+      }).returning();
+
+      return {
+        id: cliente.id,
+        document: profile.document,
+        nome: profile.name,
+        consumerProfileId: profile.id,
+      };
+    });
+
+    // 4. Registrar na Auditoria (fora da transação para evitar deadlocks)
     await logAuditEvent({
       tenantId,
-      operatorId,
+      operatorId: operatorId && operatorId !== "SISTEMA" ? operatorId : null,
       action: "CREATE_CUSTOMER",
       entityType: "CUSTOMER",
-      entityId: String(cliente.id),
+      entityId: String(result.id),
       metadata: {
-        clienteId: cliente.id,
-        clienteNome: profile.name,
-        clienteCpf: profile.document,
+        clienteId: result.id,
+        clienteNome: result.nome,
+        clienteCpf: result.document,
       }
     });
 
-    return {
-      id: cliente.id,
-      document: profile.document,
-      nome: profile.name,
-      consumerProfileId: profile.id,
-    };
+    return result;
   }
 
   async buscarPerfilGlobalPorCpf(document: string) {
@@ -201,37 +222,59 @@ export class ClientesService {
     return null;
   }
 
-  async vincularPerfilExistente(tenantId: string, profile: { consumerProfileId: string; document: string; nome: string | null }) {
-    const [cliente] = await db.insert(customers).values({
-      tenantId,
-      consumerProfileId: profile.consumerProfileId,
-    }).onConflictDoUpdate({
-      target: [customers.tenantId, customers.consumerProfileId],
-      set: {
-        updatedAt: new Date().toISOString(),
-      }
-    }).returning();
+  async vincularPerfilExistente(tenantId: string, profile: { consumerProfileId: string; document: string; nome: string | null }, operatorId?: string | null) {
+    const result = await db.transaction(async (tx) => {
+      // 1. Lock do Tenant para evitar condições de corrida (Race Conditions)
+      await tx
+        .select({ id: tenants.id })
+        .from(tenants)
+        .where(eq(tenants.id, tenantId))
+        .for("update");
 
-    // Registrar o vínculo na auditoria (Opcional, mas recomendado)
+      // 2. Verificar se já existe vínculo
+      const existing = await tx.query.customers.findFirst({
+        where: and(
+          eq(customers.tenantId, tenantId),
+          eq(customers.consumerProfileId, profile.consumerProfileId)
+        ),
+      });
+
+
+
+      const [cliente] = await tx.insert(customers).values({
+        tenantId,
+        consumerProfileId: profile.consumerProfileId,
+      }).onConflictDoUpdate({
+        target: [customers.tenantId, customers.consumerProfileId],
+        set: {
+          updatedAt: new Date().toISOString(),
+        }
+      }).returning();
+
+      return {
+        id: cliente.id,
+        document: profile.document,
+        nome: profile.nome,
+        consumerProfileId: profile.consumerProfileId,
+      };
+    });
+
+    // 4. Registrar o vínculo na auditoria (fora da transação para evitar deadlocks)
+    const validOperatorId = operatorId && operatorId !== "SISTEMA" ? operatorId : null;
     await logAuditEvent({
       tenantId,
-      operatorId: "SISTEMA", // Pode ser substituído se passarmos o operador
+      operatorId: validOperatorId,
       action: "LINK_GLOBAL_CUSTOMER",
       entityType: "CUSTOMER",
-      entityId: String(cliente.id),
+      entityId: String(result.id),
       metadata: {
-        clienteId: cliente.id,
-        clienteNome: profile.nome,
-        clienteCpf: profile.document,
+        clienteId: result.id,
+        clienteNome: result.nome,
+        clienteCpf: result.document,
       }
     });
 
-    return {
-      id: cliente.id,
-      document: profile.document,
-      nome: profile.nome,
-      consumerProfileId: profile.consumerProfileId,
-    };
+    return result;
   }
 
   async consultarSaldo(tenantId: string, document: string) {
