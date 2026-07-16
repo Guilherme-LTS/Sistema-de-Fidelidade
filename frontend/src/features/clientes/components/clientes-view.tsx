@@ -37,9 +37,11 @@ import {
   AlertTriangle,
   FileText,
   Edit2,
-  ArrowLeft
+  ArrowLeft,
+  AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth/auth-context"
 
 const formatarData = (dataISO?: string | null) => {
   if (!dataISO) return ""
@@ -56,6 +58,7 @@ const formatarData = (dataISO?: string | null) => {
 }
 
 export function ClientesView() {
+  const { user } = useAuth()
   // Estados de busca e paginação
   const [termoBusca, setTermoBusca] = useState("")
   const debouncedBusca = useDebounce(termoBusca, 500)
@@ -138,6 +141,7 @@ export function ClientesView() {
 
   return (
     <div className="space-y-4">
+
       {/* Barra de Filtros / Ações */}
       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-card p-3 rounded-xl border border-border">
         <div className="flex items-center gap-2 px-1">

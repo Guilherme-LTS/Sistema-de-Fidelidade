@@ -33,6 +33,7 @@ import { publicRoutes } from "./modules/public/public.routes.js";
 import { consumerRoutes } from "./modules/consumer/consumer.routes.js";
 import { cronRoutes } from "./modules/cron/cron.routes.js";
 import { dashboardRoutes } from "./modules/dashboard/dashboard.routes.js";
+import { billingRoutes } from "./modules/billing/billing.routes.js";
 
 // Rota de Health Check (/health)
 app.get("/health", async (_request, _reply) => {
@@ -57,3 +58,4 @@ app.register(publicRoutes, { prefix: "/public" });
 app.register(consumerRoutes, { prefix: "/consumer" });
 app.register(cronRoutes, { prefix: "/webhooks/cron" });
 app.register(dashboardRoutes, { prefix: "/dashboard" });
+app.register(billingRoutes, { prefix: "/billing" });

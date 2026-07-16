@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutDashboard, Users, Gift, Settings, Trophy, LogOut, ShieldCheck, UsersRound, UserCircle } from "lucide-react"
+import { LayoutDashboard, Users, Gift, Settings, Trophy, LogOut, ShieldCheck, UsersRound, UserCircle, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import Link from "next/link"
@@ -35,6 +35,7 @@ const sidebarGroups = [
   {
     title: "Configurações",
     items: [
+      { icon: CreditCard, label: "Assinatura", href: routes.admin.assinatura, roles: ["admin"] },
       { icon: Settings, label: "Configurações", href: routes.admin.configuracoes, roles: ["admin"] },
     ]
   },

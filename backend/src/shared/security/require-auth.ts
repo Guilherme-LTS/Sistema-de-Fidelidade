@@ -13,6 +13,11 @@ export type AuthenticatedUser = {
   email?: string;
   phone?: string | null;
   name: string;
+  subscriptionStatus?: string | null;
+  subscriptionCurrentPeriodEnd?: string | null;
+  subscriptionPriceId?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  trialOnboardingShown?: boolean;
 };
 
 // Declaração para estender o FastifyRequest com a propriedade do usuário autenticado
@@ -109,5 +114,10 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
     email: supabaseUser.email,
     phone: tenantUserRecord.phone,
     name: tenantUserRecord.name,
+    subscriptionStatus: tenantUserRecord.tenant?.subscriptionStatus,
+    subscriptionCurrentPeriodEnd: tenantUserRecord.tenant?.subscriptionCurrentPeriodEnd,
+    subscriptionPriceId: tenantUserRecord.tenant?.subscriptionPriceId,
+    cancelAtPeriodEnd: tenantUserRecord.tenant?.cancelAtPeriodEnd ?? false,
+    trialOnboardingShown: tenantUserRecord.tenant?.trialOnboardingShown ?? false,
   };
 }

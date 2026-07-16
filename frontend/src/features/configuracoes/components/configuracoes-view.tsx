@@ -1,5 +1,7 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Building2, Gift } from "lucide-react"
 
@@ -7,9 +9,21 @@ import { PerfilRestauranteTab } from "./tabs/perfil-restaurante-tab"
 import { ProgramaFidelidadeTab } from "./tabs/programa-fidelidade-tab"
 
 export function ConfiguracoesView() {
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState("restaurante")
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab")
+    if (tabParam === "fidelidade") {
+      setActiveTab(tabParam)
+    } else {
+      setActiveTab("restaurante")
+    }
+  }, [searchParams])
+
   return (
     <div className="w-full">
-      <Tabs defaultValue="restaurante" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="restaurante" className="data-[state=active]:bg-background">
             <Building2 className="w-4 h-4 mr-2" />
@@ -25,7 +39,6 @@ export function ConfiguracoesView() {
         <TabsContent value="restaurante" className="focus-visible:outline-none">
           <PerfilRestauranteTab />
         </TabsContent>
-
 
         <TabsContent value="fidelidade" className="focus-visible:outline-none">
           <ProgramaFidelidadeTab />

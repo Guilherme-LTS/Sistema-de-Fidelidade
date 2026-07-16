@@ -14,6 +14,7 @@ export const routes = {
     fidelidade: "/admin/fidelidade",
     recompensas: "/admin/recompensas",
     configuracoes: "/admin/configuracoes",
+    assinatura: "/admin/assinatura",
     auditoria: "/admin/auditoria",
     equipe: "/admin/equipe",
     perfil: "/admin/perfil",

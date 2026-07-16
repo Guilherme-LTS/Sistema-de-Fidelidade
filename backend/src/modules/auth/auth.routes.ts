@@ -4,6 +4,7 @@ import { successResponse } from "../../shared/http/response.js";
 import { z } from "zod";
 import { AppError } from "../../shared/errors/app-error.js";
 import { supabaseAuthGateway } from "../../infra/auth/supabase-auth.gateway.js";
+import { planLimitService } from "../billing/plan-limit.service.js";
 import { db } from "../../infra/database/db.js";
 import { auditLogs } from "../../infra/database/schema.js";
 
@@ -18,6 +19,30 @@ export async function authRoutes(app: FastifyInstance) {
       // O request.user é populado pelo requireAuth
       const user = request.user!;
 
+      // Se for admin, garante a criação do Customer ID no Stripe de forma assíncrona
+      if (user.role === "admin" && user.tenantId) {
+        import("../billing/stripe.service.js")
+          .then(({ stripeService }) => {
+            stripeService.getOrCreateCustomer(user.tenantId).catch((err) => {
+              console.error("[Stripe] Erro ao criar/obter Customer ID no background:", err);
+            });
+          })
+          .catch((err) => {
+            console.error("[Stripe] Falha ao importar stripe.service:", err);
+          });
+      }
+
+      let planLimits = null;
+      let usage = { operators: 0, customers: 0 };
+      if (user.tenantId) {
+        try {
+          planLimits = await planLimitService.getTenantLimits(user.tenantId);
+          usage = await planLimitService.getTenantUsage(user.tenantId);
+        } catch (err) {
+          // Ignora erro se for um tenant ainda não criado
+        }
+      }
+
       // Retorna os dados mapeados para o que o frontend espera (UsuarioPerfil)
       return successResponse({
         id: user.tenantUserId,
@@ -29,6 +54,19 @@ export async function authRoutes(app: FastifyInstance) {
         tenant_id: user.tenantId,
         tenant_name: user.tenantName,
         tenant_logo_url: user.tenantLogoUrl,
+        subscription_status: user.subscriptionStatus,
+        subscription_current_period_end: user.subscriptionCurrentPeriodEnd,
+        subscription_price_id: user.subscriptionPriceId,
+        cancel_at_period_end: user.cancelAtPeriodEnd ?? false,
+        plan_name: planLimits?.name || "Trial",
+        allow_custom_regulation: planLimits?.allowCustomRegulation ?? false,
+        trial_onboarding_shown: user.trialOnboardingShown ?? false,
+        usage: {
+          operators: usage.operators,
+          max_operators: planLimits?.maxOperators ?? 2,
+          customers: usage.customers,
+          max_customers: planLimits?.maxCustomers ?? 200,
+        },
       });
     }
   );
@@ -210,6 +248,10 @@ export async function authRoutes(app: FastifyInstance) {
       });
 
       if (!existing) {
+        if (invite.role === "operador") {
+          await planLimitService.checkOperatorLimit(invite.tenantId!);
+        }
+
         // Create user in tenant
         await db.insert(tenantUsers).values({
           tenantId: invite.tenantId!,
