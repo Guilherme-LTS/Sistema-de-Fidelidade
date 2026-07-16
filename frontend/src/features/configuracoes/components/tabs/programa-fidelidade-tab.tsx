@@ -15,6 +15,7 @@ import { useFidelidadeConfig } from "../../hooks/use-configuracoes"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
+import { useAuth } from "@/lib/auth/auth-context"
 
 const applyMoneyMask = (value: string) => {
   let v = value.replace(/\D/g, "")
@@ -37,6 +38,7 @@ const formSchema = z.object({
 })
 
 export function ProgramaFidelidadeTab() {
+  const { user } = useAuth()
   const { query, mutation } = useFidelidadeConfig()
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -185,6 +187,16 @@ export function ProgramaFidelidadeTab() {
             {/* Observações do Regulamento */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Termos e Regulamento</h3>
+              
+              {user?.allow_custom_regulation !== true && (
+                <div className="flex items-center gap-2 p-3 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 rounded-xl text-xs">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>
+                    Sua assinatura atual (plano {user?.plan_name || "Gratuito"}) não permite personalizar observações do regulamento. Faça upgrade para o plano <strong>Pro</strong> para desbloquear este recurso.
+                  </span>
+                </div>
+              )}
+
               <FormField
                 control={form.control}
                 name="regulationNotes"
@@ -193,8 +205,12 @@ export function ProgramaFidelidadeTab() {
                     <FormLabel>Observações ou Regras Especiais</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Ex.: O acúmulo de pontos não é cumulativo com outras promoções. Válido apenas para consumo no local." 
+                        placeholder={user?.allow_custom_regulation === true 
+                          ? "Ex.: O acúmulo de pontos não é cumulativo com outras promoções. Válido apenas para consumo no local." 
+                          : "Disponível apenas no plano Pro. Faça upgrade para personalizar o regulamento."
+                        } 
                         className="min-h-[100px] resize-y"
+                        disabled={user?.allow_custom_regulation !== true}
                         {...field} 
                       />
                     </FormControl>

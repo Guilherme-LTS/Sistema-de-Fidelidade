@@ -27,6 +27,16 @@ export const tenants = pgTable("tenants", {
   businessHours: jsonb("business_hours").$type<Record<string, { active: boolean; open: string; close: string }>>(),
   socialLinks: jsonb("social_links").$type<{ instagram?: string; facebook?: string; tiktok?: string; website?: string }>(),
   isActive: boolean("is_active").default(true),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }).unique(),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }).unique(),
+  stripeSubscriptionLastEventAt: integer("stripe_subscription_last_event_at"),
+  stripeBillingCachedDetails: jsonb("stripe_billing_cached_details").$type<any>(),
+  stripeBillingLastSyncedAt: integer("stripe_billing_last_synced_at"),
+  subscriptionStatus: varchar("subscription_status", { length: 50 }).default("trialing"),
+  subscriptionPriceId: varchar("subscription_price_id", { length: 255 }),
+  subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end", { withTimezone: true, mode: "string" }).default(sql`(now() + interval '14 days')`),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
+  trialOnboardingShown: boolean("trial_onboarding_shown").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow(),
 });
@@ -273,3 +283,26 @@ export const expirationItemsRelations = relations(expirationItems, ({ one }) => 
     references: [transactions.id],
   }),
 }));
+
+export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  processedAt: timestamp("processed_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+});
+
+export const stripeInvoices = pgTable("stripe_invoices", {
+  id: varchar("id", { length: 255 }).primaryKey(), // matches Stripe invoice ID, e.g. "in_..."
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  amount: integer("amount").notNull(),
+  status: varchar("status", { length: 50 }).notNull(),
+  pdfUrl: text("pdf_url"),
+  receiptUrl: text("receipt_url"),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull(),
+});
+
+export const stripeInvoicesRelations = relations(stripeInvoices, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [stripeInvoices.tenantId],
+    references: [tenants.id],
+  }),
+}));
+

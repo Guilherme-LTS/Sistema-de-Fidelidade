@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: carregarPerfilAtual,
     enabled: hasToken && !isInitializing && !isAlterarSenhaPage,
     retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutos de cache em memória
+    staleTime: 1000 * 30, // 30 segundos de cache para sincronizar status de cobrança rapidamente
   })
 
   // Carrega a lista de tenants quando o perfil do usuário for retornado

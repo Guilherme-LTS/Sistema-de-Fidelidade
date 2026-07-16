@@ -63,7 +63,7 @@ export class TransacoesService {
 
       if (perfilGlobal) {
         // Se existe globalmente, vincula o cliente ao restaurante automaticamente
-        cliente = await clientesService.vincularPerfilExistente(input.tenantId, perfilGlobal);
+        cliente = await clientesService.vincularPerfilExistente(input.tenantId, perfilGlobal, input.authUserId);
       } else {
         // 2. Não existe globalmente, precisamos do aceite da LGPD para criar o perfil
         if (input.lgpdConsentimento !== true) {

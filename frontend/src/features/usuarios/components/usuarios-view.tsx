@@ -5,9 +5,10 @@ import { useAuth } from "@/lib/auth/auth-context"
 import { useUsuarios } from "../hooks/use-usuarios"
 import { Usuario } from "../usuarios.api"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Search, MoreHorizontal, Check, X, ShieldAlert, ShieldCheck, User } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Check, X, ShieldAlert, ShieldCheck, User, AlertCircle } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { format } from "date-fns"
@@ -28,12 +29,17 @@ import {
 import { Trash2 } from "lucide-react"
 
 export function UsuariosView() {
+  const { user } = useAuth()
   const { query, alterarStatus, excluir } = useUsuarios()
   const { data: usuarios, isLoading } = query
   const [search, setSearch] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null)
   const [deleteUsuario, setDeleteUsuario] = useState<Usuario | null>(null)
+
+  const activeOperatorsCount = user?.usage?.operators || 0
+  const maxOperators = user?.usage?.max_operators || 10
+  const isAtLimit = activeOperatorsCount >= maxOperators
 
   const filteredUsuarios = usuarios?.filter((u) => {
     const term = search.toLowerCase()
@@ -54,10 +60,12 @@ export function UsuariosView() {
   }
 
   const toggleStatus = (usuario: Usuario) => {
+    if (!usuario.isActive && isAtLimit) {
+      toast.error(`Limite de operadores excedido. Seu plano atual permite no máximo ${maxOperators} operadores. Remova ou desative outro operador antes de reativar este, ou faça um upgrade no seu plano.`)
+      return
+    }
     alterarStatus.mutate({ id: usuario.id, isActive: !usuario.isActive })
   }
-
-  const { user } = useAuth()
   
   // Identificar o proprietário do tenant (dono da conta)
   // O dono é a pessoa cujo auth.user_id é igual ao tenant_id
@@ -97,9 +105,23 @@ export function UsuariosView() {
             className="pl-9 h-9"
           />
         </div>
-        <Button onClick={openModalForCreate} className="h-9 shadow-md transition-all hover:scale-105">
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Usuário
+        <Button 
+          onClick={() => {
+            if (isAtLimit) {
+              toast.error(`Limite atingido! Seu plano atual permite até ${maxOperators} operadores. Faça o upgrade para adicionar mais.`)
+              return
+            }
+            openModalForCreate()
+          }} 
+          className="h-9 shadow-md transition-all hover:scale-105"
+          variant={isAtLimit ? "secondary" : "default"}
+        >
+          {isAtLimit ? (
+            <ShieldAlert className="mr-2 h-4 w-4 text-amber-500" />
+          ) : (
+            <Plus className="mr-2 h-4 w-4" />
+          )}
+          {isAtLimit ? "Limite Atingido" : "Novo Usuário"}
         </Button>
       </div>
 
@@ -271,6 +293,6 @@ export function UsuariosView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+      </Card>
   )
 }

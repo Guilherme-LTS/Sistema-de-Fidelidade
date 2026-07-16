@@ -13,6 +13,11 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().transform((val) => val.split(",").map((s) => s.trim())),
   FRONTEND_URL: z.string().url(),
   RESEND_API_KEY: z.string().startsWith("re_"),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
+  STRIPE_PRICE_PRO_MENSAL: z.string().optional(),
+  STRIPE_PRICE_PRO_ANUAL: z.string().optional(),
 });
 
 const _env = envSchema.safeParse(process.env);
