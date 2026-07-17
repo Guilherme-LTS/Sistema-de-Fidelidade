@@ -26,7 +26,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-3">
             <Button variant="ghost" className="hidden sm:inline-flex font-medium" asChild>
-              <Link href={routes.auth.login}>Entrar (Lojista)</Link>
+              <Link href="https://app.usepontus.com.br/login">Entrar (Lojista)</Link>
             </Button>
             <Button className="rounded-full shadow-md font-medium" asChild>
               <Link href="/painel">
@@ -261,8 +261,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 gap-12 text-sm">
             <div className="flex flex-col space-y-3">
               <h4 className="font-semibold text-foreground">Produto (B2B)</h4>
-              <Link href={routes.auth.login} className="text-muted-foreground hover:text-foreground">Entrar no Painel</Link>
-              <Link href={routes.auth.cadastro} className="text-muted-foreground hover:text-foreground">Criar Conta</Link>
+              <Link href="https://app.usepontus.com.br/login" className="text-muted-foreground hover:text-foreground">Entrar no Painel</Link>
+              <Link href="https://app.usepontus.com.br/cadastro" className="text-muted-foreground hover:text-foreground">Criar Conta</Link>
             </div>
             <div className="flex flex-col space-y-3">
               <h4 className="font-semibold text-foreground">Consumidores (B2C)</h4>
