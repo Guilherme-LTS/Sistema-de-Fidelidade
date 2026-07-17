@@ -11,9 +11,9 @@ export default function CadastroPage() {
       
       {/* Botão Voltar */}
       <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
-        <Link href="/" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-12">
+        <a href="https://usepontus.com.br" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-12">
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o início
-        </Link>
+        </a>
       </div>
 
       <div className="w-full max-w-[560px] relative z-10 py-12 md:py-0">

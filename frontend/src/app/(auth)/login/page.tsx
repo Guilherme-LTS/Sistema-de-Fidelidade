@@ -13,9 +13,9 @@ export default function LoginPage() {
       <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none" />
       
       <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
-        <Link href="/" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-12">
+        <a href="https://usepontus.com.br" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-12">
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o início
-        </Link>
+        </a>
       </div>
 
       <div className="w-full max-w-[420px] relative z-10">
