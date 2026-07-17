@@ -12,7 +12,7 @@ class StripeService {
   constructor() {
     if (env.STRIPE_SECRET_KEY) {
       this.stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-        apiVersion: "2025-01-27.acacia" as any, // Use stable API version or standard types
+        apiVersion: "2026-06-24.dahlia" as any, // Alinhado com a versão estável de produção do Webhook
         maxNetworkRetries: 3, // Habilita retries automáticos integrados do SDK para falhas transientes de rede/429
       });
     }
