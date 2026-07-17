@@ -39,14 +39,6 @@ export const metadata: Metadata = {
     description: "A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.",
     images: ["/logo-dark.png"],
   },
-  icons: {
-    icon: [
-      { url: "/icon-light-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon.svg", type: "image/svg+xml" }
-    ],
-    shortcut: "/icon-light-32x32.png",
-    apple: "/apple-icon.png",
-  },
 }
 
 export default function RootLayout({

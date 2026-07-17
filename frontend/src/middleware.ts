@@ -5,6 +5,18 @@ export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
 
+  // Evitar redirecionar requisições internas do Next.js (RSC data, prefetch, static assets, APIs, etc.)
+  const isInternalOrApi =
+    url.pathname.startsWith('/_next') ||
+    url.pathname.startsWith('/api') ||
+    url.pathname.includes('.') ||
+    url.searchParams.has('_rsc') ||
+    request.headers.has('RSC');
+
+  if (isInternalOrApi) {
+    return NextResponse.next();
+  }
+
   // Identifica se a requisição está batendo no subdomínio "app"
   const isAppDomain = hostname.startsWith('app.usepontus.com.br') || hostname.startsWith('app.localhost') || hostname.startsWith('app.');
 
