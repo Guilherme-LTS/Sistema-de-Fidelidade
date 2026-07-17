@@ -27,4 +27,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-usepontus.com.br.txt
+/usepontus.com.br.txt
