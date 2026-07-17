@@ -62,7 +62,7 @@ export default function LandingPage() {
             
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="h-12 px-8 text-base shadow-xl rounded-full" asChild>
-                <Link href={routes.auth.cadastro}>Criar Conta Grátis <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                <a href="https://app.usepontus.com.br/cadastro">Criar Conta Grátis <ArrowRight className="ml-2 h-5 w-5" /></a>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 text-base rounded-full" asChild>
                 <Link href="#como-funciona">Como Funciona</Link>

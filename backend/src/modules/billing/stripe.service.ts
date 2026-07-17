@@ -342,35 +342,61 @@ class StripeService {
 
       const customerId = tenant.stripeCustomerId;
  
-      // 1. Listar faturas recentes e persistir localmente (auto-healing)
-      const invoices = await stripe.invoices.list({
-        customer: customerId,
-        limit: 10,
-      });
- 
-      for (const inv of invoices.data) {
-        if (inv.total > 0 && inv.status) {
-          await tx
-            .insert(stripeInvoices)
-            .values({
-              id: inv.id,
-              tenantId: tenantId,
-              amount: inv.total,
-              status: inv.status,
-              pdfUrl: inv.invoice_pdf || null,
-              receiptUrl: inv.hosted_invoice_url || null,
-              createdAt: inv.created ? new Date(inv.created * 1000).toISOString() : new Date().toISOString(),
-            })
-            .onConflictDoUpdate({
-              target: stripeInvoices.id,
-              set: {
+      // 1. Listar faturas recentes e persistir localmente (auto-healing de JIT sync)
+      try {
+        const invoices = await stripe.invoices.list({
+          customer: customerId,
+          limit: 10,
+        });
+   
+        for (const inv of invoices.data) {
+          if (inv.total > 0 && inv.status) {
+            await tx
+              .insert(stripeInvoices)
+              .values({
+                id: inv.id,
+                tenantId: tenantId,
                 amount: inv.total,
                 status: inv.status,
                 pdfUrl: inv.invoice_pdf || null,
                 receiptUrl: inv.hosted_invoice_url || null,
-              },
-            });
+                createdAt: inv.created ? new Date(inv.created * 1000).toISOString() : new Date().toISOString(),
+              })
+              .onConflictDoUpdate({
+                target: stripeInvoices.id,
+                set: {
+                  amount: inv.total,
+                  status: inv.status,
+                  pdfUrl: inv.invoice_pdf || null,
+                  receiptUrl: inv.hosted_invoice_url || null,
+                },
+              });
+          }
         }
+      } catch (err: any) {
+        // Se a Stripe retornar 404 (Resource Missing) indicando que o Customer ID de teste foi pesquisado no ambiente Live
+        if (err.statusCode === 404 || err.message?.includes("No such customer") || err.code === "resource_missing") {
+          console.warn(`[Stripe Auto-healing] ID do Customer (${customerId}) inexistente ou incompatível com o ambiente atual. Resetando credenciais locais para o tenant ${tenantId}.`);
+          
+          await tx
+            .update(tenants)
+            .set({
+              stripeCustomerId: null,
+              stripeSubscriptionId: null,
+              subscriptionStatus: null,
+              subscriptionPriceId: null,
+              subscriptionCurrentPeriodEnd: null,
+              stripeSubscriptionLastEventAt: null,
+              stripeBillingCachedDetails: null,
+              stripeBillingLastSyncedAt: null,
+            })
+            .where(eq(tenants.id, tenantId));
+          
+          return null; // Aborta e retorna null de faturamento indicando conta zerada limpa
+        }
+        
+        // Repropaga outros tipos de erros
+        throw err;
       }
  
       // Buscar do espelho local para retornar ao frontend
