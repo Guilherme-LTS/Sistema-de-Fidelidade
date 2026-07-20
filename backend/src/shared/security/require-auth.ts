@@ -103,6 +103,19 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
     throw new ForbiddenError("Acesso pendente de ativação de convite.");
   }
 
+  let subStatus = tenantUserRecord.tenant?.subscriptionStatus;
+  let subPeriodEnd = tenantUserRecord.tenant?.subscriptionCurrentPeriodEnd;
+
+  // Fallback de resiliência: Se o status estiver nulo mas a conta tem menos de 14 dias de criação, assume trial ativo
+  if (!subStatus && tenantUserRecord.tenant?.createdAt) {
+    const createdAtDate = new Date(tenantUserRecord.tenant.createdAt);
+    const trialEnd = new Date(createdAtDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+    if (trialEnd > new Date()) {
+      subStatus = "trialing";
+      subPeriodEnd = trialEnd.toISOString();
+    }
+  }
+
   // 3. Montar e injetar o AuthenticatedUser no request
   request.user = {
     authUserId: supabaseUser.id,
@@ -114,8 +127,8 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
     email: supabaseUser.email,
     phone: tenantUserRecord.phone,
     name: tenantUserRecord.name,
-    subscriptionStatus: tenantUserRecord.tenant?.subscriptionStatus,
-    subscriptionCurrentPeriodEnd: tenantUserRecord.tenant?.subscriptionCurrentPeriodEnd,
+    subscriptionStatus: subStatus,
+    subscriptionCurrentPeriodEnd: subPeriodEnd,
     subscriptionPriceId: tenantUserRecord.tenant?.subscriptionPriceId,
     cancelAtPeriodEnd: tenantUserRecord.tenant?.cancelAtPeriodEnd ?? false,
     trialOnboardingShown: tenantUserRecord.tenant?.trialOnboardingShown ?? false,

@@ -378,14 +378,22 @@ class StripeService {
         if (err.statusCode === 404 || err.message?.includes("No such customer") || err.code === "resource_missing") {
           console.warn(`[Stripe Auto-healing] ID do Customer (${customerId}) inexistente ou incompatível com o ambiente atual. Resetando credenciais locais para o tenant ${tenantId}.`);
           
+          // Preservar período de teste (trial) se a conta tiver menos de 14 dias
+          const createdAtDate = tenant.createdAt ? new Date(tenant.createdAt) : new Date();
+          const trialEnd = new Date(createdAtDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+          const isTrialStillValid = trialEnd > new Date();
+
+          const fallbackStatus = isTrialStillValid ? "trialing" : null;
+          const fallbackPeriodEnd = isTrialStillValid ? trialEnd.toISOString() : null;
+
           await tx
             .update(tenants)
             .set({
               stripeCustomerId: null,
               stripeSubscriptionId: null,
-              subscriptionStatus: null,
+              subscriptionStatus: fallbackStatus,
               subscriptionPriceId: null,
-              subscriptionCurrentPeriodEnd: null,
+              subscriptionCurrentPeriodEnd: fallbackPeriodEnd,
               stripeSubscriptionLastEventAt: null,
               stripeBillingCachedDetails: null,
               stripeBillingLastSyncedAt: null,
@@ -439,9 +447,29 @@ class StripeService {
       let pmDetails: any = null;
       let scheduledPlanChange: any = null;
 
-      if (tenant.stripeSubscriptionId) {
+      let targetSubId = tenant.stripeSubscriptionId;
+
+      // Auto-healing / Desincronização: Se não houver subscriptionId salvo localmente, pesquisa na Stripe por assinaturas ativas
+      if (!targetSubId && customerId) {
         try {
-          sub = await stripe.subscriptions.retrieve(tenant.stripeSubscriptionId, {
+          const activeSubs = await stripe.subscriptions.list({
+            customer: customerId,
+            status: "all",
+            limit: 5,
+          });
+          const validSub = activeSubs.data.find((s) => ["active", "trialing", "past_due"].includes(s.status));
+          if (validSub) {
+            targetSubId = validSub.id;
+            console.log(`[Stripe Auto-healing] Assinatura ativa (${validSub.id}) recuperada na Stripe para o tenant ${tenantId}.`);
+          }
+        } catch (e) {
+          console.error("[Stripe Auto-healing] Falha ao pesquisar assinaturas ativas por Customer ID:", e);
+        }
+      }
+
+      if (targetSubId) {
+        try {
+          sub = await stripe.subscriptions.retrieve(targetSubId, {
             expand: ["default_payment_method"],
           }) as any;
 
@@ -535,13 +563,14 @@ class StripeService {
           tenant.subscriptionPriceId !== (isExpired ? null : (price?.id || null)) ||
           dbPeriodEnd !== (isExpired ? null : stripePeriodEnd) ||
           (isExpired && tenant.stripeSubscriptionId !== null) ||
+          tenant.stripeSubscriptionId !== (isExpired ? null : sub.id) ||
           !tenant.stripeSubscriptionLastEventAt
         ) {
           updatePayload.subscriptionStatus = sub.status;
           updatePayload.subscriptionCurrentPeriodEnd = isExpired ? null : stripePeriodEnd;
           updatePayload.subscriptionPriceId = isExpired ? null : (price?.id || null);
           updatePayload.cancelAtPeriodEnd = isExpired ? false : (sub.cancel_at_period_end ?? false);
-          updatePayload.stripeSubscriptionId = isExpired ? null : tenant.stripeSubscriptionId;
+          updatePayload.stripeSubscriptionId = isExpired ? null : sub.id;
           updatePayload.stripeSubscriptionLastEventAt = nowUnix;
           console.log(`[JIT Sync] Divergência identificada no tenant ${tenantId}. Atualizando campos locais da assinatura...`);
         }
