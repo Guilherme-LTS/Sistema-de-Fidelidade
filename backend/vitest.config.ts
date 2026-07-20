@@ -14,5 +14,9 @@ export default defineConfig({
     env: {
       NODE_ENV: "test",
     },
+    // Runs once before all test suites — drops Supabase-internal auth.users FK
+    // so the local dev database matches the clean CI Postgres container exactly.
+    globalSetup: ["./tests/helpers/global-setup.ts"],
   },
 });
+

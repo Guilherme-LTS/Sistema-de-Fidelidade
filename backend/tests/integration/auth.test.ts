@@ -1,102 +1,57 @@
+/**
+ * tests/integration/auth.test.ts
+ *
+ * Integration tests for the requireAuth and requireRole middleware chain.
+ *
+ * Isolation strategy:
+ * - supabaseAuthGateway.getUser is mocked at the boundary: no real Supabase
+ *   network calls are made. The mock maps synthetic bearer tokens to synthetic
+ *   user IDs that match the rows seeded by factories.ts.
+ * - Database rows are created via seedAuthTestData() using deterministic
+ *   synthetic UUIDs that do NOT exist in any real production database.
+ * - No dependency on auth.users (Supabase internal schema) anywhere in this file.
+ */
+
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
-import { sql } from "drizzle-orm";
 import { app } from "../../src/app.js";
 import { requireAuth } from "../../src/shared/security/require-auth.js";
 import { requireRole } from "../../src/shared/security/require-role.js";
 import { supabaseAuthGateway } from "../../src/infra/auth/supabase-auth.gateway.js";
 import { User } from "@supabase/supabase-js";
-import { db } from "../../src/infra/database/db.js";
+import {
+  seedAuthTestData,
+  cleanAuthTestData,
+  TEST_ADMIN_UID,
+  TEST_OPERATOR_UID,
+  TEST_INACTIVE_UID,
+  TEST_TENANT_ID,
+  TEST_ADMIN_TU_ID,
+} from "../helpers/factories.js";
 
-// Usamos as chaves de usuários reais existentes no banco de dados para evitar violações de FK com auth.users
-const realAdminUid = "4173d533-32f8-4914-84b3-425c3486a8b5";     // Restaurante A (Admin)
-const realOperatorUid = "64cf7e17-2584-49f3-b43e-c3928df98e57";  // Operador A (Operador)
-const realInactiveUid = "1f6a9bbd-7f23-49f7-99f1-5f23cf58a8e4";  // Operador B (Será desativado temporariamente)
+// ---------------------------------------------------------------------------
+// Mock the auth gateway boundary — decouples tests from real Supabase Auth
+// ---------------------------------------------------------------------------
+vi.spyOn(supabaseAuthGateway, "getUser").mockImplementation(
+  async (token: string) => {
+    const tokenMap: Record<string, Partial<User>> = {
+      "valid-admin-token":    { id: TEST_ADMIN_UID,    email: "admin@test.com" },
+      "valid-operator-token": { id: TEST_OPERATOR_UID, email: "operator@test.com" },
+      "inactive-user-token":  { id: TEST_INACTIVE_UID, email: "inactive@test.com" },
+    };
+    return (tokenMap[token] as User) ?? null;
+  }
+);
 
-// Mock do Supabase Auth Gateway para simular decodificação de JWTs
-vi.spyOn(supabaseAuthGateway, "getUser").mockImplementation(async (token: string) => {
-  if (token === "valid-admin-token") {
-    return { id: realAdminUid, email: "admin@test.com" } as unknown as User;
-  }
-  if (token === "valid-operator-token") {
-    return { id: realOperatorUid, email: "operator@test.com" } as unknown as User;
-  }
-  if (token === "inactive-user-token") {
-    return { id: realInactiveUid, email: "inactive@test.com" } as unknown as User;
-  }
-  return null;
-});
-
+// ---------------------------------------------------------------------------
+// Suite
+// ---------------------------------------------------------------------------
 describe("Authentication & Authorization Integration", () => {
-  const testTenantId = "4173d533-32f8-4914-84b3-425c3486a8b5";
 
   beforeAll(async () => {
-    // 1. Inserir UIDs no auth.users (se a permissão do banco permitir)
-    try {
-      await db.execute(sql`
-        INSERT INTO auth.users (id, email)
-        VALUES 
-          (${realAdminUid}::uuid, 'admin@test.com'),
-          (${realOperatorUid}::uuid, 'operator@test.com'),
-          (${realInactiveUid}::uuid, 'inactive@test.com')
-        ON CONFLICT (id) DO NOTHING;
-      `);
-    } catch {
-      // Tabela auth.users é gerenciada pelo Supabase Auth em nuvem; ignora se permissão for negada
-    }
+    // Seed synthetic test fixtures (idempotent, no dependency on auth.users)
+    await seedAuthTestData();
 
-    // 3. Garantir que o tenant de teste exista e esteja ativo (autocontido para CI e Dev)
-    await db.execute(sql`
-      INSERT INTO tenants (id, name, is_active)
-      VALUES (${testTenantId}::uuid, 'Test Tenant Admin', true)
-      ON CONFLICT (id) DO UPDATE SET is_active = true
-    `);
-
-    // 4. Garantir que o usuário admin de teste exista e esteja ativo
-    await db.execute(sql`
-      INSERT INTO tenant_users (id, tenant_id, user_id, name, role, is_active, status)
-      VALUES (
-        '26b5a3e4-29c9-4178-9dd0-ab39e6cb842d'::uuid,
-        ${testTenantId}::uuid,
-        ${realAdminUid}::uuid,
-        'Admin User',
-        'admin',
-        true,
-        'active'
-      )
-      ON CONFLICT (id) DO UPDATE SET is_active = true, status = 'active', role = 'admin'
-    `);
-
-    // 5. Garantir que o usuário operador de teste exista e esteja ativo
-    await db.execute(sql`
-      INSERT INTO tenant_users (id, tenant_id, user_id, name, role, is_active, status)
-      VALUES (
-        '64cf7e17-2584-49f3-b43e-c3928df98e57'::uuid,
-        ${testTenantId}::uuid,
-        ${realOperatorUid}::uuid,
-        'Operator User',
-        'operador',
-        true,
-        'active'
-      )
-      ON CONFLICT (id) DO UPDATE SET is_active = true, status = 'active', role = 'operador'
-    `);
-
-    // 6. Garantir que o usuário inativo de teste exista e esteja desativado
-    await db.execute(sql`
-      INSERT INTO tenant_users (id, tenant_id, user_id, name, role, is_active, status)
-      VALUES (
-        '1f6a9bbd-7f23-49f7-99f1-5f23cf58a8e4'::uuid,
-        ${testTenantId}::uuid,
-        ${realInactiveUid}::uuid,
-        'Inactive User',
-        'operador',
-        false,
-        'active'
-      )
-      ON CONFLICT (id) DO UPDATE SET is_active = false
-    `);
-
-    // 3. Registrar rotas de teste protegidas no Fastify
+    // Register ephemeral test-only routes on the shared Fastify instance
     app.get("/test-protected", { preHandler: [requireAuth] }, async (request) => {
       return { user: request.user };
     });
@@ -113,14 +68,13 @@ describe("Authentication & Authorization Integration", () => {
   });
 
   afterAll(async () => {
-    // Reverter o estado do Operador B para ativo para não quebrar o banco de desenvolvimento do usuário
-    await db.execute(sql`
-      UPDATE tenant_users 
-      SET is_active = true 
-      WHERE user_id = ${realInactiveUid}
-    `);
+    await cleanAuthTestData();
     await app.close();
   });
+
+  // -------------------------------------------------------------------------
+  // 401 — Unauthenticated
+  // -------------------------------------------------------------------------
 
   it("should deny access with 401 if Authorization header is missing", async () => {
     const res = await app.inject({
@@ -142,7 +96,7 @@ describe("Authentication & Authorization Integration", () => {
       method: "GET",
       url: "/test-protected",
       headers: {
-        authorization: "Bearer invalid-token",
+        authorization: "Bearer this-token-is-not-in-the-mock",
       },
     });
 
@@ -155,7 +109,11 @@ describe("Authentication & Authorization Integration", () => {
     });
   });
 
-  it("should deny access with 403 if user profile is inactive or pending", async () => {
+  // -------------------------------------------------------------------------
+  // 403 — Authenticated but not authorized
+  // -------------------------------------------------------------------------
+
+  it("should deny access with 403 if user profile is inactive", async () => {
     const res = await app.inject({
       method: "GET",
       url: "/test-protected",
@@ -169,6 +127,10 @@ describe("Authentication & Authorization Integration", () => {
     expect(body.error.code).toBe("FORBIDDEN");
   });
 
+  // -------------------------------------------------------------------------
+  // 200 — Authenticated and authorized
+  // -------------------------------------------------------------------------
+
   it("should allow access and populate request.user for valid admin token", async () => {
     const res = await app.inject({
       method: "GET",
@@ -180,34 +142,35 @@ describe("Authentication & Authorization Integration", () => {
 
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
+
+    // Validate structure and synthetic fixture data — NOT any production data
     expect(body.user).toMatchObject({
-      authUserId: realAdminUid,
-      tenantUserId: "26b5a3e4-29c9-4178-9dd0-ab39e6cb842d",
-      tenantId: testTenantId,
-      role: "admin",
-      email: "admin@test.com",
-      name: "Gui Rest 9",
-      phone: "92984168887",
-      tenantName: "Gui Nome 9",
+      authUserId:   TEST_ADMIN_UID,
+      tenantUserId: TEST_ADMIN_TU_ID,
+      tenantId:     TEST_TENANT_ID,
+      role:         "admin",
+      email:        "admin@test.com",
+      name:         "Test Admin",        // from factory, not production DB
+      tenantName:   "Test Tenant (CI)",  // from factory, not production DB
     });
   });
 
-  it("should allow role-specific access based on requireRole guard rules", async () => {
+  // -------------------------------------------------------------------------
+  // RBAC — requireRole guard
+  // -------------------------------------------------------------------------
+
+  it("should enforce requireRole: admin can access admin route, operator cannot", async () => {
     const adminRes = await app.inject({
       method: "GET",
       url: "/test-admin-only",
-      headers: {
-        authorization: "Bearer valid-admin-token",
-      },
+      headers: { authorization: "Bearer valid-admin-token" },
     });
     expect(adminRes.statusCode).toBe(200);
 
     const operatorRes = await app.inject({
       method: "GET",
       url: "/test-admin-only",
-      headers: {
-        authorization: "Bearer valid-operator-token",
-      },
+      headers: { authorization: "Bearer valid-operator-token" },
     });
     expect(operatorRes.statusCode).toBe(403);
   });
