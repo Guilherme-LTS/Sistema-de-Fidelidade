@@ -10,6 +10,22 @@ jobs:
   backend-check:
     name: Backend Lint & Integration Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,7 +39,16 @@ jobs:
       - name: Install Dependencies
         run: cd backend && npm ci
 
+      - name: Push Database Schema to Test Postgres Container
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        run: cd backend && npx drizzle-kit push --force
+
       - name: Run Vitest Integration Tests
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         run: cd backend && npx vitest run
 
   frontend-check:

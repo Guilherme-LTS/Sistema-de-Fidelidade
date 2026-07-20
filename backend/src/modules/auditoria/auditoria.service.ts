@@ -16,7 +16,7 @@ export class AuditoriaService {
   async listLogs(tenantId: string, params: ListQueryParams) {
     const offset = (params.page - 1) * params.limit;
     
-    let whereConditions = [];
+    const whereConditions = [];
     whereConditions.push(eq(auditLogs.tenantId, tenantId));
 
     if (params.action && params.action !== 'ALL') {

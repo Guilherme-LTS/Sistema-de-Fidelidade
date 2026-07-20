@@ -104,7 +104,7 @@ export class ClientesService {
         .for("update");
 
       // 2. Criar ou atualizar consumer_profile
-      let [profile] = await tx.insert(consumerProfiles).values({
+      const [profile] = await tx.insert(consumerProfiles).values({
         document: cleanedDoc,
         name: input.nome,
         lgpdConsent: input.lgpdConsentimento,

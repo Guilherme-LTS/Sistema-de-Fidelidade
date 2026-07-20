@@ -18,7 +18,7 @@ class StripeService {
     }
   }
 
-  private getStripe(): Stripe {
+  public getStripe(): Stripe {
     if (!this.stripe) {
       throw new AppError("Stripe não está configurado neste ambiente. Defina STRIPE_SECRET_KEY.", 500);
     }
