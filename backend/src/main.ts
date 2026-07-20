@@ -1,16 +1,17 @@
-// Primeiro carregamos as configurações e env vars para validação rápida no boot
-import { env } from "./config/env.js";
+import { env, validateEnv } from "./config/env.js";
 import { app } from "./app.js";
 import { logger } from "./infra/logger/logger.js";
 
 const start = async () => {
   try {
-    const port = env.PORT;
+    // Validar variáveis de ambiente explicitamente no bootstrap da aplicação
+    const validatedEnv = validateEnv();
+    const port = validatedEnv.PORT;
     // Vinculamos a 0.0.0.0 para suportar execução em contêineres e na nuvem
     const host = "0.0.0.0";
 
     await app.listen({ port, host });
-    logger.info(`🚀 Server running on http://localhost:${port} in [${env.NODE_ENV}] mode`);
+    logger.info(`🚀 Server running on http://localhost:${port} in [${validatedEnv.NODE_ENV}] mode`);
   } catch (err) {
     logger.error(err, "❌ Failed to start server");
     process.exit(1);
