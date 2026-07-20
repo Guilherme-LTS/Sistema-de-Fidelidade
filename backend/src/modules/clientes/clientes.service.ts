@@ -335,7 +335,7 @@ export class ClientesService {
       SELECT r.id, r.created_at, r.points_spent, rew.name as reward_name
       FROM redemptions r
       JOIN rewards rew ON r.reward_id = rew.id
-      WHERE r.customer_id = ${cliente.id}
+      WHERE r.customer_id = ${cliente.id} AND r.tenant_id = ${tenantId}
     `);
 
     // Buscando Expirações (Expires)
@@ -346,7 +346,7 @@ export class ClientesService {
     }>(sql`
       SELECT e.id, e.created_at, e.points_expired
       FROM expirations e
-      WHERE e.customer_id = ${cliente.id}
+      WHERE e.customer_id = ${cliente.id} AND e.tenant_id = ${tenantId}
     `);
 
     // Unificando Histórico

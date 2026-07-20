@@ -3,7 +3,7 @@ services:
     name: backend
     env: node
     region: sao-paulo
-    plan: free
+    plan: starter
     buildCommand: cd backend && npm install --include=dev && npm run build
     startCommand: cd backend && NODE_ENV=production npm start
-    healthCheckPath: /
+    healthCheckPath: /health

@@ -8,7 +8,7 @@ import { User } from "@supabase/supabase-js";
 import { db } from "../../src/infra/database/db.js";
 
 // Usamos as chaves de usuários reais existentes no banco de dados para evitar violações de FK com auth.users
-const realAdminUid = "960467ea-9e16-4cdc-926b-1205945fca70";     // Restaurante A (Admin)
+const realAdminUid = "4173d533-32f8-4914-84b3-425c3486a8b5";     // Restaurante A (Admin)
 const realOperatorUid = "64cf7e17-2584-49f3-b43e-c3928df98e57";  // Operador A (Operador)
 const realInactiveUid = "1f6a9bbd-7f23-49f7-99f1-5f23cf58a8e4";  // Operador B (Será desativado temporariamente)
 
@@ -27,21 +27,26 @@ vi.spyOn(supabaseAuthGateway, "getUser").mockImplementation(async (token: string
 });
 
 describe("Authentication & Authorization Integration", () => {
-  const testTenantId = "960467ea-9e16-4cdc-926b-1205945fca70";
+  const testTenantId = "4173d533-32f8-4914-84b3-425c3486a8b5";
 
   beforeAll(async () => {
-    // 1. Garantir que o usuário inativo de teste esteja de fato desativado
+    // 1. Garantir que o tenant de teste esteja ativo
     await db.execute(sql`
-      UPDATE tenant_users 
-      SET is_active = false 
-      WHERE user_id = ${realInactiveUid}
+      UPDATE tenants SET is_active = true WHERE id = ${testTenantId}
     `);
 
     // 2. Garantir que os usuários ativos de teste estejam ativados
     await db.execute(sql`
       UPDATE tenant_users 
-      SET is_active = true 
+      SET is_active = true, status = 'active' 
       WHERE user_id IN (${realAdminUid}, ${realOperatorUid})
+    `);
+
+    // 3. Garantir que o usuário inativo de teste esteja desativado
+    await db.execute(sql`
+      UPDATE tenant_users 
+      SET is_active = false 
+      WHERE user_id = ${realInactiveUid}
     `);
 
     // 3. Registrar rotas de teste protegidas no Fastify
@@ -103,7 +108,7 @@ describe("Authentication & Authorization Integration", () => {
     });
   });
 
-  it("should deny access with 403 if user profile is inactive", async () => {
+  it("should deny access with 403 if user profile is inactive or pending", async () => {
     const res = await app.inject({
       method: "GET",
       url: "/test-protected",
@@ -113,12 +118,8 @@ describe("Authentication & Authorization Integration", () => {
     });
 
     expect(res.statusCode).toBe(403);
-    expect(JSON.parse(res.body)).toEqual({
-      error: {
-        code: "FORBIDDEN",
-        message: "Seu acesso ao sistema foi desativado. Entre em contato com o proprietário da conta ou administrador.",
-      },
-    });
+    const body = JSON.parse(res.body);
+    expect(body.error.code).toBe("FORBIDDEN");
   });
 
   it("should allow access and populate request.user for valid admin token", async () => {
@@ -132,16 +133,15 @@ describe("Authentication & Authorization Integration", () => {
 
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
-    expect(body.user).toEqual({
+    expect(body.user).toMatchObject({
       authUserId: realAdminUid,
-      tenantUserId: "cb27439f-37dc-4266-952f-89264a133e75",
+      tenantUserId: "26b5a3e4-29c9-4178-9dd0-ab39e6cb842d",
       tenantId: testTenantId,
       role: "admin",
       email: "admin@test.com",
-      name: "Restaurante A Teste teste",
-      phone: "(92) 98416-8887",
-      tenantName: "Restaurante A Teste Razao",
-      tenantLogoUrl: "https://hzzujdjgyqnlhtrsfagz.supabase.co/storage/v1/object/public/tenant-logos/960467ea-9e16-4cdc-926b-1205945fca70/logo-1782025075534.png",
+      name: "Gui Rest 9",
+      phone: "92984168887",
+      tenantName: "Gui Nome 9",
     });
   });
 

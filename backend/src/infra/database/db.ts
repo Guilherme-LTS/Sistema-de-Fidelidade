@@ -13,7 +13,7 @@ export const pool = new Pool({
 
 export const db = drizzle(pool, { schema });
 
-// Pool da aplicação com privilégios limitados (se configurado separadamente)
+// Pool da aplicação com fallback para o APP_DATABASE_URL ou DATABASE_URL
 export const appPool = new Pool({
   connectionString: env.APP_DATABASE_URL || env.DATABASE_URL,
   ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,

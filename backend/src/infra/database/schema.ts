@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, boolean, timestamp, text, integer, uniqueIndex, serial, numeric, decimal, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, boolean, timestamp, text, integer, uniqueIndex, index, serial, numeric, decimal, jsonb } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
 // -----------------------------------------------------------------------------
@@ -92,6 +92,7 @@ export const customers = pgTable("customers", {
   deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
 }, (t) => ({
   unqTenantConsumer: uniqueIndex("idx_customers_tenant_consumer_unique").on(t.tenantId, t.consumerProfileId).where(sql`deleted_at IS NULL`),
+  idxTenantCreated: index("idx_customers_tenant_created").on(t.tenantId, t.createdAt),
 }));
 
 // -----------------------------------------------------------------------------
@@ -142,7 +143,9 @@ export const transactions = pgTable("transactions", {
   tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow(),
-});
+}, (t) => ({
+  idxTenantCreated: index("idx_transactions_tenant_created").on(t.tenantId, t.createdAt),
+}));
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
   customer: one(customers, {
@@ -177,7 +180,9 @@ export const redemptions = pgTable("redemptions", {
   tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow(),
-});
+}, (t) => ({
+  idxTenantCreated: index("idx_redemptions_tenant_created").on(t.tenantId, t.createdAt),
+}));
 
 export const rewardsRelations = relations(rewards, ({ one }) => ({
   tenant: one(tenants, {
@@ -251,7 +256,9 @@ export const expirations = pgTable("expirations", {
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
   pointsExpired: integer("points_expired").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
-});
+}, (t) => ({
+  idxTenantCreated: index("idx_expirations_tenant_created").on(t.tenantId, t.createdAt),
+}));
 
 export const expirationItems = pgTable("expiration_items", {
   id: serial("id").primaryKey(),

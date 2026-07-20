@@ -18,6 +18,23 @@ const envSchema = z.object({
 
   STRIPE_PRICE_PRO_MENSAL: z.string().optional(),
   STRIPE_PRICE_PRO_ANUAL: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === "production") {
+    if (!data.STRIPE_SECRET_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "STRIPE_SECRET_KEY é obrigatória em produção.",
+        path: ["STRIPE_SECRET_KEY"],
+      });
+    }
+    if (!data.STRIPE_WEBHOOK_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "STRIPE_WEBHOOK_SECRET é obrigatória em produção.",
+        path: ["STRIPE_WEBHOOK_SECRET"],
+      });
+    }
+  }
 });
 
 const _env = envSchema.safeParse(process.env);
