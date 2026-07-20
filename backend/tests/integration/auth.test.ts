@@ -30,23 +30,70 @@ describe("Authentication & Authorization Integration", () => {
   const testTenantId = "4173d533-32f8-4914-84b3-425c3486a8b5";
 
   beforeAll(async () => {
-    // 1. Garantir que o tenant de teste esteja ativo
+    // 1. Inserir UIDs no auth.users (se a permissão do banco permitir)
+    try {
+      await db.execute(sql`
+        INSERT INTO auth.users (id, email)
+        VALUES 
+          (${realAdminUid}::uuid, 'admin@test.com'),
+          (${realOperatorUid}::uuid, 'operator@test.com'),
+          (${realInactiveUid}::uuid, 'inactive@test.com')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+    } catch {
+      // Tabela auth.users é gerenciada pelo Supabase Auth em nuvem; ignora se permissão for negada
+    }
+
+    // 3. Garantir que o tenant de teste exista e esteja ativo (autocontido para CI e Dev)
     await db.execute(sql`
-      UPDATE tenants SET is_active = true WHERE id = ${testTenantId}
+      INSERT INTO tenants (id, name, is_active)
+      VALUES (${testTenantId}::uuid, 'Test Tenant Admin', true)
+      ON CONFLICT (id) DO UPDATE SET is_active = true
     `);
 
-    // 2. Garantir que os usuários ativos de teste estejam ativados
+    // 4. Garantir que o usuário admin de teste exista e esteja ativo
     await db.execute(sql`
-      UPDATE tenant_users 
-      SET is_active = true, status = 'active' 
-      WHERE user_id IN (${realAdminUid}, ${realOperatorUid})
+      INSERT INTO tenant_users (id, tenant_id, user_id, name, role, is_active, status)
+      VALUES (
+        '26b5a3e4-29c9-4178-9dd0-ab39e6cb842d'::uuid,
+        ${testTenantId}::uuid,
+        ${realAdminUid}::uuid,
+        'Admin User',
+        'admin',
+        true,
+        'active'
+      )
+      ON CONFLICT (id) DO UPDATE SET is_active = true, status = 'active', role = 'admin'
     `);
 
-    // 3. Garantir que o usuário inativo de teste esteja desativado
+    // 5. Garantir que o usuário operador de teste exista e esteja ativo
     await db.execute(sql`
-      UPDATE tenant_users 
-      SET is_active = false 
-      WHERE user_id = ${realInactiveUid}
+      INSERT INTO tenant_users (id, tenant_id, user_id, name, role, is_active, status)
+      VALUES (
+        '64cf7e17-2584-49f3-b43e-c3928df98e57'::uuid,
+        ${testTenantId}::uuid,
+        ${realOperatorUid}::uuid,
+        'Operator User',
+        'operador',
+        true,
+        'active'
+      )
+      ON CONFLICT (id) DO UPDATE SET is_active = true, status = 'active', role = 'operador'
+    `);
+
+    // 6. Garantir que o usuário inativo de teste exista e esteja desativado
+    await db.execute(sql`
+      INSERT INTO tenant_users (id, tenant_id, user_id, name, role, is_active, status)
+      VALUES (
+        '1f6a9bbd-7f23-49f7-99f1-5f23cf58a8e4'::uuid,
+        ${testTenantId}::uuid,
+        ${realInactiveUid}::uuid,
+        'Inactive User',
+        'operador',
+        false,
+        'active'
+      )
+      ON CONFLICT (id) DO UPDATE SET is_active = false
     `);
 
     // 3. Registrar rotas de teste protegidas no Fastify
