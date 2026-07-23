@@ -259,16 +259,41 @@ class StripeService {
           ? new Date(currentPeriodEndUnix * 1000).toISOString()
           : null;
 
-        await db
-          .update(tenants)
-          .set({
-            stripeSubscriptionId: subscription.id,
-            subscriptionStatus: subscription.status,
-            subscriptionPriceId: priceId,
-            subscriptionCurrentPeriodEnd: periodEnd,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
-          })
-          .where(eq(tenants.id, tenantId));
+        // Usa transação com FOR UPDATE para serializar com o webhook customer.subscription.created
+        // que chega quase simultaneamente quando o usuário retorna do Stripe.
+        // Usa o timestamp autoritativo da Stripe para evitar clock skew na proteção de out-of-order.
+        await db.transaction(async (tx) => {
+          const [existing] = await tx
+            .select()
+            .from(tenants)
+            .where(eq(tenants.id, tenantId))
+            .for("update");
+
+          if (!existing) return;
+
+          // Se o webhook já atualizou o registro com um evento mais recente, não sobrescrever
+          const stripeEventTs = subscription.current_period_start ?? Math.floor(Date.now() / 1000);
+          if (
+            existing.stripeSubscriptionLastEventAt &&
+            stripeEventTs <= existing.stripeSubscriptionLastEventAt
+          ) {
+            return;
+          }
+
+          await tx
+            .update(tenants)
+            .set({
+              stripeSubscriptionId: subscription.id,
+              subscriptionStatus: subscription.status,
+              subscriptionPriceId: priceId,
+              subscriptionCurrentPeriodEnd: periodEnd,
+              cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
+              stripeSubscriptionLastEventAt: stripeEventTs,
+              stripeBillingCachedDetails: null,
+              stripeBillingLastSyncedAt: null,
+            })
+            .where(eq(tenants.id, tenantId));
+        });
 
         return true;
       }
@@ -656,6 +681,10 @@ class StripeService {
         ? new Date(currentPeriodEndUnix * 1000).toISOString()
         : null;
 
+      // Timestamp autoritativo da Stripe para evitar clock skew na comparação com webhooks
+      // `updatedSub.created` é gerado pelo Stripe e tipado corretamente no SDK.
+      const stripeEventTs = updatedSub.created ?? Math.floor(Date.now() / 1000);
+
       await tx
         .update(tenants)
         .set({
@@ -663,7 +692,7 @@ class StripeService {
           subscriptionPriceId: priceId,
           subscriptionCurrentPeriodEnd: periodEnd,
           cancelAtPeriodEnd: updatedSub.cancel_at_period_end ?? false,
-          stripeSubscriptionLastEventAt: Math.floor(Date.now() / 1000),
+          stripeSubscriptionLastEventAt: stripeEventTs,
           stripeBillingCachedDetails: null,
           stripeBillingLastSyncedAt: null,
         })
@@ -693,12 +722,15 @@ class StripeService {
         cancel_at_period_end: true,
       });
 
+      // Timestamp autoritativo da Stripe para evitar clock skew na comparação com webhooks
+      const stripeEventTs = updatedSub.created ?? Math.floor(Date.now() / 1000);
+
       await tx
         .update(tenants)
         .set({
           subscriptionStatus: updatedSub.status,
           cancelAtPeriodEnd: updatedSub.cancel_at_period_end ?? true,
-          stripeSubscriptionLastEventAt: Math.floor(Date.now() / 1000),
+          stripeSubscriptionLastEventAt: stripeEventTs,
           stripeBillingCachedDetails: null,
           stripeBillingLastSyncedAt: null,
         })
@@ -744,12 +776,15 @@ class StripeService {
         cancel_at_period_end: false,
       });
 
+      // Timestamp autoritativo da Stripe para evitar clock skew na comparação com webhooks
+      const stripeEventTs = updatedSub.created ?? Math.floor(Date.now() / 1000);
+
       await tx
         .update(tenants)
         .set({
           subscriptionStatus: updatedSub.status,
           cancelAtPeriodEnd: updatedSub.cancel_at_period_end ?? false,
-          stripeSubscriptionLastEventAt: Math.floor(Date.now() / 1000),
+          stripeSubscriptionLastEventAt: stripeEventTs,
           stripeBillingCachedDetails: null,
           stripeBillingLastSyncedAt: null,
         })

@@ -16,6 +16,9 @@ export const cronController = {
     try {
       // Begin transaction to ensure data integrity
       await db.transaction(async (tx) => {
+        // SKIP LOCKED garante que se duas execuções do cron rodarem em sobreposição
+        // (ex: retry de timeout, deploy durante execução), a segunda instância não
+        // processará as mesmas linhas — ela simplesmente pula as linhas bloqueadas.
         const expiredTransactions = await tx
           .select({
             transaction: transactions,
@@ -30,7 +33,8 @@ export const cronController = {
               lt(transactions.expiresAt, new Date().toISOString()),
               gt(transactions.remainingPoints, 0)
             )
-          );
+          )
+          .for("update", { skipLocked: true });
 
         let totalExpired = 0;
 

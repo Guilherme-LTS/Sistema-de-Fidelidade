@@ -1,6 +1,6 @@
 import { eq, and, asc, sql } from "drizzle-orm";
 import { db } from "../../infra/database/db.js";
-import { rewards, redemptions, transactions, customers } from "../../infra/database/schema.js";
+import { rewards, redemptions, transactions, customers, redemptionItems } from "../../infra/database/schema.js";
 import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
 import { clientesService } from "../clientes/clientes.service.js";
 import { logAuditEvent } from "../../shared/audit.service.js";
@@ -31,19 +31,29 @@ export class ResgatesService {
         throw new NotFoundError("Recompensa não encontrada ou inativa.");
       }
 
-      // 2. Buscar cliente e validar saldo
-      // Usar a mesma lógica de validação de CPF do clientesService
+      // 2. Buscar cliente e adquirir lock exclusivo de linha para evitar race conditions.
+      //    Sem este lock, dois resgates simultâneos do mesmo cliente podem ambos ler o
+      //    mesmo saldo disponível, ambos serem aprovados, e ambos deduzirem — resultando
+      //    em pontos gastos duas vezes. O FOR UPDATE garante serialização.
       const cliente = await clientesService.buscarPorCpf(input.tenantId, input.document);
       
       if (!cliente) {
         throw new NotFoundError("Cliente não encontrado.");
       }
 
+      // Lock de linha no customer — o segundo request vai bloquear aqui até o primeiro commit
+      await tx
+        .select({ id: customers.id })
+        .from(customers)
+        .where(eq(customers.id, cliente.id))
+        .for("update");
+
       const saldoInfo = await clientesService.consultarSaldo(input.tenantId, input.document);
 
       if (saldoInfo.cliente.pontosDisponiveis < recompensa.pointsCost) {
         throw new AppError(`Saldo insuficiente. O cliente possui ${saldoInfo.cliente.pontosDisponiveis} pontos, mas o prêmio custa ${recompensa.pointsCost} pontos.`);
       }
+
 
       // 3. Registrar Resgate primeiro para obter o ID
       const [resgate] = await tx.insert(redemptions).values({
@@ -101,8 +111,6 @@ export class ResgatesService {
 
       // 5. Inserir itens de consumo
       if (ledgerItems.length > 0) {
-        // Need to import redemptionItems at the top
-        const { redemptionItems } = await import("../../infra/database/schema.js");
         await tx.insert(redemptionItems).values(ledgerItems);
       }
 

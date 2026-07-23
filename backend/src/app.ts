@@ -14,8 +14,43 @@ export const app = fastify({
 await app.register(helmet, { global: true });
 await app.register(cors, corsConfig);
 await app.register(rateLimit, {
-  max: 100,
   timeWindow: "1 minute",
+  max: (req, key) => {
+    // Se a chave for identificada por tenant ou token autenticado, permite 300 req/min (suporta múltiplos caixas em um mesmo restaurante/IP)
+    if (key.startsWith("tenant:") || key.startsWith("auth:")) {
+      return 300;
+    }
+    return 100; // Limite para acessos anônimos por IP
+  },
+  keyGenerator: (req) => {
+    const tenantId = req.headers["x-tenant-id"] as string | undefined;
+    const authHeader = req.headers.authorization;
+
+    if (tenantId) {
+      return `tenant:${tenantId}:${req.ip}`;
+    }
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      return `auth:${authHeader.slice(-16)}:${req.ip}`;
+    }
+    return req.ip;
+  },
+  allowList: (req) => {
+    // Excluir Webhooks (Stripe / Cron) e Healthcheck do rate limit global para evitar bloqueio de eventos da Stripe e monitoramento
+    const url = req.url;
+    return (
+      url === "/health" ||
+      url.startsWith("/billing/webhook") ||
+      url.startsWith("/webhooks/")
+    );
+  },
+  errorResponseBuilder: (_req, context) => {
+    return {
+      error: {
+        code: "TOO_MANY_REQUESTS",
+        message: `Muitas requisições enviadas. Limite de ${context.max} requisições por minuto excedido. Tente novamente em ${context.after}.`,
+      },
+    };
+  },
 });
 
 // Handler global de erros

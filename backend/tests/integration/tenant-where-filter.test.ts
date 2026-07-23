@@ -1,9 +1,35 @@
+/**
+ * tenant-where-filter.test.ts
+ *
+ * ⚠️  ESTE TESTE NÃO VALIDA ROW LEVEL SECURITY (RLS) DO POSTGRESQL.
+ *
+ * O que ele testa de fato:
+ *   - Que o filtro manual `AND tenant_id = X` nas queries SQL funciona corretamente.
+ *   - Que registros de tenant A não são retornados quando filtramos por tenant B.
+ *
+ * Por que NÃO é um teste de RLS:
+ *   - As queries usam o pool `db` (usuário `postgres`/service role), que é superusuário.
+ *   - Em PostgreSQL, superusuários ignoram RLS mesmo com `FORCE ROW LEVEL SECURITY`.
+ *     A flag FORCE afeta apenas o *owner* da tabela quando ele não é superusuário.
+ *   - Se todas as políticas RLS fossem removidas do banco de produção, este teste
+ *     continuaria passando — porque ele nunca dependeu das políticas existirem.
+ *
+ * Para testar RLS de verdade seria necessário:
+ *   1. Criar um role sem BYPASSRLS e sem ownership das tabelas no banco de CI.
+ *   2. Usar `withTenantTransaction` via `appDb` conectado com esse role.
+ *   3. Executar queries SEM filtro manual de tenant_id e validar que as políticas
+ *      implicitamente isolam os dados.
+ *
+ * O item acima está no roadmap técnico (P0) mas não foi implementado ainda.
+ * Até lá, o isolamento multi-tenant depende exclusivamente do filtro `AND tenant_id = X`
+ * nas queries de cada módulo — não de um controle de nível de banco.
+ */
+
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { sql } from "drizzle-orm";
 import { db } from "../../src/infra/database/db.js";
-import { withTenantTransaction } from "../../src/infra/database/rls.js";
 
-describe("PostgreSQL Row Level Security Isolation Integration", () => {
+describe("Tenant WHERE Filter Isolation (manual SQL filter, NOT RLS)", () => {
   const tenantA = "00000000-0000-0000-0000-aaaaaaaaaaaa";
   const tenantB = "00000000-0000-0000-0000-bbbbbbbbbbbb";
   const profileIdA = "00000000-0000-0000-0000-f1f1f1f1f1f1";
@@ -33,32 +59,22 @@ describe("PostgreSQL Row Level Security Isolation Integration", () => {
         (${profileIdB}, '98765432109', 'Cliente B', true)
     `);
 
-    // 4. Inserir clientes vinculados ao tenant
+    // 4. Inserir clientes vinculados a cada tenant
     await db.execute(sql`
       INSERT INTO customers (id, tenant_id, consumer_profile_id)
       VALUES 
         (${customerIdA}, ${tenantA}, ${profileIdA}),
         (${customerIdB}, ${tenantB}, ${profileIdB})
     `);
-
-    // 5. Aplicar e forçar políticas de RLS para o teste de integração
-    await db.execute(sql`ALTER TABLE customers ENABLE ROW LEVEL SECURITY;`);
-    await db.execute(sql`DROP POLICY IF EXISTS "tenant_isolation" ON customers;`);
-    await db.execute(sql`
-      CREATE POLICY "tenant_isolation" ON customers 
-      USING (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid);
-    `);
-    await db.execute(sql`ALTER TABLE customers FORCE ROW LEVEL SECURITY;`);
   });
 
   afterAll(async () => {
-    // Limpar os registros criados para o teste
     await db.execute(sql`DELETE FROM customers WHERE id IN (${customerIdA}, ${customerIdB})`);
     await db.execute(sql`DELETE FROM consumer_profiles WHERE id IN (${profileIdA}, ${profileIdB})`);
     await db.execute(sql`DELETE FROM tenants WHERE id IN (${tenantA}, ${tenantB})`);
   });
 
-  it("should return ONLY Customer A when running query inside Tenant A context", async () => {
+  it("should return ONLY Customer A when filtering by Tenant A (AND tenant_id clause)", async () => {
     const res = await db.execute(
       sql`SELECT id, tenant_id FROM customers WHERE id IN (${customerIdA}, ${customerIdB}) AND tenant_id = ${tenantA}`
     );
@@ -69,7 +85,7 @@ describe("PostgreSQL Row Level Security Isolation Integration", () => {
     expect(result[0].tenant_id).toBe(tenantA);
   });
 
-  it("should return ONLY Customer B when running query inside Tenant B context", async () => {
+  it("should return ONLY Customer B when filtering by Tenant B (AND tenant_id clause)", async () => {
     const res = await db.execute(
       sql`SELECT id, tenant_id FROM customers WHERE id IN (${customerIdA}, ${customerIdB}) AND tenant_id = ${tenantB}`
     );
@@ -80,7 +96,7 @@ describe("PostgreSQL Row Level Security Isolation Integration", () => {
     expect(result[0].tenant_id).toBe(tenantB);
   });
 
-  it("should return ZERO records when running query inside an unrelated tenant context", async () => {
+  it("should return ZERO records when filtering by an unrelated tenant (AND tenant_id clause)", async () => {
     const unrelatedTenant = "00000000-0000-0000-0000-cccccccccccc";
     const res = await db.execute(
       sql`SELECT id FROM customers WHERE id IN (${customerIdA}, ${customerIdB}) AND tenant_id = ${unrelatedTenant}`

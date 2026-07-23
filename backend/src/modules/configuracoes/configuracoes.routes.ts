@@ -21,7 +21,17 @@ export const updateRestauranteSchema = z.object({
 import { requireRole } from "../../shared/security/require-role.js";
 
 export async function configuracoesRoutes(app: FastifyInstance) {
+  // requireAuth é necessário — operações de configuração devem ser autenticadas.
   app.addHook("preHandler", requireAuth);
+
+  // ⚠️  requireSubscription está INTENCIONALMENTE ausente aqui.
+  // Restaurantes inadimplentes ou com trial vencido PRECISAM conseguir acessar
+  // as configurações (nome, logo, horários, etc.) para resolver pendências administrativas.
+  // Bloquear configurações criaria um lock-out sem saída para o usuário:
+  // ele não consegue atualizar dados de contato para receber ajuda, nem corrigir problemas
+  // que o suporte pediria. O risco de permitir leitura/edição de configurações sem assinatura
+  // ativa é irrelevante — configurações não afetam débitos de pontos nem billing Stripe.
+
 
   app.get("/restaurante", (req, rep) => configuracoesController.getRestaurante(req, rep));
   app.put(

@@ -241,7 +241,9 @@ export const auditLogs = pgTable("audit_logs", {
   status: varchar("status").default("SUCESSO").notNull(), // SUCESSO ou FALHA
   ipAddress: varchar("ip_address"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow(),
-});
+}, (t) => ({
+  idxTenantCreated: index("idx_audit_logs_tenant_created").on(t.tenantId, t.createdAt),
+}));
 
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   tenant: one(tenants, {
