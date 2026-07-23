@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input"
 import { MapPin } from "lucide-react"
 
 const DefaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconUrl: "/images/leaflet/marker-icon.png",
+  iconRetinaUrl: "/images/leaflet/marker-icon-2x.png",
+  shadowUrl: "/images/leaflet/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 })
@@ -32,6 +32,7 @@ export interface AddressDetails {
 interface MapPickerProps {
   defaultLatitude?: number | string | null
   defaultLongitude?: number | string | null
+  isDirty?: boolean
   onLocationSelect: (lat: number, lng: number, details?: AddressDetails) => void
 }
 
@@ -90,7 +91,7 @@ function MapUpdater({ center }: { center: L.LatLng | null }) {
   return null
 }
 
-export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect }: MapPickerProps) {
+export function MapPicker({ defaultLatitude, defaultLongitude, isDirty = false, onLocationSelect }: MapPickerProps) {
   const [position, setPosition] = useState<L.LatLng | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
@@ -309,9 +310,15 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
               {selectedAddressPreview.details.state ? `/${selectedAddressPreview.details.state}` : ""}
             </p>
           )}
-          <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 pt-0.5">
-            💡 Localização atualizada no mapa. Clique no botão &quot;Salvar Alterações&quot; no rodapé para confirmar.
-          </p>
+          {isDirty ? (
+            <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 pt-0.5">
+              💡 Localização alterada. Clique em &quot;Salvar Alterações&quot; no painel flutuante abaixo para confirmar.
+            </p>
+          ) : (
+            <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 pt-0.5">
+              ✅ Localização salva com sucesso no perfil do restaurante.
+            </p>
+          )}
         </div>
       )}
 

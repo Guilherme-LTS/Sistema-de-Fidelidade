@@ -322,6 +322,7 @@ export function PerfilRestauranteTab() {
               <MapPicker 
                 defaultLatitude={form.watch("latitude")} 
                 defaultLongitude={form.watch("longitude")}
+                isDirty={form.formState.isDirty}
                 onLocationSelect={(lat, lng, details) => {
                   form.setValue("latitude", lat, { shouldDirty: true, shouldValidate: true })
                   form.setValue("longitude", lng, { shouldDirty: true, shouldValidate: true })
