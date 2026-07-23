@@ -93,7 +93,18 @@ function MapUpdater({ center }: { center: L.LatLng | null }) {
 export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect }: MapPickerProps) {
   const [position, setPosition] = useState<L.LatLng | null>(null)
   const [isClient, setIsClient] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [selectedAddressPreview, setSelectedAddressPreview] = useState<{ lat: number; lng: number; details?: AddressDetails } | null>(null)
   const mapRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).gm_authFailure = () => {
+        console.error("[Google Maps] Erro de autenticação de chave ou referenciador (RefererNotAllowedMapError).")
+        setAuthError("Erro de autorização no Google Maps: Certifique-se de que a API 'Places API (New)' está ativada e seu domínio está cadastrado nas restrições de HTTP Referrer da API Key.")
+      }
+    }
+  }, [])
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
@@ -191,6 +202,7 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
             if (types.includes("postal_code")) details.zipCode = component.long_name
           })
 
+          setSelectedAddressPreview({ lat, lng, details })
           onLocationSelect(lat, lng, details)
         } else {
           console.error("Erro no geocoding status:", status)
@@ -199,6 +211,11 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
     } catch (error) {
       console.error("Erro ao obter coordenadas: ", error)
     }
+  }
+
+  const handleLocationSelectWrapper = (lat: number, lng: number, details?: AddressDetails) => {
+    setSelectedAddressPreview({ lat, lng, details })
+    onLocationSelect(lat, lng, details)
   }
 
   if (!isClient) {
@@ -211,6 +228,15 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
 
   return (
     <div className="space-y-3 w-full relative">
+      {authError && (
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-700 dark:text-amber-300 space-y-1">
+          <p className="font-semibold flex items-center gap-1.5">
+            ⚠️ Autorização do Google Maps
+          </p>
+          <p>{authError}</p>
+        </div>
+      )}
+
       <div className="relative">
         <div className="flex gap-2">
           <Input 
@@ -258,12 +284,37 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
           <LocationMarker 
             position={position} 
             setPosition={setPosition} 
-            onLocationSelect={onLocationSelect}
+            onLocationSelect={handleLocationSelectWrapper}
             isGoogleLoaded={isLoaded}
           />
           <MapUpdater center={position} />
         </MapContainer>
       </div>
+
+      {position && (
+        <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs space-y-1.5 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between font-semibold text-primary">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" /> Localização Selecionada
+            </span>
+            <span className="font-mono text-[11px] text-muted-foreground">
+              {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
+            </span>
+          </div>
+          {selectedAddressPreview?.details?.street && (
+            <p className="text-muted-foreground">
+              {selectedAddressPreview.details.street}
+              {selectedAddressPreview.details.number ? `, ${selectedAddressPreview.details.number}` : ""}
+              {selectedAddressPreview.details.city ? ` - ${selectedAddressPreview.details.city}` : ""}
+              {selectedAddressPreview.details.state ? `/${selectedAddressPreview.details.state}` : ""}
+            </p>
+          )}
+          <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 pt-0.5">
+            💡 Localização atualizada no mapa. Clique no botão &quot;Salvar Alterações&quot; no rodapé para confirmar.
+          </p>
+        </div>
+      )}
+
       <p className="text-xs text-muted-foreground">O Google definiu as coordenadas. Arraste o mapa e clique caso queira ajustar o pino manualmente.</p>
     </div>
   )
