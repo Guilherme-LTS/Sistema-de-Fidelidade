@@ -15,45 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { FileJson, Search, CalendarDays, Activity, User, ChevronLeft, ChevronRight, Hash, Database } from "lucide-react"
 import { PageContainer } from "@/components/layout/page-container"
 
-const actionTranslations: Record<string, string> = {
-  LOGIN: "Login no Sistema",
-  LOGOUT: "Logout do Sistema",
-  CREATE_CUSTOMER: "Cadastro de Cliente",
-  UPDATE_CUSTOMER: "Atualização de Cliente",
-  DELETE_CUSTOMER: "Exclusão de Cliente",
-  ADD_POINTS: "Lançamento de Pontos",
-  REDEEM_REWARD: "Resgate de Recompensa",
-  CREATE_REWARD: "Criação de Recompensa",
-  UPDATE_REWARD: "Atualização de Recompensa",
-  DELETE_REWARD: "Exclusão de Recompensa",
-  UPDATE_CONFIG: "Configurações Alteradas",
-  UPDATE_USER: "Alteração de Perfil de Usuário",
-  DELETE_USER: "Exclusão de Usuário",
-  POINTS_EXPIRED: "Pontos Expirados",
-  CREATE_USER: "Usuário Criado",
-  UPDATE_PASSWORD: "Senha Alterada",
-  ACTIVATE_USER: "Usuário Ativado",
-  DEACTIVATE_USER: "Usuário Desativado",
-}
+import { getActionLabel, getEntityLabel, actionTranslations } from "../utils/audit-formatters"
 
-function getActionLabel(action: string) {
-  return actionTranslations[action] || action
-}
-
-const entityTranslations: Record<string, string> = {
-  TRANSACTION: "Lançamento de Pontos",
-  REDEMPTION: "Resgate de Recompensa",
-  TENANT_CONFIG: "Perfil do Restaurante",
-  LOYALTY_CONFIG: "Regras de Fidelidade",
-  USER: "Operador/Usuário",
-  CUSTOMER: "Cadastro de Cliente",
-  REWARD: "Recompensa",
-}
-
-function getEntityLabel(entityType: string | null) {
-  if (!entityType) return "-"
-  return entityTranslations[entityType] || entityType
-}
 
 function formatCPF(cpf: string) {
   if (!cpf) return "-"
@@ -170,6 +133,23 @@ function renderLogDetailsFriendly(log: any) {
         <div className="flex items-center gap-2 border-b pb-3">
           <div className="w-2 h-2 rounded-full bg-blue-500"></div>
           <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Dados do Cadastro</h4>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+          <DetailItem label="Cliente" value={metadata.clienteNome || "Não informado"} />
+          <DetailItem label="CPF" value={formatCPF(metadata.clienteCpf)} />
+          <DetailItem label="ID no Sistema" value={metadata.clienteId || "-"} />
+        </div>
+      </div>
+    )
+  }
+
+  // 4b. LINK_GLOBAL_CUSTOMER
+  if (log.action === "LINK_GLOBAL_CUSTOMER") {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 border-b pb-3">
+          <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+          <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Vínculo de Cliente Existente</h4>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
           <DetailItem label="Cliente" value={metadata.clienteNome || "Não informado"} />

@@ -129,7 +129,7 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
         const request = {
           input: searchTerm,
           sessionToken: sessionTokenRef.current,
-          componentRestrictions: { country: "br" },
+          includedRegionCodes: ["br"],
         }
 
         const { suggestions: results } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request)
@@ -155,13 +155,15 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
     }
   }, [defaultLatitude, defaultLongitude])
 
-  const handleSelect = async (description: string) => {
+  const handleSelect = async (description: string, placeId?: string) => {
     setSearchTerm(description)
     setSuggestions([])
 
     try {
       const geocoder = new window.google.maps.Geocoder()
-      geocoder.geocode({ address: description }, (results, status) => {
+      const geocodeQuery = placeId ? { placeId } : { address: description }
+
+      geocoder.geocode(geocodeQuery, (results, status) => {
         if (status === "OK" && results && results[0]) {
           const result = results[0]
           const lat = result.geometry.location.lat()
@@ -183,7 +185,9 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
             if (types.includes("street_number")) details.number = component.long_name
             if (types.includes("sublocality") || types.includes("sublocality_level_1")) details.neighborhood = component.long_name
             if (types.includes("administrative_area_level_2")) details.city = component.long_name
-            if (types.includes("administrative_area_level_1")) details.state = component.short_name
+            if (types.includes("administrative_area_level_1")) {
+              details.state = component.short_name.replace(/[^a-zA-Z]/g, "").substring(0, 2).toUpperCase()
+            }
             if (types.includes("postal_code")) details.zipCode = component.long_name
           })
 
@@ -229,7 +233,7 @@ export function MapPicker({ defaultLatitude, defaultLongitude, onLocationSelect 
                 <li 
                   key={placeId} 
                   className="px-3 py-2 text-sm text-popover-foreground hover:bg-muted cursor-pointer transition-colors border-b border-border last:border-0"
-                  onClick={() => handleSelect(text)}
+                  onClick={() => handleSelect(text, placeId)}
                 >
                   {text}
                 </li>

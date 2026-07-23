@@ -16,6 +16,8 @@ import { Separator } from "@/components/ui/separator"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { MapPicker } from "@/components/ui/map-picker"
 import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
+
 
 // Simplified CNPJ mask for UX
 const formatCnpj = (value: string) => {
@@ -179,6 +181,13 @@ export function PerfilRestauranteTab() {
     })
   }
 
+  const onError = (errors: any) => {
+    console.error("[PerfilRestaurante] Erros de validação do formulário:", errors)
+    toast.error("Existem campos pendentes ou inválidos no formulário.", {
+      description: "Verifique os dados informados e tente novamente."
+    })
+  }
+
   if (query.isLoading) {
     return <div className="p-12 flex justify-center"><Spinner className="w-8 h-8" /></div>
   }
@@ -193,7 +202,7 @@ export function PerfilRestauranteTab() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-20">
+          <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8 pb-20">
             
             {/* Informações Básicas */}
             <div className="space-y-4">
@@ -314,14 +323,17 @@ export function PerfilRestauranteTab() {
                 defaultLatitude={form.watch("latitude")} 
                 defaultLongitude={form.watch("longitude")}
                 onLocationSelect={(lat, lng, details) => {
-                  form.setValue("latitude", lat, { shouldDirty: true })
-                  form.setValue("longitude", lng, { shouldDirty: true })
+                  form.setValue("latitude", lat, { shouldDirty: true, shouldValidate: true })
+                  form.setValue("longitude", lng, { shouldDirty: true, shouldValidate: true })
                   
                   if (details) {
-                    if (details.street) form.setValue("addressLine1", details.street, { shouldDirty: true })
-                    if (details.number) form.setValue("addressNumber", details.number, { shouldDirty: true })
-                    if (details.city) form.setValue("addressCity", details.city, { shouldDirty: true })
-                    if (details.state) form.setValue("addressState", details.state.substring(0, 2), { shouldDirty: true })
+                    if (details.street) form.setValue("addressLine1", details.street, { shouldDirty: true, shouldValidate: true })
+                    if (details.number) form.setValue("addressNumber", details.number, { shouldDirty: true, shouldValidate: true })
+                    if (details.city) form.setValue("addressCity", details.city, { shouldDirty: true, shouldValidate: true })
+                    if (details.state) {
+                      const sanitizedUf = details.state.replace(/[^a-zA-Z]/g, "").substring(0, 2).toUpperCase()
+                      form.setValue("addressState", sanitizedUf, { shouldDirty: true, shouldValidate: true })
+                    }
                   }
                 }}
               />

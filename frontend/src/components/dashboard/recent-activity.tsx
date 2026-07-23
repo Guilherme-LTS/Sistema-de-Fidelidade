@@ -2,28 +2,7 @@ import { ArrowUpRight, RefreshCcw, Shield, Trash } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RecentActivity as RecentActivityType } from "@/lib/api/types"
 
-const actionTranslations: Record<string, string> = {
-  LOGIN: "Login no Sistema",
-  LOGOUT: "Logout do Sistema",
-  CREATE_CUSTOMER: "Cadastro de Cliente",
-  UPDATE_CUSTOMER: "Atualização de Cliente",
-  DELETE_CUSTOMER: "Exclusão de Cliente",
-  ADD_POINTS: "Lançamento de Pontos",
-  REDEEM_REWARD: "Resgate de Recompensa",
-  CREATE_REWARD: "Criação de Recompensa",
-  UPDATE_REWARD: "Atualização de Recompensa",
-  DELETE_REWARD: "Exclusão de Recompensa",
-  UPDATE_CONFIG: "Configurações Alteradas",
-  UPDATE_USER: "Alteração de Perfil de Usuário",
-  DELETE_USER: "Exclusão de Usuário",
-  POINTS_EXPIRED: "Pontos Expirados",
-  CREATE_USER: "Usuário Criado",
-  UPDATE_PASSWORD: "Senha Alterada",
-  ACTIVATE_USER: "Usuário Ativado",
-  DEACTIVATE_USER: "Usuário Desativado",
-  POINTS_EARNED: "Lançamento de Pontos",
-  REWARD_REDEEMED: "Resgate Realizado",
-}
+import { getActionLabel } from "@/features/auditoria/utils/audit-formatters"
 
 interface Props {
   activities: RecentActivityType[]
@@ -45,7 +24,7 @@ export function RecentActivity({ activities }: Props) {
               let Icon = Shield;
               let iconColor = "text-slate-500";
               let bg = "bg-slate-500/10";
-              let text = actionTranslations[act.action] || act.action;
+              let text = getActionLabel(act.action);
 
               if (act.action === "POINTS_EARNED" || act.action === "ADD_POINTS") {
                 Icon = ArrowUpRight;
