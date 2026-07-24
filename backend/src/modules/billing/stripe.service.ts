@@ -677,8 +677,16 @@ class StripeService {
 
       const subscription = await stripe.subscriptions.retrieve(tenant.stripeSubscriptionId);
 
-      // Como agora só existe o Plano Pro com mudança de ciclo (mensal/anual), fazemos a atualização direta na Stripe.
-      const updatedSub = await stripe.subscriptions.update(tenant.stripeSubscriptionId, {
+      // Verificar se houve alteração do ciclo de cobrança (mensal vs anual)
+      const currentItem = subscription.items?.data?.[0];
+      const currentInterval = currentItem?.price?.recurring?.interval;
+
+      const newPrice = await stripe.prices.retrieve(newPriceId);
+      const newInterval = newPrice.recurring?.interval;
+
+      const isIntervalChanged = !!(currentInterval && newInterval && currentInterval !== newInterval);
+
+      const updateParams: Stripe.SubscriptionUpdateParams = {
         items: [
           {
             id: subscription.items.data[0].id,
@@ -687,7 +695,15 @@ class StripeService {
         ],
         cancel_at_period_end: false,
         proration_behavior: subscription.status === "trialing" ? "none" : "create_prorations",
-      }) as any;
+      };
+
+      // Se o ciclo de cobrança mudou e a assinatura possui cupom/desconto ativo, desvincula o desconto do ciclo antigo
+      if (isIntervalChanged && (subscription.discount || (subscription.discounts && subscription.discounts.length > 0))) {
+        console.log(`[Stripe changePlan] Ciclo alterado de ${currentInterval} para ${newInterval}. Desvinculando cupom do ciclo antigo para tenant ${tenantId}.`);
+        updateParams.discounts = "";
+      }
+
+      const updatedSub = await stripe.subscriptions.update(tenant.stripeSubscriptionId, updateParams) as any;
 
       const priceId = updatedSub.items?.data?.[0]?.price?.id;
       const currentPeriodEndUnix = updatedSub.status === "trialing"

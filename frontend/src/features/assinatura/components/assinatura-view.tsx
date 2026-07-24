@@ -829,23 +829,30 @@ export function AssinaturaView() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Confirmar Mudança de Ciclo de Cobrança
+              Confirmar Mudança para o Plano Pro ({planChangeConfirm?.planKey === "pro_anual" ? "Anual" : "Mensal"})
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="space-y-3 text-sm text-muted-foreground pt-1">
                 {status === "trial_scheduled" ? (
                   <>
-                    <p>A alteração do seu ciclo de cobrança foi realizada com sucesso.</p>
                     <p>
-                      <strong>Como você está no período de testes gratuito,</strong> isso altera apenas a forma de cobrança futura. O primeiro débito ocorrerá exclusivamente após o término do trial.
+                      Você está alterando o agendamento da sua assinatura para o <strong>Plano Pro ({planChangeConfirm?.planKey === "pro_anual" ? "Anual" : "Mensal"})</strong>.
+                    </p>
+                    <div className="p-3 bg-muted/40 rounded-xl border space-y-1 text-xs text-foreground">
+                      <p>• <strong>Novo valor previsto:</strong> R$ {planChangeConfirm?.planKey === "pro_anual" ? precoAnual : precoMensal}/{planChangeConfirm?.planKey === "pro_anual" ? "ano" : "mês"}</p>
+                      <p>• <strong>Data da primeira cobrança:</strong> Ao término do seu período de testes em {formatDate(user.subscription_current_period_end)}.</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Caso tenha utilizado um cupom específico para o ciclo anterior, o desconto será desvinculado e a cobrança futura seguirá a tabela oficial do novo ciclo escolhido.
                     </p>
                   </>
                 ) : (
                   <>
-                    <p>Você está alterando o ciclo de faturamento da sua assinatura Pro.</p>
-                    <p>
-                      <strong>Esta mudança é imediata.</strong> A diferença de valores proporcional ao período restante do ciclo atual será calculada e compensada na sua próxima fatura.
-                    </p>
+                    <p>Você está alterando o ciclo de faturamento da sua assinatura Pro para {planChangeConfirm?.planKey === "pro_anual" ? "Anual" : "Mensal"}.</p>
+                    <div className="p-3 bg-muted/40 rounded-xl border space-y-1 text-xs text-foreground">
+                      <p>• <strong>Novo valor:</strong> R$ {planChangeConfirm?.planKey === "pro_anual" ? precoAnual : precoMensal}/{planChangeConfirm?.planKey === "pro_anual" ? "ano" : "mês"}</p>
+                      <p>• <strong>Efeito:</strong> A mudança é efetuada imediatamente com cálculo proporcional.</p>
+                    </div>
                   </>
                 )}
               </div>
