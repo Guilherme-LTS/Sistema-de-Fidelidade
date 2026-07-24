@@ -12,7 +12,6 @@ class StripeService {
   constructor() {
     if (env.STRIPE_SECRET_KEY) {
       this.stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-        apiVersion: "2026-06-24.dahlia" as any, // Alinhado com a versão estável de produção do Webhook
         maxNetworkRetries: 3, // Habilita retries automáticos integrados do SDK para falhas transientes de rede/429
       });
     }
@@ -172,9 +171,9 @@ class StripeService {
     }
 
     if (activeOrPendingSubs.length > 0) {
-      const sub = activeOrPendingSubs[0] as any;
+      const sub = activeOrPendingSubs[0] as Stripe.Subscription;
       const subPriceId = sub.items?.data?.[0]?.price?.id;
-      const currentPeriodEndUnix = sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end;
+      const currentPeriodEndUnix = sub.items?.data?.[0]?.current_period_end;
       const periodEnd = currentPeriodEndUnix ? new Date(currentPeriodEndUnix * 1000).toISOString() : null;
 
       await dbClient
@@ -260,12 +259,12 @@ class StripeService {
     }
 
     if (session.payment_status === "paid" || session.payment_status === "no_payment_required") {
-      const subscription = session.subscription as any;
+      const subscription = session.subscription as Stripe.Subscription;
       if (subscription) {
         const priceId = subscription.items?.data?.[0]?.price?.id;
         const currentPeriodEndUnix = subscription.status === "trialing"
-          ? (subscription.trial_end ?? subscription.current_period_end ?? subscription.items?.data?.[0]?.current_period_end)
-          : (subscription.current_period_end ?? subscription.trial_end ?? subscription.items?.data?.[0]?.current_period_end);
+          ? (subscription.trial_end ?? subscription.items?.data?.[0]?.current_period_end)
+          : (subscription.items?.data?.[0]?.current_period_end ?? subscription.trial_end);
         const periodEnd = currentPeriodEndUnix
           ? new Date(currentPeriodEndUnix * 1000).toISOString()
           : null;
@@ -283,7 +282,7 @@ class StripeService {
           if (!existing) return;
 
           // Se o webhook já atualizou o registro com um evento mais recente, não sobrescrever
-          const stripeEventTs = subscription.current_period_start ?? Math.floor(Date.now() / 1000);
+          const stripeEventTs = subscription.items?.data?.[0]?.current_period_start ?? Math.floor(Date.now() / 1000);
           if (
             existing.stripeSubscriptionLastEventAt &&
             stripeEventTs <= existing.stripeSubscriptionLastEventAt
@@ -463,7 +462,7 @@ class StripeService {
       // 2. Tentar recuperar a próxima fatura (upcoming)
       let upcomingInvoice = null;
       try {
-        const upcoming = await (stripe.invoices as any).upcoming({
+        const upcoming = await stripe.invoices.createPreview({
           customer: customerId,
         });
         upcomingInvoice = {
@@ -507,7 +506,7 @@ class StripeService {
         try {
           sub = await stripe.subscriptions.retrieve(targetSubId, {
             expand: ["default_payment_method"],
-          }) as any;
+          }) as Stripe.Subscription;
 
           let paymentMethod = sub.default_payment_method as Stripe.PaymentMethod | null | string;
 
@@ -698,17 +697,17 @@ class StripeService {
       };
 
       // Se o ciclo de cobrança mudou e a assinatura possui cupom/desconto ativo, desvincula o desconto do ciclo antigo
-      if (isIntervalChanged && (subscription.discount || (subscription.discounts && subscription.discounts.length > 0))) {
+      if (isIntervalChanged && (subscription.discounts && subscription.discounts.length > 0)) {
         console.log(`[Stripe changePlan] Ciclo alterado de ${currentInterval} para ${newInterval}. Desvinculando cupom do ciclo antigo para tenant ${tenantId}.`);
         updateParams.discounts = "";
       }
 
-      const updatedSub = await stripe.subscriptions.update(tenant.stripeSubscriptionId, updateParams) as any;
+      const updatedSub = await stripe.subscriptions.update(tenant.stripeSubscriptionId, updateParams) as Stripe.Subscription;
 
       const priceId = updatedSub.items?.data?.[0]?.price?.id;
       const currentPeriodEndUnix = updatedSub.status === "trialing"
-        ? (updatedSub.trial_end ?? updatedSub.current_period_end ?? updatedSub.items?.data?.[0]?.current_period_end)
-        : (updatedSub.current_period_end ?? updatedSub.trial_end ?? updatedSub.items?.data?.[0]?.current_period_end);
+        ? (updatedSub.trial_end ?? updatedSub.items?.data?.[0]?.current_period_end)
+        : (updatedSub.items?.data?.[0]?.current_period_end ?? updatedSub.trial_end);
       const periodEnd = currentPeriodEndUnix
         ? new Date(currentPeriodEndUnix * 1000).toISOString()
         : null;

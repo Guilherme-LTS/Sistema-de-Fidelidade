@@ -17,6 +17,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Em ambiente de desenvolvimento local (localhost / 127.0.0.1), não efetuar redirecionamentos de subdomínio de produção
+  const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+  if (isLocalhost) {
+    return NextResponse.next();
+  }
+
   // Identifica se a requisição está batendo no subdomínio "app"
   const isAppDomain = hostname.startsWith('app.usepontus.com.br') || hostname.startsWith('app.localhost') || hostname.startsWith('app.');
 

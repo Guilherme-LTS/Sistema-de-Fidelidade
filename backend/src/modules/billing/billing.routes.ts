@@ -307,15 +307,15 @@ export async function billingRoutes(app: FastifyInstance) {
         switch (event.type) {
           case "customer.subscription.created":
           case "customer.subscription.updated": {
-            const subscription = event.data.object as any;
+            const subscription = event.data.object as Stripe.Subscription;
             const customerId = subscription.customer as string;
             const status = subscription.status;
             const priceId = subscription.items.data[0]?.price.id;
             
             // Suporte defensivo a versões de API antigas e novas (onde o período foi para os items)
             const currentPeriodEndUnix = status === "trialing"
-              ? (subscription.trial_end ?? subscription.current_period_end ?? subscription.items?.data?.[0]?.current_period_end)
-              : (subscription.current_period_end ?? subscription.trial_end ?? subscription.items?.data?.[0]?.current_period_end);
+              ? (subscription.trial_end ?? subscription.items?.data?.[0]?.current_period_end)
+              : (subscription.items?.data?.[0]?.current_period_end ?? subscription.trial_end);
             const periodEnd = currentPeriodEndUnix
               ? new Date(currentPeriodEndUnix * 1000).toISOString()
               : null;
@@ -374,7 +374,7 @@ export async function billingRoutes(app: FastifyInstance) {
           }
 
           case "customer.subscription.deleted": {
-            const subscription = event.data.object as any;
+            const subscription = event.data.object as Stripe.Subscription;
             const customerId = subscription.customer as string;
 
             await db.transaction(async (tx) => {
@@ -419,7 +419,7 @@ export async function billingRoutes(app: FastifyInstance) {
           case "invoice.created":
           case "invoice.finalized":
           case "invoice.paid": {
-            const invoice = event.data.object as any;
+            const invoice = event.data.object as Stripe.Invoice;
             const customerId = invoice.customer as string;
 
             await db.transaction(async (tx) => {
@@ -468,7 +468,7 @@ export async function billingRoutes(app: FastifyInstance) {
           }
 
           case "invoice.payment_failed": {
-            const invoice = event.data.object as any;
+            const invoice = event.data.object as Stripe.Invoice;
             const customerId = invoice.customer as string;
 
             await db.transaction(async (tx) => {
@@ -480,7 +480,7 @@ export async function billingRoutes(app: FastifyInstance) {
                 .for("update");
 
               if (tenant) {
-                const subscriptionId = invoice.subscription as string | null;
+                const subscriptionId = (invoice as any).subscription as string | null;
                 // Proteção contra Webhooks fora de ordem (Out-of-Order Events)
                 if (
                   subscriptionId &&

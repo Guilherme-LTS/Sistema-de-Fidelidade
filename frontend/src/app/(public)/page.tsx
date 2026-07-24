@@ -26,7 +26,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-3">
             <Button variant="ghost" className="hidden sm:inline-flex font-medium" asChild>
-              <a href="https://app.usepontus.com.br/login">Entrar (Lojista)</a>
+              <Link href="/login">Entrar (Lojista)</Link>
             </Button>
             <Button className="rounded-full shadow-md font-medium" asChild>
               <Link href="/painel">
@@ -62,7 +62,7 @@ export default function LandingPage() {
             
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="h-12 px-8 text-base shadow-xl rounded-full" asChild>
-                <a href="https://app.usepontus.com.br/cadastro">Criar Conta Grátis <ArrowRight className="ml-2 h-5 w-5" /></a>
+                <Link href="/cadastro">Criar Conta Grátis <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 text-base rounded-full" asChild>
                 <Link href="#como-funciona">Como Funciona</Link>
@@ -261,8 +261,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 gap-12 text-sm">
             <div className="flex flex-col space-y-3">
               <h4 className="font-semibold text-foreground">Produto (B2B)</h4>
-              <a href="https://app.usepontus.com.br/login" className="text-muted-foreground hover:text-foreground">Entrar no Painel</a>
-              <a href="https://app.usepontus.com.br/cadastro" className="text-muted-foreground hover:text-foreground">Criar Conta</a>
+              <Link href="/login" className="text-muted-foreground hover:text-foreground">Entrar no Painel</Link>
+              <Link href="/cadastro" className="text-muted-foreground hover:text-foreground">Criar Conta</Link>
             </div>
             <div className="flex flex-col space-y-3">
               <h4 className="font-semibold text-foreground">Consumidores (B2C)</h4>
