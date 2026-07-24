@@ -25,8 +25,8 @@ export function BillingBanner() {
 
   const isTrial = status === "trialing"
   const trialDays = getTrialDaysRemaining()
-  const trialEndingSoon = isTrial && trialDays > 0 && trialDays <= 3
-  const trialExpired = isTrial && trialDays <= 0
+  const trialEndingSoon = isTrial && periodEnd && trialDays > 0 && trialDays <= 3
+  const trialExpired = isTrial && periodEnd && new Date(periodEnd).getTime() <= Date.now()
 
   const isBlocked = status === "canceled" || !status || trialExpired
 

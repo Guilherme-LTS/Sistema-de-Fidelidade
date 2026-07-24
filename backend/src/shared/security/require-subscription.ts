@@ -31,9 +31,9 @@ export async function requireSubscription(request: FastifyRequest, _reply: Fasti
     return;
   }
 
-  // Período de teste (trialing) é válido se a data de encerramento for futura
+  // Período de teste (trialing) é válido se a data de encerramento for futura ou ausente
   if (status === "trialing") {
-    if (periodEnd && new Date(periodEnd) > new Date()) {
+    if (!periodEnd || new Date(periodEnd) > new Date()) {
       return;
     }
   }

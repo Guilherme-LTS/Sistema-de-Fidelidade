@@ -313,7 +313,9 @@ export async function billingRoutes(app: FastifyInstance) {
             const priceId = subscription.items.data[0]?.price.id;
             
             // Suporte defensivo a versões de API antigas e novas (onde o período foi para os items)
-            const currentPeriodEndUnix = subscription.current_period_end ?? subscription.items.data[0]?.current_period_end;
+            const currentPeriodEndUnix = status === "trialing"
+              ? (subscription.trial_end ?? subscription.current_period_end ?? subscription.items?.data?.[0]?.current_period_end)
+              : (subscription.current_period_end ?? subscription.trial_end ?? subscription.items?.data?.[0]?.current_period_end);
             const periodEnd = currentPeriodEndUnix
               ? new Date(currentPeriodEndUnix * 1000).toISOString()
               : null;

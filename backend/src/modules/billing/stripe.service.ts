@@ -263,7 +263,9 @@ class StripeService {
       const subscription = session.subscription as any;
       if (subscription) {
         const priceId = subscription.items?.data?.[0]?.price?.id;
-        const currentPeriodEndUnix = subscription.current_period_end ?? subscription.items?.data?.[0]?.current_period_end;
+        const currentPeriodEndUnix = subscription.status === "trialing"
+          ? (subscription.trial_end ?? subscription.current_period_end ?? subscription.items?.data?.[0]?.current_period_end)
+          : (subscription.current_period_end ?? subscription.trial_end ?? subscription.items?.data?.[0]?.current_period_end);
         const periodEnd = currentPeriodEndUnix
           ? new Date(currentPeriodEndUnix * 1000).toISOString()
           : null;
@@ -581,8 +583,11 @@ class StripeService {
       };
 
       if (sub) {
-        const stripePeriodEnd = sub.current_period_end
-          ? new Date(sub.current_period_end * 1000).toISOString()
+        const currentPeriodEndUnix = sub.status === "trialing"
+          ? (sub.trial_end ?? sub.current_period_end)
+          : (sub.current_period_end ?? sub.trial_end);
+        const stripePeriodEnd = currentPeriodEndUnix
+          ? new Date(currentPeriodEndUnix * 1000).toISOString()
           : null;
 
         const dbPeriodEnd = tenant.subscriptionCurrentPeriodEnd
@@ -685,7 +690,9 @@ class StripeService {
       }) as any;
 
       const priceId = updatedSub.items?.data?.[0]?.price?.id;
-      const currentPeriodEndUnix = updatedSub.current_period_end ?? updatedSub.items?.data?.[0]?.current_period_end;
+      const currentPeriodEndUnix = updatedSub.status === "trialing"
+        ? (updatedSub.trial_end ?? updatedSub.current_period_end ?? updatedSub.items?.data?.[0]?.current_period_end)
+        : (updatedSub.current_period_end ?? updatedSub.trial_end ?? updatedSub.items?.data?.[0]?.current_period_end);
       const periodEnd = currentPeriodEndUnix
         ? new Date(currentPeriodEndUnix * 1000).toISOString()
         : null;

@@ -106,12 +106,16 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
   let subStatus = tenantUserRecord.tenant?.subscriptionStatus;
   let subPeriodEnd = tenantUserRecord.tenant?.subscriptionCurrentPeriodEnd;
 
-  // Fallback de resiliência: Se o status estiver nulo mas a conta tem menos de 14 dias de criação, assume trial ativo
-  if (!subStatus && tenantUserRecord.tenant?.createdAt) {
+  // Fallback de resiliência: Se o status estiver nulo mas a conta tem menos de 14 dias de criação, assume trial ativo.
+  // Da mesma forma, se estiver em trialing mas subPeriodEnd for nulo, deriva a data a partir de createdAt.
+  if (tenantUserRecord.tenant?.createdAt) {
     const createdAtDate = new Date(tenantUserRecord.tenant.createdAt);
     const trialEnd = new Date(createdAtDate.getTime() + 14 * 24 * 60 * 60 * 1000);
-    if (trialEnd > new Date()) {
+    
+    if (!subStatus && trialEnd > new Date()) {
       subStatus = "trialing";
+      subPeriodEnd = trialEnd.toISOString();
+    } else if (subStatus === "trialing" && !subPeriodEnd) {
       subPeriodEnd = trialEnd.toISOString();
     }
   }

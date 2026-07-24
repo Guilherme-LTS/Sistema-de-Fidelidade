@@ -301,14 +301,14 @@ export function AssinaturaView() {
                       {details?.subscriptionInfo?.interval === "year" ? "Faturamento Anual" : "Faturamento Mensal"}
                       <span className="text-muted-foreground/50">•</span>
                       {status === "trial_scheduled" ? (
-                        <span>Primeira cobrança em <strong>{details?.upcomingInvoice ? formatDate(details.upcomingInvoice.dueDate) : formatDate(details?.subscriptionInfo?.currentPeriodEnd)}</strong></span>
+                        <span>Primeira cobrança em <strong>{details?.upcomingInvoice ? formatDate(details.upcomingInvoice.dueDate) : formatDate(details?.subscriptionInfo?.currentPeriodEnd || user.subscription_current_period_end)}</strong></span>
                       ) : status === "trial_canceled" || status === "canceled" ? (
                         <span>Encerramento do acesso em <strong>{formatDate(details?.subscriptionInfo?.currentPeriodEnd || user.subscription_current_period_end)}</strong></span>
                       ) : (
                         <span>Próxima cobrança em <strong>{details?.upcomingInvoice ? formatDate(details.upcomingInvoice.dueDate) : formatDate(details?.subscriptionInfo?.currentPeriodEnd)}</strong></span>
                       )}
                     </>
-                  ) : status === "trial_active" ? (
+                  ) : status === "trial_scheduled" || status === "trial_active" ? (
                     <span>Período de testes gratuito expira em <strong>{formatDate(user.subscription_current_period_end)}</strong></span>
                   ) : (
                     <span>Sua conta está inativa. Escolha um plano abaixo para reativar seu programa de fidelidade.</span>
