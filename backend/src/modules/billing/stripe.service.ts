@@ -222,6 +222,7 @@ class StripeService {
         },
       ],
       mode: "subscription",
+      allow_promotion_codes: true,
       subscription_data,
       tax_id_collection: {
         enabled: true,
