@@ -121,7 +121,7 @@ export default function LandingPage() {
               <div className="bg-card p-6 rounded-2xl shadow-sm border text-center relative z-10 hover:shadow-md transition-all">
                 <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">3</div>
                 <h3 className="text-xl font-semibold mb-3">O Resgate Acontece</h3>
-                <p className="text-muted-foreground">Motivado pelas recompensas, o cliente volta mais vezes ao seu restaurante para resgatar os prêmios.</p>
+                <p className="text-muted-foreground">Motivado pelas recompensas, o cliente volta mais vezes ao seu estabelecimento para resgatar os prêmios.</p>
               </div>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function LandingPage() {
                   <div className="p-3 bg-primary/10 rounded-2xl">
                     <Store className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold">Para o Restaurante</h3>
+                  <h3 className="text-2xl font-bold">Para o Estabelecimento</h3>
                 </div>
                 
                 <ul className="space-y-6">
@@ -254,7 +254,7 @@ export default function LandingPage() {
             <Image src="/logo-dark.png" alt="Pontus" width={220} height={59} className="hidden dark:block" priority  style={{ width: "auto", height: "auto" }} />
             </div>
             <p className="text-sm text-muted-foreground max-w-xs">
-              A plataforma definitiva de retenção e fidelização para restaurantes e negócios locais.
+              A plataforma definitiva de retenção e fidelização para estabelecimentos e negócios locais.
             </p>
           </div>
 

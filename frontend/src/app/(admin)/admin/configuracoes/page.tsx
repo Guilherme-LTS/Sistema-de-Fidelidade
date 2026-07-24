@@ -7,7 +7,7 @@ export default function ConfiguracoesPage() {
     <AuthGuard allowedRoles={["admin"]}>
       <PageContainer
         title="Configurações"
-        description="Gerencie os dados do restaurante, perfil de acesso e as regras do programa de fidelidade."
+        description="Gerencie os dados do estabelecimento, perfil de acesso e as regras do programa de fidelidade."
       >
         <ConfiguracoesView />
       </PageContainer>

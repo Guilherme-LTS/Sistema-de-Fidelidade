@@ -71,7 +71,7 @@ export function Header({ title, description, actions }: HeaderProps) {
               </AvatarFallback>
             </Avatar>
             <div className="text-xs hidden sm:block">
-              <p className="font-semibold text-foreground">{user?.tenant_name || "Restaurante"}</p>
+              <p className="font-semibold text-foreground">{user?.tenant_name || "Estabelecimento"}</p>
               <p className="text-muted-foreground text-[10px]">{user?.email || ""}</p>
             </div>
           </div>

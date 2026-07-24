@@ -5,6 +5,7 @@ import { consumerProfiles, tenants, customers, transactions, rewards } from "../
 import { eq, sql, and, desc } from "drizzle-orm";
 import { successResponse, errorResponse } from "../../shared/http/response.js";
 import { supabaseAuthGateway } from "../../infra/auth/supabase-auth.gateway.js";
+import { validateAndCleanCPF } from "../../shared/validators/cpf.js";
 
 export async function publicRoutes(app: FastifyInstance) {
   app.get("/tenants/:slug", async (request, reply) => {
@@ -49,7 +50,7 @@ export async function publicRoutes(app: FastifyInstance) {
 
   app.get("/consumer/quick-check/:cpf", async (request, reply) => {
     const paramsSchema = z.object({
-      cpf: z.string().min(11),
+      cpf: z.string().min(1),
     });
 
     const parsedParams = paramsSchema.safeParse(request.params);
@@ -57,10 +58,12 @@ export async function publicRoutes(app: FastifyInstance) {
       return reply.status(400).send(errorResponse("CPF inválido.", "VALIDATION_ERROR"));
     }
 
-    const document = parsedParams.data.cpf.replace(/\D/g, "");
-    if (document.length !== 11) {
-      return reply.status(400).send(errorResponse("CPF inválido.", "VALIDATION_ERROR"));
+    const cpfValidation = validateAndCleanCPF(parsedParams.data.cpf);
+    if (!cpfValidation.isValid) {
+      return reply.status(400).send(errorResponse(cpfValidation.error || "CPF inválido.", "VALIDATION_ERROR"));
     }
+
+    const document = cpfValidation.cleaned;
 
     try {
       const [profile] = await db
@@ -151,7 +154,7 @@ export async function publicRoutes(app: FastifyInstance) {
   app.get("/tenants/:slug/quick-check/:cpf", async (request, reply) => {
     const paramsSchema = z.object({
       slug: z.string().min(1),
-      cpf: z.string().min(11),
+      cpf: z.string().min(1),
     });
 
     const parsedParams = paramsSchema.safeParse(request.params);
@@ -160,11 +163,12 @@ export async function publicRoutes(app: FastifyInstance) {
     }
 
     const { slug } = parsedParams.data;
-    const document = parsedParams.data.cpf.replace(/\D/g, "");
-
-    if (document.length !== 11) {
-      return reply.status(400).send(errorResponse("CPF inválido.", "VALIDATION_ERROR"));
+    const cpfValidation = validateAndCleanCPF(parsedParams.data.cpf);
+    if (!cpfValidation.isValid) {
+      return reply.status(400).send(errorResponse(cpfValidation.error || "CPF inválido.", "VALIDATION_ERROR"));
     }
+
+    const document = cpfValidation.cleaned;
 
     try {
       const [tenant] = await db
@@ -265,24 +269,29 @@ export async function publicRoutes(app: FastifyInstance) {
     const { identifier, password } = parsed.data;
     let email = identifier;
 
-    // Check if identifier is CPF (only numbers, length 11)
+    // Check if identifier is CPF
     const numericIdentifier = identifier.replace(/\D/g, "");
-    if (numericIdentifier.length === 11) {
+    if (numericIdentifier.length === 11 || (!identifier.includes("@") && numericIdentifier.length > 0)) {
+      const cpfValidation = validateAndCleanCPF(numericIdentifier);
+      if (!cpfValidation.isValid) {
+        return reply.status(400).send(errorResponse(cpfValidation.error || "CPF inválido.", "VALIDATION_ERROR"));
+      }
+
       try {
         const [profile] = await db
           .select({ authUserId: consumerProfiles.authUserId })
           .from(consumerProfiles)
-          .where(eq(consumerProfiles.document, numericIdentifier))
+          .where(eq(consumerProfiles.document, cpfValidation.cleaned))
           .limit(1);
 
         if (!profile || !profile.authUserId) {
-          return reply.status(401).send(errorResponse("Credenciais inválidas.", "UNAUTHORIZED"));
+          return reply.status(401).send(errorResponse("E-mail, CPF ou senha inválidos.", "UNAUTHORIZED"));
         }
 
         // Get email from Supabase Auth Admin
         const { data: { user }, error: adminError } = await supabaseAuthGateway.admin.getUserById(profile.authUserId);
         if (adminError || !user || !user.email) {
-          return reply.status(401).send(errorResponse("Credenciais inválidas.", "UNAUTHORIZED"));
+          return reply.status(401).send(errorResponse("E-mail, CPF ou senha inválidos.", "UNAUTHORIZED"));
         }
         
         email = user.email;
@@ -319,12 +328,16 @@ export async function publicRoutes(app: FastifyInstance) {
     }
 
     const { name, cpf, email, password } = parsed.data;
-    const document = cpf.replace(/\D/g, "");
+    const cpfValidation = validateAndCleanCPF(cpf);
+    if (!cpfValidation.isValid) {
+      return reply.status(400).send(errorResponse(cpfValidation.error || "CPF inválido.", "VALIDATION_ERROR"));
+    }
+    const document = cpfValidation.cleaned;
 
     let createdUserId: string | undefined;
 
     try {
-      // 0. Preventiva: Verificar se o CPF já existe E JÁ TEM LOGIN para evitar erro 500
+      // 0. Preventiva: Verificar se o CPF já existe E JÁ TEM LOGIN ATIVO no Supabase
       const [existingProfile] = await db
         .select({ id: consumerProfiles.id, authUserId: consumerProfiles.authUserId })
         .from(consumerProfiles)
@@ -332,7 +345,14 @@ export async function publicRoutes(app: FastifyInstance) {
         .limit(1);
 
       if (existingProfile && existingProfile.authUserId) {
-        return reply.status(409).send(errorResponse("Já existe uma conta vinculada a este CPF.", "CONFLICT"));
+        const { data: { user: existingAuthUser }, error: checkAuthErr } = await supabaseAuthGateway.admin.getUserById(existingProfile.authUserId);
+        if (!checkAuthErr && existingAuthUser) {
+          return reply.status(409).send(errorResponse("Já existe uma conta vinculada a este CPF.", "CONFLICT"));
+        }
+        // Se o usuário do Supabase Auth não existe mais (ID órfão), limpa a referência para permitir o novo vínculo
+        await db.update(consumerProfiles)
+          .set({ authUserId: null, updatedAt: new Date().toISOString() })
+          .where(eq(consumerProfiles.id, existingProfile.id));
       }
 
       // 1. Create user via Supabase Admin (bypassing email confirmation)
@@ -425,12 +445,17 @@ export async function publicRoutes(app: FastifyInstance) {
     let hasAccount = false;
 
     const numericIdentifier = identifier.replace(/\D/g, "");
-    if (numericIdentifier.length === 11) {
+    if (numericIdentifier.length === 11 || (!identifier.includes("@") && numericIdentifier.length > 0)) {
+      const cpfValidation = validateAndCleanCPF(numericIdentifier);
+      if (!cpfValidation.isValid) {
+        return reply.status(400).send(errorResponse(cpfValidation.error || "CPF inválido.", "VALIDATION_ERROR"));
+      }
+
       try {
         const [profile] = await db
-          .select({ authUserId: consumerProfiles.authUserId })
+          .select({ id: consumerProfiles.id, authUserId: consumerProfiles.authUserId })
           .from(consumerProfiles)
-          .where(eq(consumerProfiles.document, numericIdentifier))
+          .where(eq(consumerProfiles.document, cpfValidation.cleaned))
           .limit(1);
 
         if (profile) {
@@ -439,6 +464,12 @@ export async function publicRoutes(app: FastifyInstance) {
             if (!adminError && user && user.email) {
               email = user.email;
               hasAccount = true;
+            } else {
+              // Se o authUserId for um registro órfão (usuário deletado do Supabase), auto-corrige e trata como POINTS_ONLY
+              await db.update(consumerProfiles)
+                .set({ authUserId: null, updatedAt: new Date().toISOString() })
+                .where(eq(consumerProfiles.id, profile.id));
+              hasPointsOnly = true;
             }
           } else {
             hasPointsOnly = true;

@@ -27,7 +27,7 @@ export function ConfiguracoesView() {
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="restaurante" className="data-[state=active]:bg-background">
             <Building2 className="w-4 h-4 mr-2" />
-            Perfil do Restaurante
+            Perfil do Estabelecimento
           </TabsTrigger>
 
           <TabsTrigger value="fidelidade" className="data-[state=active]:bg-background">

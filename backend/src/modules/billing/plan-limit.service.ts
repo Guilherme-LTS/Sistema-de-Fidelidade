@@ -37,7 +37,7 @@ class PlanLimitService {
     });
 
     if (!tenant) {
-      throw new AppError("Restaurante não encontrado.", 404);
+      throw new AppError("Estabelecimento não encontrado.", 404);
     }
 
     const status = tenant.subscriptionStatus;

@@ -146,7 +146,7 @@ export function CadastroForm() {
                 <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="tenantName"
-                  placeholder="Seu Restaurante"
+                  placeholder="Seu Estabelecimento"
                   className="pl-10 h-10 border-border focus:shadow-md transition-all duration-200"
                   {...form.register("tenantName")}
                 />
@@ -228,7 +228,7 @@ export function CadastroForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder="contato@restaurante.com.br"
+                placeholder="contato@empresa.com.br"
                 className="pl-10 h-10 border-border focus:shadow-md transition-all duration-200"
                 {...form.register("email")}
               />

@@ -80,7 +80,7 @@ export function invitationTemplate({
     <div class="content">
       <h2>Você foi convidado!</h2>
       <p>Olá,</p>
-      <p>Você foi convidado para participar da equipe do restaurante <strong>${tenantName}</strong> na plataforma Pontus.</p>
+      <p>Você foi convidado para participar da equipe do estabelecimento <strong>${tenantName}</strong> na plataforma Pontus.</p>
       <p>O seu cargo será: <strong>${role === 'admin' ? 'Administrador' : role === 'operador' ? 'Operador' : 'Novato'}</strong>.</p>
       
       <div class="button-container">

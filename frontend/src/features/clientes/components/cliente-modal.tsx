@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { cadastrarCliente, Cliente } from "../clientes.api"
+import { formatCPF, isValidCPF } from "@/lib/masks"
 
 import {
   Dialog,
@@ -69,6 +70,10 @@ export function ClienteModal({ open, onOpenChange, cliente }: ClienteModalProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isValidCPF(document)) {
+      toast.error("CPF inválido. Verifique os números digitados.")
+      return
+    }
     mutation.mutate({ nome, document, lgpdConsentimento })
   }
 
@@ -99,8 +104,8 @@ export function ClienteModal({ open, onOpenChange, cliente }: ClienteModalProps)
               <Input
                 id="document"
                 value={document}
-                onChange={(e) => setDocument(e.target.value)}
-                placeholder="Apenas números"
+                onChange={(e) => setDocument(formatCPF(e.target.value))}
+                placeholder="000.000.000-00"
                 maxLength={14}
                 required
                 disabled={isEditing}

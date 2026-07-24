@@ -28,10 +28,13 @@ class StripeService {
   /**
    * Obtém ou cria um cliente no Stripe para um Tenant.
    */
-  async getOrCreateCustomer(tenantId: string): Promise<string> {
+  /**
+   * Obtém ou cria um cliente no Stripe para um Tenant.
+   */
+  async getOrCreateCustomer(tenantId: string, outerTx?: any): Promise<string> {
     const stripe = this.getStripe();
 
-    return await db.transaction(async (tx) => {
+    const executeCustomerSync = async (tx: any) => {
       // 1. Obter trava de linha pessimista (Row lock) para o tenant
       const [tenant] = await tx
         .select()
@@ -40,7 +43,7 @@ class StripeService {
         .for("update");
 
       if (!tenant) {
-        throw new AppError("Restaurante não encontrado.", 404);
+        throw new AppError("Estabelecimento não encontrado.", 404);
       }
 
       // Double-check após adquirir o lock
@@ -108,7 +111,12 @@ class StripeService {
         .where(eq(tenants.id, tenantId));
 
       return customer.id;
-    });
+    };
+
+    if (outerTx) {
+      return await executeCustomerSync(outerTx);
+    }
+    return await db.transaction(async (tx) => await executeCustomerSync(tx));
   }
 
   /**
@@ -116,7 +124,7 @@ class StripeService {
    */
   async createCheckoutSession(tenantId: string, priceId: string, tx?: any): Promise<{ url: string | null; alreadySubscribed: boolean }> {
     const stripe = this.getStripe();
-    const customerId = await this.getOrCreateCustomer(tenantId);
+    const customerId = await this.getOrCreateCustomer(tenantId, tx);
 
     // Listar todas as assinaturas do cliente (de qualquer status) diretamente na Stripe
     const allSubs = await stripe.subscriptions.list({
@@ -247,7 +255,7 @@ class StripeService {
 
     const tenantId = session.metadata?.tenantId;
     if (tenantId !== expectedTenantId) {
-      throw new AppError("Sessão de checkout inválida para este restaurante.", 403);
+      throw new AppError("Sessão de checkout inválida para este estabelecimento.", 403);
     }
 
     if (session.payment_status === "paid" || session.payment_status === "no_payment_required") {
@@ -305,9 +313,9 @@ class StripeService {
   /**
    * Cria uma sessão do Customer Portal para o lojista gerenciar a assinatura.
    */
-  async createPortalSession(tenantId: string): Promise<string> {
+  async createPortalSession(tenantId: string, tx?: any): Promise<string> {
     const stripe = this.getStripe();
-    const customerId = await this.getOrCreateCustomer(tenantId);
+    const customerId = await this.getOrCreateCustomer(tenantId, tx);
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
@@ -658,7 +666,7 @@ class StripeService {
         .for("update");
 
       if (!tenant || !tenant.stripeSubscriptionId) {
-        throw new AppError("Nenhuma assinatura ativa encontrada para este restaurante.", 404);
+        throw new AppError("Nenhuma assinatura ativa encontrada para este estabelecimento.", 404);
       }
 
       const subscription = await stripe.subscriptions.retrieve(tenant.stripeSubscriptionId);
@@ -795,9 +803,9 @@ class StripeService {
   /**
    * Cria uma sessão do Customer Portal específica para atualização do cartão de crédito.
    */
-  async createCardUpdateSession(tenantId: string): Promise<string> {
+  async createCardUpdateSession(tenantId: string, tx?: any): Promise<string> {
     const stripe = this.getStripe();
-    const customerId = await this.getOrCreateCustomer(tenantId);
+    const customerId = await this.getOrCreateCustomer(tenantId, tx);
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,

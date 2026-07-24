@@ -16,7 +16,7 @@ export default function EquipePage() {
     <AuthGuard allowedRoles={["admin"]}>
       <PageContainer
         title="Equipe"
-        description="Gerencie os acessos e permissões dos funcionários do restaurante."
+        description="Gerencie os acessos e permissões dos funcionários do seu estabelecimento."
       >
         <UsuariosView />
       </PageContainer>

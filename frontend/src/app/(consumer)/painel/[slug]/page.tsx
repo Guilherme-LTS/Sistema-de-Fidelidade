@@ -46,8 +46,8 @@ export default function TenantDashboardPage(props: PageProps) {
   if (isError || !data) {
     return (
       <div className="space-y-6 text-center py-12">
-        <h2 className="text-xl font-semibold text-foreground">Restaurante não encontrado</h2>
-        <p className="text-muted-foreground">Você não possui vínculo com este restaurante ou ele não existe.</p>
+        <h2 className="text-xl font-semibold text-foreground">Estabelecimento não encontrado</h2>
+        <p className="text-muted-foreground">Você não possui vínculo com este estabelecimento ou ele não existe.</p>
         <Link href="/painel" className="text-primary hover:underline inline-flex items-center font-medium mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o painel
         </Link>
@@ -622,7 +622,7 @@ export default function TenantDashboardPage(props: PageProps) {
 
                     {/* Tab 2: Prêmios */}
                     <TabsContent value="premios" className="space-y-3 mt-5 focus-visible:outline-none max-h-[45vh] overflow-y-auto pr-1">
-                      <h4 className="font-bold text-foreground text-sm mb-2">Recompensas do Restaurante:</h4>
+                      <h4 className="font-bold text-foreground text-sm mb-2">Recompensas do Estabelecimento:</h4>
                       {rewards.length === 0 ? (
                         <p className="text-xs text-muted-foreground text-center py-6">Nenhum prêmio ativo cadastrado no momento.</p>
                       ) : (
@@ -645,7 +645,7 @@ export default function TenantDashboardPage(props: PageProps) {
                     {/* Tab 3: Suporte */}
                     <TabsContent value="suporte" className="space-y-4 mt-5 focus-visible:outline-none">
                       <div className="space-y-3">
-                        <h4 className="font-bold text-foreground text-sm">Canais de Atendimento do Restaurante:</h4>
+                        <h4 className="font-bold text-foreground text-sm">Canais de Atendimento do Estabelecimento:</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                           {tenant.phone && (
                             <div className="flex items-center gap-2 p-3 bg-muted/30 border border-border/30 rounded-xl">

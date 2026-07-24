@@ -195,7 +195,7 @@ export function PerfilRestauranteTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Perfil do Restaurante</CardTitle>
+        <CardTitle>Perfil do Estabelecimento</CardTitle>
         <CardDescription>
           Informações públicas e dados de faturamento do seu negócio.
         </CardDescription>
@@ -214,7 +214,7 @@ export function PerfilRestauranteTab() {
                     <FormItem>
                       <FormLabel>Razão Social <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="Restaurante S.A" {...field} />
+                        <Input placeholder="Empresa Exemplo Ltda" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -255,7 +255,7 @@ export function PerfilRestauranteTab() {
                   name="logoUrl"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Logo do Restaurante</FormLabel>
+                      <FormLabel>Logo do Estabelecimento</FormLabel>
                       <FormControl>
                         <ImageUpload 
                           value={field.value} 

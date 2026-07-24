@@ -75,7 +75,7 @@ export class UsuariosService {
     });
 
     if (existingInvite) {
-      throw new AppError("Já existe um convite pendente para este e-mail neste restaurante.", 400);
+      throw new AppError("Já existe um convite pendente para este e-mail neste estabelecimento.", 400);
     }
 
     const { sql } = await import("drizzle-orm");
@@ -106,7 +106,7 @@ export class UsuariosService {
     }).returning();
 
     const emailService = EmailService.getInstance();
-    await emailService.sendInvitation(data.email, novoConvite.token, tenant?.name || 'Restaurante', data.role);
+    await emailService.sendInvitation(data.email, novoConvite.token, tenant?.name || 'Estabelecimento', data.role);
 
     await logAuditEvent({
       tenantId,

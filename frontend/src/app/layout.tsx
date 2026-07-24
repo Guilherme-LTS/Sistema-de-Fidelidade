@@ -12,14 +12,14 @@ const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--fon
 
 export const metadata: Metadata = {
   title: "Pontus | Fidelidade de Resultados",
-  description: "A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.",
+  description: "A plataforma de fidelidade feita para quem tem estabelecimento comercial, não para quem tem TI.",
   metadataBase: new URL("https://usepontus.com.br"),
   alternates: {
     canonical: "https://usepontus.com.br",
   },
   openGraph: {
     title: "Pontus | Fidelidade de Resultados",
-    description: "A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.",
+    description: "A plataforma de fidelidade feita para quem tem estabelecimento comercial, não para quem tem TI.",
     url: "https://usepontus.com.br",
     siteName: "Pontus",
     images: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Pontus | Fidelidade de Resultados",
-    description: "A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.",
+    description: "A plataforma de fidelidade feita para quem tem estabelecimento comercial, não para quem tem TI.",
     images: ["/logo-dark.png"],
   },
 }
@@ -64,7 +64,7 @@ export default function RootLayout({
                 "priceCurrency": "BRL",
               },
               "description":
-                "A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.",
+                "A plataforma de fidelidade feita para quem tem estabelecimento comercial, não para quem tem TI.",
             }),
           }}
         />

@@ -168,7 +168,7 @@ function renderLogDetailsFriendly(log: any) {
         <div className="flex items-center gap-2 border-b pb-3">
           <div className="w-2 h-2 rounded-full bg-blue-500"></div>
           <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-            {isFidelidade ? "Regras do Programa de Fidelidade" : "Configurações do Restaurante"}
+            {isFidelidade ? "Regras do Programa de Fidelidade" : "Configurações do Estabelecimento"}
           </h4>
         </div>
         <div className="space-y-4">

@@ -63,7 +63,7 @@ export function PendingInvitations() {
             <div className="flex flex-col">
               <h4 className="text-sm font-semibold text-foreground">Convite Pendente</h4>
               <p className="text-xs text-muted-foreground">
-                Você foi convidado para a equipe do restaurante <strong className="text-primary font-medium">{invite.tenantName}</strong> como <span className="capitalize text-foreground font-medium">{invite.role}</span>.
+                Você foi convidado para a equipe do estabelecimento <strong className="text-primary font-medium">{invite.tenantName}</strong> como <span className="capitalize text-foreground font-medium">{invite.role}</span>.
               </p>
             </div>
           </div>

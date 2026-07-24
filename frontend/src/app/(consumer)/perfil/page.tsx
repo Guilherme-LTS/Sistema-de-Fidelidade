@@ -380,7 +380,7 @@ export default function PerfilPage() {
           <div className="flex items-center justify-between rounded-lg border p-3 bg-card shadow-sm">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Promoções e Vantagens</Label>
-              <p className="text-xs text-muted-foreground">Receba ofertas especiais dos seus restaurantes parceiros.</p>
+              <p className="text-xs text-muted-foreground">Receba ofertas especiais dos seus estabelecimentos parceiros.</p>
             </div>
             <Switch checked disabled />
           </div>

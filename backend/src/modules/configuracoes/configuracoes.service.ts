@@ -33,7 +33,7 @@ export class ConfiguracoesService {
     const tenant = await db.query.tenants.findFirst({
       where: eq(tenants.id, tenantId),
     });
-    if (!tenant) throw new NotFoundError("Restaurante não encontrado.");
+    if (!tenant) throw new NotFoundError("Estabelecimento não encontrado.");
     
     // Ensure we always return an object even if it's null in DB
     const businessHours = tenant.businessHours || {
@@ -62,7 +62,7 @@ export class ConfiguracoesService {
       .where(eq(tenants.id, tenantId))
       .returning();
       
-    if (!tenant) throw new NotFoundError("Restaurante não encontrado.");
+    if (!tenant) throw new NotFoundError("Estabelecimento não encontrado.");
 
     await logAuditEvent({
       tenantId,
@@ -88,7 +88,7 @@ export class ConfiguracoesService {
       }
     });
 
-    if (!tenant) throw new NotFoundError("Restaurante não encontrado.");
+    if (!tenant) throw new NotFoundError("Estabelecimento não encontrado.");
 
     return {
       carenciaPontos: tenant.loyaltyGracePeriodDays || 0,
@@ -122,7 +122,7 @@ export class ConfiguracoesService {
       .where(eq(tenants.id, tenantId))
       .returning();
 
-    if (!tenant) throw new NotFoundError("Restaurante não encontrado.");
+    if (!tenant) throw new NotFoundError("Estabelecimento não encontrado.");
 
     const conversionChanged = previousConversion !== input.pointsConversionReal;
     const metadata: any = { 

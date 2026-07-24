@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { formatCPF, getPasswordStrength } from "@/lib/masks"
+import { formatCPF, isValidCPF, getPasswordStrength } from "@/lib/masks"
 import { QuickCheckPanel } from "./quick-check-panel"
 import { Eye, EyeOff, MailCheck, Lock } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -43,14 +43,30 @@ function extractErrorMessage(err: any): string {
 }
 
 // ---- Schemas ----
+const identifierValidation = z.string().min(1, "Informe seu CPF ou E-mail.").refine((val) => {
+  const isEmail = val.includes("@")
+  if (isEmail) return z.string().email().safeParse(val).success
+  const numeric = val.replace(/\D/g, "")
+  if (numeric.length === 11) {
+    return isValidCPF(val)
+  }
+  return false
+}, {
+  message: "Informe um E-mail válido ou um CPF válido.",
+})
+
 const loginSchema = z.object({
-  identifier: z.string().min(1, "Informe seu CPF ou E-mail."),
+  identifier: identifierValidation,
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres."),
 })
 
 const signupSchema = z.object({
   name: z.string().min(3, "Nome muito curto."),
-  cpf: z.string().length(14, "CPF incompleto."),
+  cpf: z.string()
+    .min(1, "CPF é obrigatório.")
+    .refine((val) => isValidCPF(val), {
+      message: "CPF inválido. Verifique os números digitados.",
+    }),
   email: z.string().email("E-mail inválido."),
   password: z.string()
     .min(8, "A senha deve ter no mínimo 8 caracteres.")
@@ -66,7 +82,7 @@ const signupSchema = z.object({
 })
 
 const forgotSchema = z.object({
-  identifier: z.string().min(1, "Informe seu CPF ou E-mail."),
+  identifier: identifierValidation,
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>

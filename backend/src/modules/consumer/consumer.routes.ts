@@ -173,7 +173,7 @@ export async function consumerRoutes(app: FastifyInstance) {
         .limit(1);
 
       if (!tenant) {
-        return reply.status(404).send(errorResponse("Restaurante não encontrado.", "NOT_FOUND"));
+        return reply.status(404).send(errorResponse("Estabelecimento não encontrado.", "NOT_FOUND"));
       }
 
       // 3. Busca a conta (customer)
@@ -190,7 +190,7 @@ export async function consumerRoutes(app: FastifyInstance) {
         .limit(1);
 
       if (!customer) {
-        return reply.status(403).send(errorResponse("Você não possui vínculo com este restaurante.", "FORBIDDEN"));
+        return reply.status(403).send(errorResponse("Você não possui vínculo com este estabelecimento.", "FORBIDDEN"));
       }
 
       // 4. Busca recompensas ativas
@@ -301,7 +301,7 @@ export async function consumerRoutes(app: FastifyInstance) {
         .limit(1);
 
       if (!tenant) {
-        return reply.status(404).send(errorResponse("Restaurante não encontrado.", "NOT_FOUND"));
+        return reply.status(404).send(errorResponse("Estabelecimento não encontrado.", "NOT_FOUND"));
       }
 
       const [customer] = await db
@@ -317,7 +317,7 @@ export async function consumerRoutes(app: FastifyInstance) {
         .limit(1);
 
       if (!customer) {
-        return reply.status(403).send(errorResponse("Você não possui vínculo com este restaurante.", "FORBIDDEN"));
+        return reply.status(403).send(errorResponse("Você não possui vínculo com este estabelecimento.", "FORBIDDEN"));
       }
 
       // Fetch earns

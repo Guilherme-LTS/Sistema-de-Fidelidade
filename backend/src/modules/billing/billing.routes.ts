@@ -66,7 +66,7 @@ export async function billingRoutes(app: FastifyInstance) {
           .for("update");
 
         if (!tenant) {
-          throw new AppError("Restaurante não encontrado.", 404);
+          throw new AppError("Estabelecimento não encontrado.", 404);
         }
 
         // 2. Bloqueio preventivo local se o banco operacional já tiver registro ativo

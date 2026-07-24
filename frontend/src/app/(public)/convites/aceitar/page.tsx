@@ -210,7 +210,7 @@ function AceitarConviteContent() {
           Convite Aceito!
         </CardTitle>
         <CardDescription className="text-muted-foreground text-sm px-4">
-          Você foi convidado para a equipe do restaurante <strong>{invite?.tenantName}</strong> como <strong>{invite?.role === "admin" ? "Administrador" : invite?.role === "operador" ? "Operador" : "Novato"}</strong>.
+          Você foi convidado para a equipe do estabelecimento <strong>{invite?.tenantName}</strong> como <strong>{invite?.role === "admin" ? "Administrador" : invite?.role === "operador" ? "Operador" : "Novato"}</strong>.
         </CardDescription>
       </CardHeader>
 

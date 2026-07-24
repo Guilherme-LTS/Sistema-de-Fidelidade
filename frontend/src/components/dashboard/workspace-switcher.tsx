@@ -31,7 +31,7 @@ export function WorkspaceSwitcher() {
         </div>
         <div className="flex flex-col min-w-0 text-left">
           <span className="text-sm font-semibold text-foreground truncate">
-            {activeTenant?.tenantName || user?.tenant_name || "Restaurante"}
+            {activeTenant?.tenantName || user?.tenant_name || "Estabelecimento"}
           </span>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             {activeTenant?.role || user?.role || "Operador"}
@@ -62,7 +62,7 @@ export function WorkspaceSwitcher() {
 
       <DropdownMenuContent align="start" className="w-60 min-w-60 mt-1 p-1 bg-popover border border-border shadow-md rounded-lg animate-in fade-in-50 slide-in-from-top-1">
         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wider">
-          Restaurantes
+          Estabelecimentos
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-border/60 my-1" />
         

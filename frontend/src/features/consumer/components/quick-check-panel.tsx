@@ -12,12 +12,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { Card, CardContent } from "@/components/ui/card"
-import { formatCPF } from "@/lib/masks"
+import { formatCPF, isValidCPF } from "@/lib/masks"
 import { checkPointsGlobally, checkPointsForTenant, QuickCheckGlobalResult, QuickCheckTenantResult } from "../consumer.api"
 import Link from "next/link"
 
 const searchSchema = z.object({
-  cpf: z.string().min(14, "CPF incompleto."),
+  cpf: z.string()
+    .min(1, "CPF é obrigatório.")
+    .refine((val) => isValidCPF(val), {
+      message: "CPF inválido. Verifique os números digitados.",
+    }),
 })
 
 type SearchFormValues = z.infer<typeof searchSchema>

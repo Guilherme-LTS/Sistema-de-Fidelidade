@@ -45,7 +45,7 @@ export class TransacoesService {
 
     const pontosGanhos = Math.floor(input.valor / divisor);
     if (pontosGanhos === 0) {
-      throw new AppError(`O valor da compra não é suficiente para gerar pontos. Valor mínimo para este restaurante: R$ ${divisor.toFixed(2).replace(".", ",")}.`);
+      throw new AppError(`O valor da compra não é suficiente para gerar pontos. Valor mínimo para este estabelecimento: R$ ${divisor.toFixed(2).replace(".", ",")}.`);
     }
 
     const carenciaDias = tenant?.loyaltyGracePeriodDays || 0;

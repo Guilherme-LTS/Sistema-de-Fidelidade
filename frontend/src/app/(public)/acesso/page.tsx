@@ -7,7 +7,7 @@ import { ConsumerAuthForm } from "@/features/consumer/components/consumer-auth-f
 
 export const metadata: Metadata = {
   title: "Acesso do Consumidor | Pontus",
-  description: "Acesse seus pontos e recompensas em todos os restaurantes parceiros.",
+  description: "Acesse seus pontos e recompensas em todos os estabelecimentos parceiros.",
 }
 
 export default function AcessoConsumidorPage() {

@@ -45,8 +45,8 @@ export function BillingBanner() {
             <AlertTriangle className="h-5 w-5 shrink-0" />
             <span className="text-xs font-semibold">
               {isAdmin 
-                ? "Pagamento em atraso. Regularize sua assinatura para reativar as funções operacionais do restaurante."
-                : "Pagamento em atraso. As funções operacionais do restaurante foram suspensas temporariamente. Por favor, avise o administrador da conta."}
+                ? "Pagamento em atraso. Regularize sua assinatura para reativar as funções operacionais do seu estabelecimento."
+                : "Pagamento em atraso. As funções operacionais do seu estabelecimento foram suspensas temporariamente. Por favor, avise o administrador da conta."}
             </span>
           </div>
           {isAdmin && (

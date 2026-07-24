@@ -47,7 +47,7 @@ export class ConfiguracoesController {
     const tenantId = request.user!.tenantId;
     const body = restauranteSchema.parse(request.body);
     const data = await configuracoesService.updateRestaurante(tenantId, body, request.user!.authUserId, request.ip);
-    return successResponse(data, "Perfil do restaurante atualizado com sucesso.");
+    return successResponse(data, "Perfil do estabelecimento atualizado com sucesso.");
   }
 
   async getFidelidade(request: FastifyRequest, reply: FastifyReply) {

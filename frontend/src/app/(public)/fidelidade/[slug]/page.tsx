@@ -33,7 +33,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const tenant = data?.data
   
   if (!tenant) {
-    return { title: "Restaurante não encontrado" }
+    return { title: "Estabelecimento não encontrado" }
   }
 
   return {

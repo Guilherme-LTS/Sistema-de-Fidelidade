@@ -58,6 +58,27 @@ export function formatCPF(value: string): string {
   return r
 }
 
+export function isValidCPF(cpf: string): boolean {
+  if (!cpf) return false
+
+  const cleaned = cpf.replace(/\D/g, "")
+  if (cleaned.length !== 11) return false
+
+  // Rejeita sequências de dígitos idênticos (ex: 000.000.000-00, 111.111.111-11)
+  if (/^(\d)\1{10}$/.test(cleaned)) return false
+
+  const digits = cleaned.split("").map(Number)
+  const calculateCheckDigit = (baseLength: number) => {
+    const sum = digits
+      .slice(0, baseLength)
+      .reduce((total, digit, index) => total + digit * (baseLength + 1 - index), 0)
+    const remainder = (sum * 10) % 11
+    return remainder === 10 ? 0 : remainder
+  }
+
+  return calculateCheckDigit(9) === digits[9] && calculateCheckDigit(10) === digits[10]
+}
+
 export function isValidCNPJ(cnpj: string): boolean {
   if (!cnpj) return false
 

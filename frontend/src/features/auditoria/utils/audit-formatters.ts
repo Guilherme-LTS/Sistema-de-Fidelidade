@@ -27,7 +27,7 @@ export const actionTranslations: Record<string, string> = {
 export const entityTranslations: Record<string, string> = {
   TRANSACTION: "Lançamento de Pontos",
   REDEMPTION: "Resgate de Recompensa",
-  TENANT_CONFIG: "Perfil do Restaurante",
+  TENANT_CONFIG: "Perfil do Estabelecimento",
   LOYALTY_CONFIG: "Regras de Fidelidade",
   USER: "Operador/Usuário",
   CUSTOMER: "Cadastro de Cliente",

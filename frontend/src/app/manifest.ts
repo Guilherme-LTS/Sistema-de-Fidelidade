@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Pontus | Fidelidade de Resultados',
     short_name: 'Pontus',
-    description: 'A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.',
+    description: 'A plataforma de fidelidade feita para quem tem estabelecimento comercial, não para quem tem TI.',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',
