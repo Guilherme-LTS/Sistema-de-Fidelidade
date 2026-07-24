@@ -81,12 +81,26 @@ export function AssinaturaView() {
   const precoMensal = proMensalPlan ? (proMensalPlan.amount / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "99,00"
   const precoAnual = proAnualPlan ? (proAnualPlan.amount / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "948,00"
 
-  // Sincronizar o ciclo visual do toggle com a assinatura ativa da Stripe
-  useEffect(() => {
+  // Determinar de forma resiliente o intervalo do plano ativo ou agendado ("month" | "year")
+  const activeInterval: "month" | "year" | null = (() => {
     if (details?.subscriptionInfo?.interval) {
-      setBillingCycle(details.subscriptionInfo.interval === "year" ? "anual" : "mensal")
+      return details.subscriptionInfo.interval
     }
-  }, [details])
+    if (user?.subscription_price_id) {
+      if (proAnualPlan && user.subscription_price_id === proAnualPlan.stripePriceId) return "year"
+      if (proMensalPlan && user.subscription_price_id === proMensalPlan.stripePriceId) return "month"
+      if (user.subscription_price_id.includes("anual")) return "year"
+      if (user.subscription_price_id.includes("mensal")) return "month"
+    }
+    return null
+  })()
+
+  // Sincronizar o ciclo visual do toggle com a assinatura ativa ou agendada
+  useEffect(() => {
+    if (activeInterval) {
+      setBillingCycle(activeInterval === "year" ? "anual" : "mensal")
+    }
+  }, [activeInterval])
 
   // Sincronizar o perfil do usuário caso a Stripe tenha alterado o status (JIT Sync autocicatrização)
   useEffect(() => {
@@ -111,8 +125,11 @@ export function AssinaturaView() {
   const isExpired = status === "expired"
   const trialExpired = isTrial && trialDaysLeft <= 0
   
-  const hasStripeSubscription = !!details?.subscriptionInfo
-  const hasActiveStripeSubscription = hasStripeSubscription && details?.subscriptionInfo?.status !== "canceled"
+  const hasStripeSubscription = !!details?.subscriptionInfo || !!user.subscription_price_id
+  const hasActiveStripeSubscription =
+    (!!details?.subscriptionInfo && details.subscriptionInfo.status !== "canceled") ||
+    (status === "trial_scheduled" || status === "trial_canceled" || status === "active" || status === "canceled")
+  
   const pendingInvoice = details?.invoiceHistory?.find((inv) => inv.status === "open")
 
   const handleSubscribe = async (planKey: string) => {
@@ -308,7 +325,7 @@ export function AssinaturaView() {
                         <span>Próxima cobrança em <strong>{details?.upcomingInvoice ? formatDate(details.upcomingInvoice.dueDate) : formatDate(details?.subscriptionInfo?.currentPeriodEnd)}</strong></span>
                       )}
                     </>
-                  ) : status === "trial_scheduled" || status === "trial_active" ? (
+                  ) : status === "trial_active" ? (
                     <span>Período de testes gratuito expira em <strong>{formatDate(user.subscription_current_period_end)}</strong></span>
                   ) : (
                     <span>Sua conta está inativa. Escolha um plano abaixo para reativar seu programa de fidelidade.</span>
@@ -628,7 +645,7 @@ export function AssinaturaView() {
             <CardFooter>
               {hasActiveStripeSubscription ? (
                 (() => {
-                  const isCurrent = details?.subscriptionInfo?.interval === (billingCycle === "mensal" ? "month" : "year");
+                  const isCurrent = activeInterval === (billingCycle === "mensal" ? "month" : "year");
                   const isTrialing = status === "trial_scheduled";
                   const isTrialCanceled = status === "trial_canceled";
                   
