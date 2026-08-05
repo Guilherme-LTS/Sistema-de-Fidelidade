@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
 
-  // Evitar redirecionar requisições estáticas e APIs internas
+  // 1. Ignorar requisições estáticas, assets internos e APIs
   const isStaticOrApi =
     url.pathname.startsWith('/_next') ||
     url.pathname.startsWith('/api') ||
@@ -18,17 +18,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Em ambiente local ou preview da Vercel, não efetuar redirecionamentos de subdomínio de produção
+  // 2. Ignorar redirecionamentos em ambiente local (localhost) ou preview da Vercel
   const isLocalOrPreview = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.includes('vercel.app');
   if (isLocalOrPreview) {
     return NextResponse.next();
   }
 
-  // Identifica se a requisição está batendo no subdomínio "app"
-  const isAppDomain = hostname.startsWith('app.usepontus.com.br') || hostname.startsWith('app.localhost') || hostname.startsWith('app.');
+  // Identifica se o subdomínio atual é o "app.usepontus.com.br"
+  const isAppDomain = hostname.startsWith('app.usepontus.com.br') || hostname.startsWith('app.');
 
-  // Identifica se a rota atual faz parte do escopo do aplicativo/painel/auth
-  const isAuthOrAdminRoute =
+  // Escopo de Rotas B2B (Lojista / Estabelecimento / SaaS Administrative)
+  const isMerchantB2BRoute =
     url.pathname.startsWith('/admin') ||
     url.pathname.startsWith('/login') ||
     url.pathname.startsWith('/cadastro') ||
@@ -36,14 +36,22 @@ export function middleware(request: NextRequest) {
     url.pathname.startsWith('/confirmacao-pendente') ||
     url.pathname.startsWith('/convites');
 
-  // 1. Redirecionar acessos administrativos no domínio raiz para o subdomínio app
-  if (!isAppDomain && isAuthOrAdminRoute) {
+  // Escopo de Rotas B2C (Público / Consumidor / Cliente Final)
+  const isConsumerB2CRoute =
+    url.pathname === '/' ||
+    url.pathname.startsWith('/painel') ||
+    url.pathname.startsWith('/acesso') ||
+    url.pathname.startsWith('/perfil') ||
+    url.pathname.startsWith('/fidelidade');
+
+  // REGRA 1: Se estiver em www.usepontus.com.br e tentar acessar uma rota B2B de lojista -> Redireciona para app.usepontus.com.br
+  if (!isAppDomain && isMerchantB2BRoute) {
     return NextResponse.redirect(`https://app.usepontus.com.br${url.pathname}${url.search}`, 307);
   }
 
-  // 2. Redirecionar acessos à Landing Page institucional no subdomínio app para o domínio raiz oficial
-  if (isAppDomain && url.pathname === '/') {
-    return NextResponse.redirect(`https://www.usepontus.com.br${url.search}`, 307);
+  // REGRA 2: Se estiver em app.usepontus.com.br e tentar acessar uma rota B2C pública ou de consumidor -> Redireciona para www.usepontus.com.br
+  if (isAppDomain && isConsumerB2CRoute) {
+    return NextResponse.redirect(`https://www.usepontus.com.br${url.pathname}${url.search}`, 307);
   }
 
   return NextResponse.next();
@@ -58,5 +66,9 @@ export const config = {
     '/alterar-senha',
     '/confirmacao-pendente',
     '/convites/:path*',
+    '/painel/:path*',
+    '/acesso',
+    '/perfil',
+    '/fidelidade/:path*',
   ],
 };
