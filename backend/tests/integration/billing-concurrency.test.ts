@@ -15,6 +15,15 @@ const stripeInstance = stripeService.getStripe();
 
 let originalSubscriptionsRetrieve: any;
 let originalSubscriptionsUpdate: any;
+let originalPricesRetrieve: any;
+
+const mockPricesRetrieve = vi.fn().mockImplementation((priceId: string) => {
+  return Promise.resolve({
+    id: priceId,
+    unit_amount: 199000,
+    recurring: { interval: priceId.includes("anual") || priceId.includes("year") ? "year" : "month" },
+  });
+});
 
 const mockSubscriptionsRetrieve = vi.fn().mockResolvedValue({
   id: mockSubscriptionId,
@@ -73,10 +82,12 @@ describe("Stripe Billing Concurrency & Transaction Isolation Integration", () =>
     // Fazer backup das implementações
     originalSubscriptionsRetrieve = stripeInstance.subscriptions.retrieve;
     originalSubscriptionsUpdate = stripeInstance.subscriptions.update;
+    originalPricesRetrieve = stripeInstance.prices.retrieve;
 
     // Aplicar mocks temporários
     stripeInstance.subscriptions.retrieve = mockSubscriptionsRetrieve as any;
     stripeInstance.subscriptions.update = mockSubscriptionsUpdate as any;
+    stripeInstance.prices.retrieve = mockPricesRetrieve as any;
 
     testTenantId = randomUUID();
 
@@ -100,6 +111,7 @@ describe("Stripe Billing Concurrency & Transaction Isolation Integration", () =>
     // Restaurar implementações originais
     stripeInstance.subscriptions.retrieve = originalSubscriptionsRetrieve;
     stripeInstance.subscriptions.update = originalSubscriptionsUpdate;
+    stripeInstance.prices.retrieve = originalPricesRetrieve;
 
     // Limpeza (Remover tenant temporário)
     await db.delete(tenants).where(eq(tenants.id, testTenantId));

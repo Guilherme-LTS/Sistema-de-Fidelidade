@@ -5,7 +5,7 @@ import { ConsumerAuthForm } from "@/features/consumer/components/consumer-auth-f
 // No futuro, isso será substituído por uma chamada à API do backend
 async function getTenantBySlug(slug: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'}/public/tenants/${slug}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001'}/public/tenants/${slug}`, {
       next: { revalidate: 60 } // Cache por 60 segundos
     })
     

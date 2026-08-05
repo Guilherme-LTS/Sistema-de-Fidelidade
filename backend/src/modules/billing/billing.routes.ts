@@ -322,11 +322,32 @@ export async function billingRoutes(app: FastifyInstance) {
 
             await db.transaction(async (tx) => {
               // Buscar Tenant com base no customerId usando bloqueio de linha FOR UPDATE
-              const [tenant] = await tx
+              let [tenant] = await tx
                 .select()
                 .from(tenants)
                 .where(eq(tenants.stripeCustomerId, customerId))
                 .for("update");
+
+              // Auto-healing: Se não encontrou por customerId, busca por metadata.tenantId se disponível
+              if (!tenant) {
+                const metadataTenantId = subscription.metadata?.tenantId;
+                if (metadataTenantId) {
+                  const [tenantByMeta] = await tx
+                    .select()
+                    .from(tenants)
+                    .where(eq(tenants.id, metadataTenantId))
+                    .for("update");
+
+                  if (tenantByMeta) {
+                    tenant = tenantByMeta;
+                    await tx
+                      .update(tenants)
+                      .set({ stripeCustomerId: customerId })
+                      .where(eq(tenants.id, tenant.id));
+                    app.log.info(`[Stripe Webhook Auto-healing] stripeCustomerId ${customerId} associado ao Tenant ${tenant.id}`);
+                  }
+                }
+              }
 
               if (tenant) {
                 // Proteção contra Webhooks fora de ordem (Out-of-Order Events)

@@ -40,9 +40,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(`https://app.usepontus.com.br${url.pathname}${url.search}`, 307);
   }
 
-  // 2. Redirecionar acessos à Landing Page institucional no subdomínio app para o domínio raiz
+  // 2. Redirecionar acessos à Landing Page institucional no subdomínio app para o domínio raiz oficial
   if (isAppDomain && url.pathname === '/') {
-    return NextResponse.redirect(`https://usepontus.com.br${url.search}`, 307);
+    return NextResponse.redirect(`https://www.usepontus.com.br${url.search}`, 307);
   }
 
   return NextResponse.next();

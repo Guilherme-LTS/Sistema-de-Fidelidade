@@ -661,6 +661,11 @@ class StripeService {
    */
   async changePlan(tenantId: string, newPriceId: string, isUpgrade: boolean = false): Promise<void> {
     const stripe = this.getStripe();
+    const priceMap: Record<string, string | undefined> = {
+      pro_mensal: env.STRIPE_PRICE_PRO_MENSAL,
+      pro_anual: env.STRIPE_PRICE_PRO_ANUAL,
+    };
+    const resolvedPriceId = priceMap[newPriceId] || newPriceId;
 
     await db.transaction(async (tx) => {
       // 1. Lock pessimista na linha do tenant
@@ -680,7 +685,7 @@ class StripeService {
       const currentItem = subscription.items?.data?.[0];
       const currentInterval = currentItem?.price?.recurring?.interval;
 
-      const newPrice = await stripe.prices.retrieve(newPriceId);
+      const newPrice = await stripe.prices.retrieve(resolvedPriceId);
       const newInterval = newPrice.recurring?.interval;
 
       const isIntervalChanged = !!(currentInterval && newInterval && currentInterval !== newInterval);
@@ -689,17 +694,27 @@ class StripeService {
         items: [
           {
             id: subscription.items.data[0].id,
-            price: newPriceId,
+            price: resolvedPriceId,
           },
         ],
         cancel_at_period_end: false,
         proration_behavior: subscription.status === "trialing" ? "none" : "create_prorations",
       };
 
+      if (subscription.schedule) {
+        const scheduleId = typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
+        try {
+          await stripe.subscriptionSchedules.release(scheduleId);
+          console.log(`[Stripe changePlan] Subscription Schedule ${scheduleId} liberado antes da alteração para tenant ${tenantId}.`);
+        } catch (schedErr) {
+          console.warn(`[Stripe changePlan] Aviso ao liberar schedule ${scheduleId}:`, schedErr);
+        }
+      }
+
       // Se o ciclo de cobrança mudou e a assinatura possui cupom/desconto ativo, desvincula o desconto do ciclo antigo
-      if (isIntervalChanged && (subscription.discounts && subscription.discounts.length > 0)) {
+      if (isIntervalChanged && subscription.discounts && subscription.discounts.length > 0) {
         console.log(`[Stripe changePlan] Ciclo alterado de ${currentInterval} para ${newInterval}. Desvinculando cupom do ciclo antigo para tenant ${tenantId}.`);
-        updateParams.discounts = "";
+        updateParams.discounts = [];
       }
 
       const updatedSub = await stripe.subscriptions.update(tenant.stripeSubscriptionId, updateParams) as Stripe.Subscription;

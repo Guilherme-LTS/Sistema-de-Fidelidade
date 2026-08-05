@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 const clientEnvSchema = z.object({
-  NEXT_PUBLIC_API_URL: z.string().url().default("http://localhost:3001"),
+  NEXT_PUBLIC_API_URL: z.string().url().default("http://localhost:4001"),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
   NEXT_PUBLIC_PUBLIC_TENANT_ID: z.string().optional(),

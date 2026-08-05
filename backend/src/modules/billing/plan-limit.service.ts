@@ -42,17 +42,19 @@ class PlanLimitService {
 
     const status = tenant.subscriptionStatus;
 
-    // Se a assinatura está cancelada, não-paga ou inadimplente
-    const isCanceled = status === "canceled" || status === "unpaid" || status === "past_due" || !status;
-    
-    // Validar se o trial expirou localmente (sem assinatura vinculada na Stripe)
+    // Se a assinatura está explicitamente cancelada, não-paga ou inadimplente
+    const isCanceled = status === "canceled" || status === "unpaid" || status === "past_due";
+
+    // Validar se o trial expirou localmente
     let isTrialExpired = false;
-    if (status === "trialing" && !tenant.stripeSubscriptionId) {
-      const now = new Date();
-      const periodEnd = tenant.subscriptionCurrentPeriodEnd
+
+    if (!status || status === "trialing") {
+      const createdAtDate = tenant.createdAt ? new Date(tenant.createdAt) : new Date();
+      const trialEnd = tenant.subscriptionCurrentPeriodEnd
         ? new Date(tenant.subscriptionCurrentPeriodEnd)
-        : null;
-      if (periodEnd && periodEnd < now) {
+        : new Date(createdAtDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      if (trialEnd < new Date()) {
         isTrialExpired = true;
       }
     }

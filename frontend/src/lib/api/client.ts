@@ -77,7 +77,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       }
     }
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       if (typeof window !== "undefined") {
         if (isConsumerPath) {
           clearStoredConsumerToken()

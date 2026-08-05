@@ -79,12 +79,13 @@ describe("Stripe Billing Rate Limit Cache Integration", () => {
   beforeAll(async () => {
     // Fazer backup das implementações originais do Stripe
     originalInvoicesList = stripeInstance.invoices.list;
-    originalInvoicesUpcoming = (stripeInstance.invoices as any).upcoming;
+    originalInvoicesUpcoming = (stripeInstance.invoices as any).upcoming || (stripeInstance.invoices as any).createPreview;
     originalSubscriptionsRetrieve = stripeInstance.subscriptions.retrieve;
 
     // Aplicar mocks temporários
     stripeInstance.invoices.list = mockInvoicesList as any;
     (stripeInstance.invoices as any).upcoming = mockInvoicesUpcoming as any;
+    (stripeInstance.invoices as any).createPreview = mockInvoicesUpcoming as any;
     stripeInstance.subscriptions.retrieve = mockSubscriptionsRetrieve as any;
 
     testTenantId = randomUUID();
