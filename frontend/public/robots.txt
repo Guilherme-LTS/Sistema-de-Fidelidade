@@ -7,4 +7,4 @@ Disallow: /configuracoes/
 Disallow: /auth/
 Disallow: /api/
 
-Sitemap: https://usepontus.com.br/sitemap.xml
+Sitemap: https://www.usepontus.com.br/sitemap.xml

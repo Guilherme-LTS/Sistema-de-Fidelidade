@@ -13,14 +13,14 @@ const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--fon
 export const metadata: Metadata = {
   title: "Pontus | Fidelidade de Resultados",
   description: "A plataforma de fidelidade feita para quem tem estabelecimento comercial, não para quem tem TI.",
-  metadataBase: new URL("https://usepontus.com.br"),
+  metadataBase: new URL("https://www.usepontus.com.br"),
   alternates: {
-    canonical: "https://usepontus.com.br",
+    canonical: "https://www.usepontus.com.br",
   },
   openGraph: {
     title: "Pontus | Fidelidade de Resultados",
     description: "A plataforma de fidelidade feita para quem tem estabelecimento comercial, não para quem tem TI.",
-    url: "https://usepontus.com.br",
+    url: "https://www.usepontus.com.br",
     siteName: "Pontus",
     images: [
       {

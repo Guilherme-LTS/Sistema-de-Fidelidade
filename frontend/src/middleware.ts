@@ -5,21 +5,22 @@ export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
 
-  // Evitar redirecionar requisições internas do Next.js (RSC data, prefetch, static assets, APIs, etc.)
-  const isInternalOrApi =
+  // Evitar redirecionar requisições estáticas e APIs internas
+  const isStaticOrApi =
     url.pathname.startsWith('/_next') ||
     url.pathname.startsWith('/api') ||
     url.pathname.includes('.') ||
-    url.searchParams.has('_rsc') ||
-    request.headers.has('RSC');
+    url.pathname === '/favicon.ico' ||
+    url.pathname === '/robots.txt' ||
+    url.pathname === '/sitemap.xml';
 
-  if (isInternalOrApi) {
+  if (isStaticOrApi) {
     return NextResponse.next();
   }
 
-  // Em ambiente de desenvolvimento local (localhost / 127.0.0.1), não efetuar redirecionamentos de subdomínio de produção
-  const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
-  if (isLocalhost) {
+  // Em ambiente local ou preview da Vercel, não efetuar redirecionamentos de subdomínio de produção
+  const isLocalOrPreview = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.includes('vercel.app');
+  if (isLocalOrPreview) {
     return NextResponse.next();
   }
 

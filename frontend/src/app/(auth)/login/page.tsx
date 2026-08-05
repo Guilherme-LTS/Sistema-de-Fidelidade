@@ -5,6 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, Star, TrendingUp, ShieldCheck } from "lucide-react"
 
+import { DOMAINS } from "@/config/domains"
+
 export default function LoginPage() {
   return (
     <main className="flex min-h-screen bg-background relative overflow-hidden flex-col items-center justify-center p-4 pt-24 pb-8">
@@ -13,9 +15,9 @@ export default function LoginPage() {
       <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none" />
       
       <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
-        <Link href="/" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-12">
+        <a href={DOMAINS.landing || "/"} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-12">
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o início
-        </Link>
+        </a>
       </div>
 
       <div className="w-full max-w-[420px] relative z-10">

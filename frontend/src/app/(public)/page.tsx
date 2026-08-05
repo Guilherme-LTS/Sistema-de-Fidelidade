@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { routes } from "@/config/routes"
+import { DOMAINS } from "@/config/domains"
 
 export default function LandingPage() {
   return (
@@ -26,12 +27,12 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-3">
             <Button variant="ghost" className="hidden sm:inline-flex font-medium" asChild>
-              <Link href="/login">Entrar (Lojista)</Link>
+              <a href={`${DOMAINS.app}/login`}>Entrar (Lojista)</a>
             </Button>
             <Button className="rounded-full shadow-md font-medium" asChild>
-              <Link href="/painel">
+              <a href={`${DOMAINS.app}/painel`}>
                 <User className="mr-2 h-4 w-4" /> Meus Pontos
-              </Link>
+              </a>
             </Button>
           </div>
         </div>
@@ -62,7 +63,7 @@ export default function LandingPage() {
             
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="h-12 px-8 text-base shadow-xl rounded-full" asChild>
-                <Link href="/cadastro">Criar Conta Grátis <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                <a href={`${DOMAINS.app}/cadastro`}>Criar Conta Grátis <ArrowRight className="ml-2 h-5 w-5" /></a>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 text-base rounded-full" asChild>
                 <Link href="#como-funciona">Como Funciona</Link>
@@ -86,9 +87,9 @@ export default function LandingPage() {
             
             <div className="w-full md:w-auto flex-1 max-w-md flex gap-2">
               <Button className="w-full h-12 text-base rounded-xl shadow-md bg-foreground text-background hover:bg-foreground/90" asChild>
-                <Link href="/painel">
+                <a href={`${DOMAINS.app}/painel`}>
                   Acessar Meu Painel de Pontos
-                </Link>
+                </a>
               </Button>
             </div>
           </div>
@@ -261,12 +262,12 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 gap-12 text-sm">
             <div className="flex flex-col space-y-3">
               <h4 className="font-semibold text-foreground">Produto (B2B)</h4>
-              <Link href="/login" className="text-muted-foreground hover:text-foreground">Entrar no Painel</Link>
-              <Link href="/cadastro" className="text-muted-foreground hover:text-foreground">Criar Conta</Link>
+              <a href={`${DOMAINS.app}/login`} className="text-muted-foreground hover:text-foreground">Entrar no Painel</a>
+              <a href={`${DOMAINS.app}/cadastro`} className="text-muted-foreground hover:text-foreground">Criar Conta</a>
             </div>
             <div className="flex flex-col space-y-3">
               <h4 className="font-semibold text-foreground">Consumidores (B2C)</h4>
-              <Link href="/painel" className="text-muted-foreground hover:text-foreground">Meus Pontos</Link>
+              <a href={`${DOMAINS.app}/painel`} className="text-muted-foreground hover:text-foreground">Meus Pontos</a>
               <a href="#" className="text-muted-foreground hover:text-foreground">Termos de Uso</a>
               <a href="#" className="text-muted-foreground hover:text-foreground">Privacidade (LGPD)</a>
             </div>

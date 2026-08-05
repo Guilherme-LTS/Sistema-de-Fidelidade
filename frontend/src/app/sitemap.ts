@@ -1,23 +1,24 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://usepontus.com.br'
+  const landingUrl = 'https://www.usepontus.com.br'
+  const appUrl = 'https://app.usepontus.com.br'
 
   return [
     {
-      url: `${baseUrl}/`,
+      url: `${landingUrl}/`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 1,
     },
     {
-      url: `${baseUrl}/cadastro`,
+      url: `${appUrl}/cadastro`,
       lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/login`,
+      url: `${appUrl}/login`,
       lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.8,
