@@ -18,7 +18,9 @@ const nextConfig = {
       "@radix-ui/react-select",
       "@radix-ui/react-tooltip",
       "@radix-ui/react-popover",
-      "@radix-ui/react-[a-z]*",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-slot",
+      "@radix-ui/react-label",
     ],
   },
   async headers() {
