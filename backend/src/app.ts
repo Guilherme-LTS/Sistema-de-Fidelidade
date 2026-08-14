@@ -10,6 +10,11 @@ export const app = fastify({
   logger: false, // Usamos nosso logger customizado infra/logger para controle total
 });
 
+// Injetar cabeçalho HTTP de SEO para impedir indexação da API por robôs de busca
+app.addHook("onSend", async (_request, reply) => {
+  reply.header("X-Robots-Tag", "noindex, nofollow");
+});
+
 // Registrar segurança básica (CORS, Helmet e Rate Limit)
 await app.register(helmet, { global: true });
 await app.register(cors, corsConfig);

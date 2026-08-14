@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { AuthGuard } from "@/features/auth/components/auth-guard"
@@ -5,6 +6,13 @@ import { AuthProvider } from "@/lib/auth/auth-context"
 import { PendingInvitations } from "@/components/dashboard/pending-invitations"
 import { BillingBanner } from "@/components/dashboard/billing-banner"
 import { TrialOnboardingModal } from "@/features/configuracoes/components/trial-onboarding-modal"
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (

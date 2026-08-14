@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /$
-Allow: /cadastro
+Disallow: /login
+Disallow: /cadastro
+Disallow: /alterar-senha
+Disallow: /confirmacao-pendente
 Disallow: /admin/
 Disallow: /clientes/
 Disallow: /configuracoes/

@@ -1,7 +1,19 @@
+import type { Metadata } from "next"
 import { AlterarSenhaForm } from "@/features/auth/components/alterar-senha-form"
 import { AuthProvider } from "@/lib/auth/auth-context"
 import { Suspense } from "react"
 import { DOMAINS } from "@/config/domains"
+
+export const metadata: Metadata = {
+  title: "Alterar Senha | Pontus",
+  robots: {
+    index: false,
+    follow: false,
+  },
+  alternates: {
+    canonical: "https://app.usepontus.com.br/alterar-senha",
+  },
+}
 
 export default function AlterarSenhaPage() {
   return (

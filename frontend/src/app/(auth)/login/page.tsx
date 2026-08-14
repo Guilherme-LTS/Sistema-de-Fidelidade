@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { LoginForm } from "@/features/auth/components/login-form"
 import { AuthProvider } from "@/lib/auth/auth-context"
 import { Suspense } from "react"
@@ -6,6 +7,17 @@ import Image from "next/image"
 import { ArrowLeft, Star, TrendingUp, ShieldCheck } from "lucide-react"
 
 import { DOMAINS } from "@/config/domains"
+
+export const metadata: Metadata = {
+  title: "Entrar | Pontus",
+  robots: {
+    index: false,
+    follow: false,
+  },
+  alternates: {
+    canonical: "https://app.usepontus.com.br/login",
+  },
+}
 
 export default function LoginPage() {
   return (

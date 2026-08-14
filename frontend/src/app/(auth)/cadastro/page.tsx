@@ -1,9 +1,21 @@
+import type { Metadata } from "next"
 import { CadastroForm } from "@/features/auth/components/cadastro-form"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft } from "lucide-react"
 
 import { DOMAINS } from "@/config/domains"
+
+export const metadata: Metadata = {
+  title: "Criar Conta | Pontus",
+  robots: {
+    index: false,
+    follow: false,
+  },
+  alternates: {
+    canonical: "https://app.usepontus.com.br/cadastro",
+  },
+}
 
 export default function CadastroPage() {
   return (
