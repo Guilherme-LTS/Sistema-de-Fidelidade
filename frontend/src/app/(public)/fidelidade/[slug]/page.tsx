@@ -39,6 +39,15 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   return {
     title: `Pontus | ${tenant.name}`,
     description: `Acesse seus pontos e prêmios em ${tenant.name}`,
+    alternates: {
+      canonical: `https://www.usepontus.com.br/fidelidade/${params.slug}`,
+    },
+    openGraph: {
+      title: `Pontus | ${tenant.name}`,
+      description: `Acesse seus pontos e prêmios em ${tenant.name}`,
+      url: `https://www.usepontus.com.br/fidelidade/${params.slug}`,
+      siteName: "Pontus",
+    },
   }
 }
 
