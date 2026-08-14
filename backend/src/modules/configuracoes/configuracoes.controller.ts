@@ -34,6 +34,7 @@ const fidelidadeSchema = z.object({
   expiracaoPontos: z.number().min(0),
   pointsConversionReal: z.number().positive("O valor de conversão deve ser maior que zero."),
   regulationNotes: z.string().optional().or(z.literal("")),
+  pointName: z.string().max(50, "O nome dos pontos deve ter no máximo 50 caracteres.").optional().or(z.literal("")).nullable(),
 });
 
 export class ConfiguracoesController {

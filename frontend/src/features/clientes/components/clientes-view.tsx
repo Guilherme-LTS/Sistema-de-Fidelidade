@@ -40,7 +40,7 @@ import {
   ArrowLeft,
   AlertCircle
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, getPointName } from "@/lib/utils"
 import { useAuth } from "@/lib/auth/auth-context"
 
 const formatarData = (dataISO?: string | null) => {
@@ -59,6 +59,7 @@ const formatarData = (dataISO?: string | null) => {
 
 export function ClientesView() {
   const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
   // Estados de busca e paginação
   const [termoBusca, setTermoBusca] = useState("")
   const debouncedBusca = useDebounce(termoBusca, 500)
@@ -303,15 +304,15 @@ export function ClientesView() {
                   </div>
                 </div>
 
-                {/* Cards de Métricas Rápidas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                {/* Cards de Resumo dos Pontos */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
                   {/* Pontos Disponíveis */}
                   <div className="bg-card p-4 rounded-xl border border-border shadow-sm flex items-center gap-3">
                     <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
                       <Award className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground">Pontos Disponíveis</p>
+                      <p className="text-xs font-semibold text-muted-foreground">{pointName} Disponíveis</p>
                       <p className="text-2xl font-bold text-emerald-600 mt-0.5">
                         {clienteAtivo.pontosDisponiveis ?? 0}
                       </p>
@@ -324,7 +325,7 @@ export function ClientesView() {
                       <Clock className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground">Pontos Pendentes</p>
+                      <p className="text-xs font-semibold text-muted-foreground">{pointName} Pendentes</p>
                       <p className="text-2xl font-bold text-amber-500 mt-0.5">
                         {clienteAtivo.pontosPendentes ?? 0}
                       </p>
@@ -337,7 +338,7 @@ export function ClientesView() {
                       <AlertTriangle className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-muted-foreground">Pontos Expirando</p>
+                      <p className="text-xs font-semibold text-muted-foreground">{pointName} Expirando</p>
                       <p className="text-2xl font-bold text-rose-500 mt-0.5">
                         {clienteAtivo.pontosExpirando ?? 0}
                       </p>
@@ -372,7 +373,7 @@ export function ClientesView() {
                           <TableRow>
                             <TableHead className="w-[120px] text-xs font-bold uppercase">Data</TableHead>
                             <TableHead className="text-xs font-bold uppercase">Descrição</TableHead>
-                            <TableHead className="text-right text-xs font-bold uppercase w-[120px]">Pontos</TableHead>
+                            <TableHead className="text-right text-xs font-bold uppercase w-[120px]">{pointName}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>

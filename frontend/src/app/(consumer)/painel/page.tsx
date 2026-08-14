@@ -9,7 +9,9 @@ import { Store, Star, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-interface ConsumerDashboardResponse {
+import { getPointName } from "@/lib/utils"
+
+interface ConsumerDashboardData {
   profile: {
     name: string
     document: string
@@ -19,6 +21,7 @@ interface ConsumerDashboardResponse {
     tenant_name: string
     tenant_slug: string
     tenant_logo: string | null
+    tenant_point_name?: string | null
     customer_id: string
     pontos_disponiveis: number
     pontos_pendentes: number
@@ -133,7 +136,7 @@ export default function ConsumerPanel() {
                         {membership.pontos_disponiveis}
                       </span>
                       <span className="text-sm md:text-sm font-bold text-muted-foreground">
-                        pts
+                        {getPointName(membership.tenant_point_name)}
                       </span>
                     </div>
                   </div>

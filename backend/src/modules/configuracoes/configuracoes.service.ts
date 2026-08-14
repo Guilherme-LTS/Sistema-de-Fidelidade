@@ -26,6 +26,7 @@ type FidelidadeInput = {
   expiracaoPontos: number;
   pointsConversionReal: number;
   regulationNotes?: string;
+  pointName?: string | null;
 };
 
 export class ConfiguracoesService {
@@ -85,6 +86,7 @@ export class ConfiguracoesService {
         loyaltyExpirationDays: true,
         pointsConversionReal: true,
         regulationNotes: true,
+        pointName: true,
       }
     });
 
@@ -95,6 +97,7 @@ export class ConfiguracoesService {
       expiracaoPontos: tenant.loyaltyExpirationDays || 90,
       pointsConversionReal: tenant.pointsConversionReal ? Number(tenant.pointsConversionReal) : 1.00,
       regulationNotes: tenant.regulationNotes || "",
+      pointName: tenant.pointName || null,
     };
   }
 
@@ -106,10 +109,12 @@ export class ConfiguracoesService {
         loyaltyExpirationDays: true,
         pointsConversionReal: true,
         regulationNotes: true,
+        pointName: true,
       }
     });
 
     const previousConversion = currentConfig?.pointsConversionReal ? Number(currentConfig.pointsConversionReal) : 1.00;
+    const cleanPointName = input.pointName?.trim() ? input.pointName.trim() : null;
 
     const [tenant] = await db.update(tenants)
       .set({
@@ -117,6 +122,7 @@ export class ConfiguracoesService {
         loyaltyExpirationDays: input.expiracaoPontos,
         pointsConversionReal: input.pointsConversionReal.toString(),
         regulationNotes: input.regulationNotes || null,
+        pointName: cleanPointName,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tenants.id, tenantId))
@@ -127,11 +133,12 @@ export class ConfiguracoesService {
     const conversionChanged = previousConversion !== input.pointsConversionReal;
     const metadata: any = { 
       action: 'UPDATE_FIDELIDADE', 
-      changes: input,
+      changes: { ...input, pointName: cleanPointName },
       previous: {
         carenciaPontos: currentConfig?.loyaltyGracePeriodDays || 0,
         expiracaoPontos: currentConfig?.loyaltyExpirationDays || 90,
         pointsConversionReal: previousConversion,
+        pointName: currentConfig?.pointName || null,
       }
     };
 
@@ -153,6 +160,8 @@ export class ConfiguracoesService {
       carenciaPontos: tenant.loyaltyGracePeriodDays || 0,
       expiracaoPontos: tenant.loyaltyExpirationDays || 90,
       pointsConversionReal: tenant.pointsConversionReal ? Number(tenant.pointsConversionReal) : 1.00,
+      regulationNotes: tenant.regulationNotes || "",
+      pointName: tenant.pointName || null,
     };
   }
 }

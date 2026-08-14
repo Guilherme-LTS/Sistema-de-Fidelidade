@@ -9,6 +9,7 @@ export type AuthenticatedUser = {
   tenantId: string;
   tenantName: string;
   tenantLogoUrl?: string | null;
+  pointName?: string | null;
   role: "admin" | "operador" | "novato";
   email?: string;
   phone?: string | null;
@@ -127,6 +128,7 @@ export async function requireAuth(request: FastifyRequest, _reply: FastifyReply)
     tenantId: tenantUserRecord.tenantId!,
     tenantName: tenantUserRecord.tenant?.name || "Restaurante",
     tenantLogoUrl: tenantUserRecord.tenant?.logoUrl,
+    pointName: tenantUserRecord.tenant?.pointName || null,
     role: tenantUserRecord.role,
     email: supabaseUser.email,
     phone: tenantUserRecord.phone,

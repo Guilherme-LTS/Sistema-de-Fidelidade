@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { getPointName } from "@/lib/utils"
 
 interface PageProps {
   params: Promise<{
@@ -57,6 +58,8 @@ export default function TenantDashboardPage(props: PageProps) {
 
   const { tenant, rewards, summary } = data
   const { pontos_disponiveis } = summary
+  const pointName = getPointName(tenant.pointName)
+  const pointNameLower = pointName.toLowerCase()
 
   // Identifica a próxima recompensa
   const unachievableRewards = rewards
@@ -187,7 +190,7 @@ export default function TenantDashboardPage(props: PageProps) {
                   <div>
                     <div className="flex items-baseline gap-1">
                       <span className="text-4xl font-bold tracking-tighter text-foreground">{pontos_disponiveis}</span>
-                      <span className="text-muted-foreground font-medium">pontos</span>
+                      <span className="text-muted-foreground font-medium">{pointNameLower}</span>
                     </div>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -209,7 +212,7 @@ export default function TenantDashboardPage(props: PageProps) {
                   <div className="space-y-1">
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-bold tracking-tighter text-foreground">Faltam {nextReward.pointsCost - pontos_disponiveis}</span>
-                      <span className="text-muted-foreground font-medium text-sm">pontos</span>
+                      <span className="text-muted-foreground font-medium text-sm">{pointNameLower}</span>
                     </div>
                     <p className="text-sm text-muted-foreground truncate" title={nextReward.name}>
                       Para resgatar: <strong className="font-medium text-foreground">{nextReward.name}</strong>
@@ -590,20 +593,20 @@ export default function TenantDashboardPage(props: PageProps) {
                           <span className="text-2xl font-black text-slate-700 dark:text-slate-300">
                             {tenant.loyaltyExpirationDays === 0 ? "Sem expiração" : `${tenant.loyaltyExpirationDays} dias`}
                           </span>
-                          <span className="text-xs text-muted-foreground mt-1 font-semibold">Validade dos pontos</span>
+                          <span className="text-xs text-muted-foreground mt-1 font-semibold">Validade dos {pointNameLower}</span>
                         </div>
                       </div>
 
                       <div className="space-y-3 pt-2 text-sm leading-relaxed text-muted-foreground">
                         <h4 className="font-bold text-foreground text-sm">Funcionamento Geral:</h4>
                         <ul className="list-disc pl-5 space-y-1.5 text-xs">
-                          <li>Os pontos são concedidos mediante a identificação do seu CPF no momento do pagamento no caixa.</li>
-                          <li>Os pontos acumulados são de uso pessoal, intransferíveis e não podem ser convertidos em dinheiro.</li>
+                          <li>Os {pointNameLower} são concedidos mediante a identificação do seu CPF no momento do pagamento no caixa.</li>
+                          <li>Os {pointNameLower} acumulados são de uso pessoal, intransferíveis e não podem ser convertidos em dinheiro.</li>
                           {tenant.loyaltyGracePeriodDays > 0 && (
-                            <li>Após acumular pontos, eles ficarão em estado "Pendente" por {tenant.loyaltyGracePeriodDays} dias antes de ficarem "Disponíveis" para troca.</li>
+                            <li>Após acumular {pointNameLower}, eles ficarão em estado "Pendente" por {tenant.loyaltyGracePeriodDays} dias antes de ficarem "Disponíveis" para troca.</li>
                           )}
                           {tenant.loyaltyExpirationDays > 0 && (
-                            <li>Fique atento: os pontos expiram automaticamente após {tenant.loyaltyExpirationDays} dias de sua data de lançamento.</li>
+                            <li>Fique atento: os {pointNameLower} expiram automaticamente após {tenant.loyaltyExpirationDays} dias de sua data de lançamento.</li>
                           )}
                         </ul>
                       </div>

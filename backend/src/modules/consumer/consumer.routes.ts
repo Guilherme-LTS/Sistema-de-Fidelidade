@@ -40,6 +40,7 @@ export async function consumerRoutes(app: FastifyInstance) {
           t.name AS tenant_name,
           t.slug AS tenant_slug,
           t.logo_url AS tenant_logo,
+          t.point_name AS tenant_point_name,
           c.id AS customer_id,
           COALESCE(SUM(CASE
             WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock)
@@ -64,7 +65,7 @@ export async function consumerRoutes(app: FastifyInstance) {
         WHERE c.consumer_profile_id = ${profile.id}
           AND c.deleted_at IS NULL
           AND t.is_active = true
-        GROUP BY t.id, t.name, t.slug, t.logo_url, c.id
+        GROUP BY t.id, t.name, t.slug, t.logo_url, t.point_name, c.id
       `);
 
       return successResponse({
@@ -248,6 +249,7 @@ export async function consumerRoutes(app: FastifyInstance) {
           latitude: tenant.latitude,
           longitude: tenant.longitude,
           socialLinks: tenant.socialLinks || null,
+          pointName: tenant.pointName || null,
           pointsConversionReal: tenant.pointsConversionReal ? Number(tenant.pointsConversionReal) : 1.00,
           loyaltyGracePeriodDays: tenant.loyaltyGracePeriodDays || 0,
           loyaltyExpirationDays: tenant.loyaltyExpirationDays || 90,

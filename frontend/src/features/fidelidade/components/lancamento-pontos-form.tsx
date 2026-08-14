@@ -8,6 +8,8 @@ import { useLancarPontos } from "../hooks/use-transacoes"
 import { limparCpf, buscarClientePorCpf, Cliente } from "@/features/clientes/clientes.api"
 import { isValidCpf, applyCpfMask } from "@/lib/validators/cpf"
 import { useFidelidadeConfig } from "@/features/configuracoes/hooks/use-configuracoes"
+import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
 
 import {
   Card,
@@ -65,6 +67,8 @@ const finalFormSchema = z.object({
 });
 
 export function LancamentoPontosForm() {
+  const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
   const [successData, setSuccessData] = useState<{ pontos: number; cliente: string } | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [foundCustomer, setFoundCustomer] = useState<Cliente | null>(null)
@@ -144,7 +148,7 @@ export function LancamentoPontosForm() {
       <CardHeader className="bg-primary/5 border-b border-border min-h-[120px] pt-6 pb-6 px-6">
         <CardTitle className="text-xl flex items-center gap-2">
           <Coins className="h-5 w-5 text-primary" />
-          Lançamento de Pontos
+          Lançamento de {pointName}
         </CardTitle>
         <CardDescription>
           Digite o CPF para iniciar o lançamento. Se o cliente for novo, o cadastro é feito na hora.
@@ -157,9 +161,9 @@ export function LancamentoPontosForm() {
             <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h3 className="text-2xl font-bold text-foreground mb-2">+{successData.pontos} Pontos</h3>
+            <h3 className="text-2xl font-bold text-foreground mb-2">+{successData.pontos} {pointName}</h3>
             <p className="text-muted-foreground max-w-md">
-              Os pontos foram creditados com sucesso na conta de <strong className="text-foreground">{successData.cliente}</strong>.
+              Os {pointName.toLowerCase()} foram creditados com sucesso na conta de <strong className="text-foreground">{successData.cliente}</strong>.
             </p>
             <Button onClick={handleReset} className="mt-6" variant="outline">
               Fazer novo lançamento
@@ -283,7 +287,7 @@ export function LancamentoPontosForm() {
                         Processando...
                       </>
                     ) : (
-                      "Lançar Pontos Agora"
+                      `Lançar ${pointName} Agora`
                     )}
                   </Button>
                 </div>

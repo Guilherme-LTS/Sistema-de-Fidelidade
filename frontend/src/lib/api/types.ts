@@ -12,6 +12,7 @@ export interface UsuarioPerfil {
   tenant_id: string
   tenant_name?: string
   tenant_logo_url?: string | null
+  point_name?: string | null
   subscription_status?: string | null
   subscription_current_period_end?: string | null
   subscription_price_id?: string | null

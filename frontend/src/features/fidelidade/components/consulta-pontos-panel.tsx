@@ -16,6 +16,8 @@ import { Spinner } from "@/components/ui/spinner"
 import { applyCpfMask, isValidCpf } from "@/lib/validators/cpf"
 import { useClienteComExtrato } from "@/features/clientes/hooks/use-clientes"
 import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
 import {
   Table,
   TableBody,
@@ -30,6 +32,8 @@ const consultaSearchSchema = z.object({
 })
 
 export function ConsultaPontosPanel() {
+  const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
   const [searchedCpf, setSearchedCpf] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof consultaSearchSchema>>({
@@ -139,7 +143,7 @@ export function ConsultaPontosPanel() {
                 </Card>
                 <Card className="shadow-none bg-background">
                   <CardContent className="p-4 flex flex-col">
-                    <span className="text-sm font-medium text-muted-foreground mb-1">Pontos Pendentes</span>
+                    <span className="text-sm font-medium text-muted-foreground mb-1">{pointName} Pendentes</span>
                     <span className="text-2xl font-bold">{cliente.pontosPendentes ?? 0}</span>
                   </CardContent>
                 </Card>
@@ -173,7 +177,7 @@ export function ConsultaPontosPanel() {
                       <TableRow>
                         <TableHead className="w-[180px]">Data e Hora</TableHead>
                         <TableHead>Operação</TableHead>
-                        <TableHead className="text-right">Pontos</TableHead>
+                        <TableHead className="text-right">{pointName}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

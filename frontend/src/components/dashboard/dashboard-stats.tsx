@@ -2,6 +2,8 @@ import { Users, Coins, ArrowUpRight, ArrowDownRight, RefreshCcw, Activity } from
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DashboardStats } from "@/lib/api/types"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
 
 interface Props {
   stats: DashboardStats
@@ -30,6 +32,9 @@ function GrowthBadge({ growth, invert = false }: { growth: number | undefined | 
 }
 
 export function DashboardStatsCards({ stats }: Props) {
+  const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card className="bg-card hover:bg-muted/50 transition-colors">
@@ -50,7 +55,7 @@ export function DashboardStatsCards({ stats }: Props) {
 
       <Card className="bg-card hover:bg-muted/50 transition-colors">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pontos em Circulação</CardTitle>
+          <CardTitle className="text-sm font-medium">{pointName} em Circulação</CardTitle>
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             <Coins className="h-4 w-4 text-primary" />
           </div>
@@ -66,7 +71,7 @@ export function DashboardStatsCards({ stats }: Props) {
 
       <Card className="bg-card hover:bg-muted/50 transition-colors">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pontos Resgatados</CardTitle>
+          <CardTitle className="text-sm font-medium">{pointName} Resgatados</CardTitle>
           <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
             <RefreshCcw className="h-4 w-4 text-emerald-500" />
           </div>
@@ -85,7 +90,7 @@ export function DashboardStatsCards({ stats }: Props) {
           <div className="absolute top-0 right-0 w-2 h-full bg-rose-500" />
         )}
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pontos Expirados</CardTitle>
+          <CardTitle className="text-sm font-medium">{pointName} Expirados</CardTitle>
           <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center">
             <ArrowDownRight className="h-4 w-4 text-rose-500" />
           </div>
@@ -103,7 +108,7 @@ export function DashboardStatsCards({ stats }: Props) {
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Total de pontos que perderão a validade nos próximos 30 dias.</p>
+                    <p>Total de {pointName.toLowerCase()} que perderão a validade nos próximos 30 dias.</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

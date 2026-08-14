@@ -10,6 +10,8 @@ import { DashboardStats } from "@/lib/api/types"
 import { PageContainer } from "@/components/layout/page-container"
 import { Button } from "@/components/ui/button"
 import { AuthGuard } from "@/features/auth/components/auth-guard"
+import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -26,6 +28,8 @@ import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { SkeletonDashboard } from "@/components/dashboard/skeleton-dashboard"
 
 export default function DashboardPage() {
+  const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<string>("30")
@@ -71,7 +75,7 @@ export default function DashboardPage() {
               </SelectContent>
             </Select>
             <Button asChild className="w-full sm:w-auto h-9 text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 hover:scale-105 cursor-pointer">
-              <Link href="/admin/fidelidade">Lançar Pontos</Link>
+              <Link href="/admin/fidelidade">Lançar {pointName}</Link>
             </Button>
           </div>
         }
@@ -86,7 +90,7 @@ export default function DashboardPage() {
           </div>
           <h3 className="text-xl font-bold tracking-tight mb-2">Bem-vindo ao seu Programa de Fidelidade!</h3>
           <p className="text-muted-foreground mb-6 max-w-md">
-            Parece que você ainda não registrou nenhuma movimentação. Comece lançando pontos para o seu primeiro cliente e acompanhe o crescimento aqui no Dashboard.
+            Parece que você ainda não registrou nenhuma movimentação. Comece lançando {pointName.toLowerCase()} para o seu primeiro cliente e acompanhe o crescimento aqui no Dashboard.
           </p>
           <Button asChild className="gap-2">
             <Link href="/admin/fidelidade">

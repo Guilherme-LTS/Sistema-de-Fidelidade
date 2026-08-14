@@ -54,6 +54,7 @@ export async function authRoutes(app: FastifyInstance) {
         tenant_id: user.tenantId,
         tenant_name: user.tenantName,
         tenant_logo_url: user.tenantLogoUrl,
+        point_name: user.pointName || null,
         subscription_status: user.subscriptionStatus,
         subscription_current_period_end: user.subscriptionCurrentPeriodEnd,
         subscription_price_id: user.subscriptionPriceId,

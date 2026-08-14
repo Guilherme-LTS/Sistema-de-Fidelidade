@@ -35,6 +35,7 @@ const formSchema = z.object({
   expiracaoPontos: z.coerce.number().min(0, "Mínimo 0 dias").max(1825, "Máximo 5 anos"),
   valorConversaoFormatado: z.string().min(4, "Informe um valor válido."),
   regulationNotes: z.string().optional(),
+  pointName: z.string().max(50, "Máximo 50 caracteres.").optional(),
 })
 
 export function ProgramaFidelidadeTab() {
@@ -48,6 +49,7 @@ export function ProgramaFidelidadeTab() {
       expiracaoPontos: 90,
       valorConversaoFormatado: "R$ 1,00",
       regulationNotes: "",
+      pointName: "",
     },
   })
 
@@ -60,6 +62,7 @@ export function ProgramaFidelidadeTab() {
         expiracaoPontos: query.data.expiracaoPontos ?? 90,
         valorConversaoFormatado: applyMoneyMask(cents.toString()),
         regulationNotes: query.data.regulationNotes ?? "",
+        pointName: query.data.pointName ?? "",
       })
     }
   }, [query.data, form])
@@ -80,6 +83,7 @@ export function ProgramaFidelidadeTab() {
       expiracaoPontos: values.expiracaoPontos,
       pointsConversionReal: unmasked,
       regulationNotes: values.regulationNotes,
+      pointName: values.pointName,
     }, {
       onSuccess: () => {
         form.reset(values)
@@ -143,6 +147,32 @@ export function ProgramaFidelidadeTab() {
                       </FormControl>
                       <FormDescription>
                         Prazo total de validade dos pontos após a carência antes de sumirem da carteira do cliente.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Nome da Moeda / Pontos */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Nome dos Pontos / Moeda</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="pointName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome Personalizado dos Pontos</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Pontos (ex.: Botecoins, Estrelas, Moedinhas)" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Informe um nome personalizado para a moeda de fidelidade dos seus clientes. Deixe em branco para utilizar o padrão "Pontos".
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

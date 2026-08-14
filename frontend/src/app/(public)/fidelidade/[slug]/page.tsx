@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { ConsumerAuthForm } from "@/features/consumer/components/consumer-auth-form"
+import { getPointName } from "@/lib/utils"
 
 // No futuro, isso será substituído por uma chamada à API do backend
 async function getTenantBySlug(slug: string) {
@@ -36,15 +37,17 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     return { title: "Estabelecimento não encontrado" }
   }
 
+  const pointName = getPointName(tenant.pointName).toLowerCase()
+
   return {
     title: `Pontus | ${tenant.name}`,
-    description: `Acesse seus pontos e prêmios em ${tenant.name}`,
+    description: `Acesse seus ${pointName} e prêmios em ${tenant.name}`,
     alternates: {
       canonical: `https://www.usepontus.com.br/fidelidade/${params.slug}`,
     },
     openGraph: {
       title: `Pontus | ${tenant.name}`,
-      description: `Acesse seus pontos e prêmios em ${tenant.name}`,
+      description: `Acesse seus ${pointName} e prêmios em ${tenant.name}`,
       url: `https://www.usepontus.com.br/fidelidade/${params.slug}`,
       siteName: "Pontus",
     },

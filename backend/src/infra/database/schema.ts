@@ -21,6 +21,7 @@ export const tenants = pgTable("tenants", {
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   logoUrl: text("logo_url"),
   regulationNotes: text("regulation_notes"),
+  pointName: varchar("point_name", { length: 50 }),
   pointsConversionReal: decimal("points_conversion_real", { precision: 10, scale: 2 }).default("1.00").notNull(),
   loyaltyGracePeriodDays: integer("loyalty_grace_period_days").default(0),
   loyaltyExpirationDays: integer("loyalty_expiration_days").default(90),

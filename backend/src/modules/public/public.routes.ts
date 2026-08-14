@@ -27,6 +27,7 @@ export async function publicRoutes(app: FastifyInstance) {
           name: tenants.name,
           tradingName: tenants.tradingName,
           logoUrl: tenants.logoUrl,
+          pointName: tenants.pointName,
           isActive: tenants.isActive,
         })
         .from(tenants)
@@ -86,6 +87,7 @@ export async function publicRoutes(app: FastifyInstance) {
             t.name AS tenant_name,
             t.slug AS tenant_slug,
             t.logo_url AS tenant_logo,
+            t.point_name AS tenant_point_name,
             c.id AS customer_id,
             COALESCE(SUM(CASE
               WHEN tr.available_at <= (SELECT now_at FROM app_clock) AND tr.expires_at > (SELECT now_at FROM app_clock)
@@ -110,7 +112,7 @@ export async function publicRoutes(app: FastifyInstance) {
           WHERE c.consumer_profile_id = ${profile.id}
             AND c.deleted_at IS NULL
             AND t.is_active = true
-          GROUP BY t.id, t.name, t.slug, t.logo_url, c.id
+          GROUP BY t.id, t.name, t.slug, t.logo_url, t.point_name, c.id
         )
         SELECT 
           cp.*,
@@ -172,7 +174,7 @@ export async function publicRoutes(app: FastifyInstance) {
 
     try {
       const [tenant] = await db
-        .select({ id: tenants.id, name: tenants.name, logoUrl: tenants.logoUrl })
+        .select({ id: tenants.id, name: tenants.name, logoUrl: tenants.logoUrl, pointName: tenants.pointName })
         .from(tenants)
         .where(eq(tenants.slug, slug))
         .limit(1);
@@ -244,6 +246,7 @@ export async function publicRoutes(app: FastifyInstance) {
         tenant: {
           name: tenant.name,
           logoUrl: tenant.logoUrl,
+          pointName: tenant.pointName || null,
         },
         firstName,
         points: pontos_disponiveis,

@@ -5,6 +5,7 @@ export interface ConsumerMembership {
   tenant_name: string
   tenant_slug: string
   tenant_logo: string | null
+  tenant_point_name?: string | null
   customer_id: string
   pontos_disponiveis: number
   pontos_pendentes: number
@@ -50,6 +51,7 @@ export interface TenantDashboardDetails {
     tradingName: string | null
     slug: string
     logoUrl: string | null
+    pointName?: string | null
     email: string | null
     phone: string | null
     addressLine1: string | null
