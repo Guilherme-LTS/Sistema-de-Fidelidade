@@ -115,6 +115,7 @@ export interface QuickCheckTenantResult {
   tenant: {
     name: string
     logoUrl: string | null
+    pointName?: string | null
   }
   firstName: string
   points: number

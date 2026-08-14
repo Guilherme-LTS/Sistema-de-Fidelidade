@@ -26,12 +26,18 @@ const resgateSchema = z.object({
 
 type ResgateForm = z.infer<typeof resgateSchema>
 
+import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
+
 interface ResgateModalProps {
   document: string
   pontosDisponiveis: number
 }
 
 export function ResgateModal({ document, pontosDisponiveis }: ResgateModalProps) {
+  const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
+  const pointNameLower = pointName.toLowerCase()
   const [isOpen, setIsOpen] = useState(false)
   const { recompensas, isLoading } = useRecompensas()
   const { resgatar } = useResgates()
@@ -56,8 +62,8 @@ export function ResgateModal({ document, pontosDisponiveis }: ResgateModalProps)
               <div className="mt-2 space-y-1">
                 <p><strong>Cliente:</strong> {data.cliente.nome}</p>
                 <p><strong>Prêmio:</strong> {data.recompensa.name}</p>
-                <p><strong>Pontos utilizados:</strong> {data.recompensa.pointsCost}</p>
-                <p><strong>Saldo restante:</strong> {saldoRestante} pts</p>
+                <p><strong>{pointName} utilizados:</strong> {data.recompensa.pointsCost}</p>
+                <p><strong>Saldo restante:</strong> {saldoRestante} {pointNameLower}</p>
               </div>
             ),
             duration: 5000,
@@ -83,7 +89,7 @@ export function ResgateModal({ document, pontosDisponiveis }: ResgateModalProps)
           <DialogDescription>
             Escolha o prêmio que o cliente deseja resgatar.
             <br />
-            Saldo disponível: <strong className="text-emerald-600">{pontosDisponiveis} pts</strong>
+            Saldo disponível: <strong className="text-emerald-600">{pontosDisponiveis} {pointNameLower}</strong>
           </DialogDescription>
         </DialogHeader>
         
@@ -113,7 +119,7 @@ export function ResgateModal({ document, pontosDisponiveis }: ResgateModalProps)
                       <p className="text-xs text-muted-foreground">{r.description || "Sem descrição"}</p>
                     </div>
                     <div className={`font-bold text-sm ${isSelected ? "text-primary" : "text-muted-foreground"}`}>
-                      {r.pointsCost} pts
+                      {r.pointsCost} {pointNameLower}
                     </div>
                   </div>
                 </div>

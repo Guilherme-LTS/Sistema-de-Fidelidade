@@ -16,6 +16,8 @@ import { FileJson, Search, CalendarDays, Activity, User, ChevronLeft, ChevronRig
 import { PageContainer } from "@/components/layout/page-container"
 
 import { getActionLabel, getEntityLabel, actionTranslations } from "../utils/audit-formatters"
+import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
 
 
 function formatCPF(cpf: string) {
@@ -36,7 +38,7 @@ function DetailItem({ label, value, highlight = false, valueClassName = "" }: { 
   )
 }
 
-function renderLogDetailsFriendly(log: any) {
+function renderLogDetailsFriendly(log: any, pointName: string = "Pontos") {
   if (!log.metadata) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 rounded-xl border border-dashed border-border/60">
@@ -46,13 +48,15 @@ function renderLogDetailsFriendly(log: any) {
       </div>
     )
   }
-  
+
   let metadata: any = {}
   try {
     metadata = typeof log.metadata === "string" ? JSON.parse(log.metadata) : log.metadata
   } catch (e) {
     return <p className="text-sm text-destructive p-4 bg-destructive/10 rounded-lg border border-destructive/20">Falha ao decodificar os metadados do evento.</p>
   }
+
+  const pointNameLower = pointName.toLowerCase()
 
   // 1. ADD_POINTS
   if (log.action === "ADD_POINTS") {
@@ -70,7 +74,7 @@ function renderLogDetailsFriendly(log: any) {
             value={metadata.valorCompra ? `R$ ${Number(metadata.valorCompra).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "-"} 
             valueClassName="text-emerald-600 dark:text-emerald-400 font-semibold"
           />
-          <DetailItem label="Pontos Creditados" value={`+ ${metadata.pontosGanhos} pts`} highlight valueClassName="text-primary font-bold" />
+          <DetailItem label={`${pointName} Creditados`} value={`+ ${metadata.pontosGanhos} ${pointNameLower}`} highlight valueClassName="text-primary font-bold" />
         </div>
       </div>
     )
@@ -88,8 +92,8 @@ function renderLogDetailsFriendly(log: any) {
           <DetailItem label="Cliente" value={metadata.clienteNome || "Não informado"} />
           <DetailItem label="CPF" value={formatCPF(metadata.clienteCpf)} />
           <DetailItem 
-            label="Quantidade Expirada" 
-            value={`- ${metadata.pontosExpirados || metadata.pointsExpired || 0} pts`} 
+            label={`Quantidade Expirada`} 
+            value={`- ${metadata.pontosExpirados || metadata.pointsExpired || 0} ${pointNameLower}`} 
             highlight 
             valueClassName="text-orange-600 dark:text-orange-500 font-bold" 
           />
@@ -116,8 +120,8 @@ function renderLogDetailsFriendly(log: any) {
           <DetailItem label="CPF" value={formatCPF(metadata.clienteCpf)} />
           <DetailItem label="Recompensa" value={metadata.recompensaNome || "-"} />
           <DetailItem 
-            label="Pontos Gastos" 
-            value={`- ${metadata.pontosGastos} pts`} 
+            label={`${pointName} Gastos`} 
+            value={`- ${metadata.pontosGastos} ${pointNameLower}`} 
             highlight 
             valueClassName="text-rose-600 dark:text-rose-500 font-bold" 
           />
@@ -264,6 +268,8 @@ function renderLogDetailsFriendly(log: any) {
 }
 
 export function AuditoriaView() {
+  const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState("")
   const [action, setAction] = useState("ALL")
@@ -539,7 +545,7 @@ export function AuditoriaView() {
               <div className="p-6">
                 <div className="bg-card rounded-xl border border-border shadow-sm">
                   <div className="p-5 sm:p-6">
-                    {renderLogDetailsFriendly(selectedLog)}
+                    {renderLogDetailsFriendly(selectedLog, pointName)}
                   </div>
                 </div>
               </div>

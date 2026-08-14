@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { formatCPF, isValidCPF } from "@/lib/masks"
 import { checkPointsGlobally, checkPointsForTenant, QuickCheckGlobalResult, QuickCheckTenantResult } from "../consumer.api"
 import Link from "next/link"
+import { getPointName } from "@/lib/utils"
 
 const searchSchema = z.object({
   cpf: z.string()
@@ -71,6 +72,8 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
 
   // Se já buscou num contexto de restaurante (Tenant específico)
   if (tenantResult) {
+    const tenantPointName = getPointName(tenantResult.tenant?.pointName)
+    const tenantPointNameLower = tenantPointName.toLowerCase()
     const unachievableRewards = tenantResult.rewards
       .filter(r => r.pointsCost > tenantResult.points)
       .sort((a, b) => a.pointsCost - b.pointsCost)
@@ -94,7 +97,7 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
             </div>
             {nextReward && (
               <div className="text-right max-w-[120px]">
-                <p className="text-xs text-muted-foreground">Faltam <strong className="text-foreground">{nextReward.pointsCost - tenantResult.points} pts</strong> para:</p>
+                <p className="text-xs text-muted-foreground">Faltam <strong className="text-foreground">{nextReward.pointsCost - tenantResult.points} {tenantPointNameLower}</strong> para:</p>
                 <p className="text-xs font-semibold truncate" title={nextReward.name}>{nextReward.name}</p>
               </div>
             )}
@@ -131,14 +134,14 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
                           {reward.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {reward.pointsCost} pontos
+                          {reward.pointsCost} {tenantPointNameLower}
                         </p>
                       </div>
                       
                       {/* Status Status Text (Right) */}
                       <div className="text-right shrink-0">
                         <p className={`text-[11px] font-semibold ${isRedeemable ? "text-emerald-500" : "text-muted-foreground"}`}>
-                          {isRedeemable ? "Pronto para resgatar!" : `Faltam ${reward.pointsCost - tenantResult.points} pts`}
+                          {isRedeemable ? "Pronto para resgatar!" : `Faltam ${reward.pointsCost - tenantResult.points} ${tenantPointNameLower}`}
                         </p>
                       </div>
                     </div>
@@ -182,7 +185,10 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
           </div>
         ) : (
           <div className="grid gap-3">
-            {globalResult.memberships.map((membership) => (
+            {globalResult.memberships.map((membership) => {
+              const membershipPointName = getPointName(membership.tenant_point_name)
+              const membershipPointNameLower = membershipPointName.toLowerCase()
+              return (
               <div key={membership.tenant_id} className="p-4 bg-card border rounded-xl flex flex-col gap-3 relative group hover:border-primary/30 transition-colors shadow-sm">
                 
                 {/* Header (Logo + Nome + Botão) */}
@@ -202,7 +208,7 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
                 {/* Saldo Principal */}
                 <div className="flex items-baseline gap-1.5 mt-1">
                   <span className="text-3xl font-black tracking-tighter text-foreground">{membership.pontos_disponiveis}</span>
-                  <span className="text-sm font-bold text-primary flex items-center gap-1">pts <Star className="h-3.5 w-3.5 fill-primary" /></span>
+                  <span className="text-sm font-bold text-primary flex items-center gap-1">{membershipPointName} <Star className="h-3.5 w-3.5 fill-primary" /></span>
                 </div>
 
                 {/* Recompensa Disponível Highlight */}
@@ -275,14 +281,14 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
                                     {reward.name}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    {reward.pointsCost} pontos
+                                    {reward.pointsCost} {membershipPointNameLower}
                                   </p>
                                 </div>
                                 
                                 {/* Status Status Text (Right) */}
                                 <div className="text-right shrink-0">
                                   <p className={`text-[11px] font-semibold ${isRedeemable ? "text-emerald-500" : "text-muted-foreground"}`}>
-                                    {isRedeemable ? "Pronto para resgatar!" : `Faltam ${reward.pointsCost - membership.pontos_disponiveis} pts`}
+                                    {isRedeemable ? "Pronto para resgatar!" : `Faltam ${reward.pointsCost - membership.pontos_disponiveis} ${membershipPointNameLower}`}
                                   </p>
                                 </div>
                               </div>
@@ -297,7 +303,8 @@ export function QuickCheckPanel({ tenantSlug, onSwitchToLogin }: QuickCheckPanel
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
 

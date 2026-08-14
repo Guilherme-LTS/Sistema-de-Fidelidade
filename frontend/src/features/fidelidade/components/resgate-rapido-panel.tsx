@@ -15,11 +15,16 @@ import { applyCpfMask, isValidCpf } from "@/lib/validators/cpf"
 import { useClienteComExtrato } from "@/features/clientes/hooks/use-clientes"
 import { ResgateModal } from "@/features/resgates/components/resgate-modal"
 
+import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
+
 const resgateSearchSchema = z.object({
   document: z.string().refine((val) => isValidCpf(val), "CPF inválido"),
 })
 
 export function ResgateRapidoPanel() {
+  const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
   const [searchedCpf, setSearchedCpf] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof resgateSearchSchema>>({
@@ -102,7 +107,7 @@ export function ResgateRapidoPanel() {
               
               <div className="bg-card border shadow-sm rounded-lg w-full p-4 mb-6 flex justify-between items-center">
                 <span className="text-muted-foreground text-sm font-medium">Saldo Disponível</span>
-                <span className="text-2xl font-bold text-emerald-600">{cliente.pontosDisponiveis ?? 0} pts</span>
+                <span className="text-2xl font-bold text-emerald-600">{cliente.pontosDisponiveis ?? 0} {pointName}</span>
               </div>
 
               <ResgateModal 

@@ -60,7 +60,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
+import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
+
 export function DashboardCharts({ data }: Props) {
+  const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
+  const pointNameLower = pointName.toLowerCase()
+
   const sortedData = useMemo(() => 
     [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
   [data])
@@ -70,9 +77,9 @@ export function DashboardCharts({ data }: Props) {
   [sortedData])
 
   const chartConfig = {
-    emitidos: { label: "Pontos Emitidos", color: "#006323" }, // primary
-    resgatados: { label: "Pontos Resgatados", color: "#E8762C" }, // accent
-    expirados: { label: "Pontos Expirados", color: "#f43f5e" }, // rose-500 (Rose/Red)
+    emitidos: { label: `${pointName} Emitidos`, color: "#006323" }, // primary
+    resgatados: { label: `${pointName} Resgatados`, color: "#E8762C" }, // accent
+    expirados: { label: `${pointName} Expirados`, color: "#f43f5e" }, // rose-500 (Rose/Red)
   }
 
   return (
@@ -80,7 +87,7 @@ export function DashboardCharts({ data }: Props) {
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <CardTitle className="text-lg font-semibold tracking-tight">Fluxo de Pontos Diário</CardTitle>
+            <CardTitle className="text-lg font-semibold tracking-tight">Fluxo de {pointName} Diário</CardTitle>
             <CardDescription className="text-sm mt-1">Acompanhe o engajamento e a saúde financeira do seu programa</CardDescription>
           </div>
           {/* Custom Rich Legend */}
@@ -109,7 +116,7 @@ export function DashboardCharts({ data }: Props) {
             </div>
             <p className="text-base font-medium text-foreground mb-1">Nenhum dado para o período</p>
             <p className="text-sm text-muted-foreground max-w-sm text-center">
-              Não houve movimentação de pontos nos dias selecionados. Tente alterar o período no filtro acima.
+              Não houve movimentação de {pointNameLower} nos dias selecionados. Tente alterar o período no filtro acima.
             </p>
           </div>
         ) : (

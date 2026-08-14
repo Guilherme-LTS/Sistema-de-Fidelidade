@@ -272,7 +272,7 @@ export function LancamentoPontosForm() {
                             />
                           </FormControl>
                           <FormDescription>
-                            Cada R$ {conversionRule.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} em compras equivale a 1 ponto.
+                            Cada R$ {conversionRule.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} em compras equivale a 1 {pointName.toLowerCase()}.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

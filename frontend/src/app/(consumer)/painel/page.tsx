@@ -154,7 +154,7 @@ export default function ConsumerPanel() {
                       </div>
                       <div className="flex items-baseline gap-1 md:gap-1">
                         <span className="text-lg md:text-sm font-bold text-foreground leading-none">{membership.pontos_pendentes}</span>
-                        <span className="text-[10px] font-medium text-muted-foreground hidden md:inline">pts</span>
+                        <span className="text-[10px] font-medium text-muted-foreground hidden md:inline">{getPointName(membership.tenant_point_name)}</span>
                       </div>
                     </div>
 
@@ -168,7 +168,7 @@ export default function ConsumerPanel() {
                         <span className={`text-lg md:text-sm font-bold leading-none ${membership.pontos_expirando > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-foreground'}`}>
                           {membership.pontos_expirando}
                         </span>
-                        <span className="text-[10px] font-medium text-muted-foreground hidden md:inline">pts</span>
+                        <span className="text-[10px] font-medium text-muted-foreground hidden md:inline">{getPointName(membership.tenant_point_name)}</span>
                       </div>
                     </div>
                   </div>

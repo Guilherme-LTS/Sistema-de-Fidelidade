@@ -294,7 +294,7 @@ export default function TenantDashboardPage(props: PageProps) {
                             </span>
                             {!isRedeemable && (
                               <span className="text-xs font-medium text-muted-foreground">
-                                Faltam {reward.pointsCost - pontos_disponiveis} pts
+                                Faltam {reward.pointsCost - pontos_disponiveis} {pointNameLower}
                               </span>
                             )}
                           </div>
@@ -357,14 +357,14 @@ export default function TenantDashboardPage(props: PageProps) {
                           textColor = 'text-emerald-600';
                           Icon = CheckCircle2;
                           sign = '+';
-                          title = 'Pontos Acumulados';
+                          title = `${pointName} Acumulados`;
                           subtitle = `${item.description} • ${new Date(item.createdAt).toLocaleDateString('pt-BR')}`;
                         } else if (isExpire) {
                           bgColor = 'bg-orange-100 text-orange-600';
                           textColor = 'text-orange-600';
                           Icon = Hourglass;
                           sign = '-';
-                          title = 'Pontos Expirados';
+                          title = `${pointName} Expirados`;
                           subtitle = `${item.description} • ${new Date(item.createdAt).toLocaleDateString('pt-BR')}`;
                         } else if (item.type === 'spend') {
                           bgColor = 'bg-accent/10 text-accent';
@@ -387,7 +387,7 @@ export default function TenantDashboardPage(props: PageProps) {
                               </div>
                             </div>
                             <div className={`font-bold whitespace-nowrap pl-2 ${textColor}`}>
-                              {sign}{item.points} pts
+                              {sign}{item.points} {pointNameLower}
                             </div>
                           </div>
                         )
@@ -637,7 +637,7 @@ export default function TenantDashboardPage(props: PageProps) {
                                 {reward.description && <p className="text-[10px] text-muted-foreground line-clamp-1">{reward.description}</p>}
                               </div>
                               <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold py-1 px-2.5 rounded-full whitespace-nowrap shrink-0">
-                                {reward.pointsCost} pts
+                                {reward.pointsCost} {pointNameLower}
                               </Badge>
                             </div>
                           ))}

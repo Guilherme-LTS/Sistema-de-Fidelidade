@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
 
 const applyMoneyMask = (value: string) => {
   let v = value.replace(/\D/g, "")
@@ -52,6 +53,9 @@ export function ProgramaFidelidadeTab() {
       pointName: "",
     },
   })
+
+  const currentPointName = getPointName(form.watch("pointName"))
+  const currentPointNameLower = currentPointName.toLowerCase()
 
   useEffect(() => {
     if (query.data) {
@@ -113,11 +117,11 @@ export function ProgramaFidelidadeTab() {
         </Alert>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-20">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             
-            {/* Prazos e Validade */}
+            {/* Prazos de Validade e Liberação */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Prazos e Validade</h3>
+              <h3 className="text-lg font-medium">Validade e Liberação</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -129,7 +133,7 @@ export function ProgramaFidelidadeTab() {
                         <Input type="number" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Número de dias após a compra para o ponto ficar disponível para resgate.
+                        Número de dias após a compra para o {currentPointNameLower} ficar disponível para resgate.
                         Use 0 para disponibilidade imediata.
                       </FormDescription>
                       <FormMessage />
@@ -146,7 +150,7 @@ export function ProgramaFidelidadeTab() {
                         <Input type="number" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Prazo total de validade dos pontos após a carência antes de sumirem da carteira do cliente.
+                        Prazo total de validade dos {currentPointNameLower} após a carência antes de sumirem da carteira do cliente.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -167,7 +171,7 @@ export function ProgramaFidelidadeTab() {
                       <FormLabel>Nome Personalizado dos Pontos</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="Pontos (ex.: Botecoins, Estrelas, Moedinhas)" 
+                          placeholder="Pontos (ex.:Estrelas, Moedinhas)" 
                           {...field} 
                         />
                       </FormControl>
@@ -192,7 +196,7 @@ export function ProgramaFidelidadeTab() {
                   name="valorConversaoFormatado"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valor gasto para 1 ponto</FormLabel>
+                      <FormLabel>Valor gasto para 1 {currentPointNameLower}</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="R$ 1,00" 
@@ -202,8 +206,8 @@ export function ProgramaFidelidadeTab() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Insira o valor em Reais (R$) necessário para o cliente acumular exatamente 1 ponto.
-                        Exemplo: R$ 5,00 gastos = 1 ponto ganho.
+                        Insira o valor em Reais (R$) necessário para o cliente acumular exatamente 1 {currentPointNameLower}.
+                        Exemplo: R$ 5,00 gastos = 1 {currentPointNameLower} ganho.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

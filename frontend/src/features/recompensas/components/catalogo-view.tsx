@@ -33,6 +33,7 @@ import { Switch } from "@/components/ui/switch"
 import { PageContainer } from "@/components/layout/page-container"
 import { supabaseAdminClient as supabase } from "@/lib/supabase-clients"
 import { useAuth } from "@/lib/auth/auth-context"
+import { getPointName } from "@/lib/utils"
 import { toast } from "sonner"
 
 const recompensaSchema = z.object({
@@ -47,6 +48,7 @@ type RecompensaForm = z.infer<typeof recompensaSchema>
 
 export function CatalogoView() {
   const { user } = useAuth()
+  const pointName = getPointName(user?.point_name)
   const { recompensas, isLoading, criar, atualizar, excluir } = useRecompensas()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRecompensa, setEditingRecompensa] = useState<Recompensa | null>(null)
@@ -256,7 +258,7 @@ export function CatalogoView() {
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-4">
                     <Badge variant="secondary" className={`${r.imageUrl ? 'bg-black/50 text-white hover:bg-black/70' : 'bg-primary/10 text-primary hover:bg-primary/20'} font-bold border-none px-3 py-1 text-sm flex items-center gap-1 backdrop-blur-md`}>
                       <Award className="w-3.5 h-3.5" />
-                      {r.pointsCost} pts
+                      {r.pointsCost} {pointName}
                     </Badge>
                     {!r.isActive && (
                       <Badge variant="outline" className={`text-xs border-none backdrop-blur-md ${r.imageUrl ? 'bg-black/50 text-white/80' : 'bg-muted/50 text-muted-foreground'}`}>Inativo</Badge>
