@@ -202,7 +202,7 @@ export function PerfilRestauranteTab() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8 pb-20">
+          <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8 pb-8">
             
             {/* Informações Básicas */}
             <div className="space-y-4">
@@ -518,8 +518,8 @@ export function PerfilRestauranteTab() {
                       />
                     </div>
                     
-                    <div className="flex items-center gap-2 md:contents">
-                      <div className="flex-1 md:block">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 md:contents mt-2 md:mt-0">
+                      <div className="flex-1 min-w-[100px] md:block">
                         <FormField
                           control={form.control}
                           name={`businessHours.${day.id}.open`}
@@ -530,15 +530,15 @@ export function PerfilRestauranteTab() {
                                   type="time" 
                                   {...field} 
                                   disabled={!form.watch(`businessHours.${day.id}.active`)}
-                                  className="text-center font-medium"
+                                  className="text-center font-medium w-full"
                                 />
                               </FormControl>
                             </FormItem>
                           )}
                         />
                       </div>
-                      <span className="text-muted-foreground text-sm md:hidden">até</span>
-                      <div className="flex-1 md:block">
+                      <span className="text-muted-foreground text-sm md:hidden shrink-0">até</span>
+                      <div className="flex-1 min-w-[100px] md:block">
                         <FormField
                           control={form.control}
                           name={`businessHours.${day.id}.close`}
@@ -549,7 +549,7 @@ export function PerfilRestauranteTab() {
                                   type="time" 
                                   {...field} 
                                   disabled={!form.watch(`businessHours.${day.id}.active`)}
-                                  className="text-center font-medium"
+                                  className="text-center font-medium w-full"
                                 />
                               </FormControl>
                             </FormItem>
@@ -565,8 +565,8 @@ export function PerfilRestauranteTab() {
             </div>
 
             {form.formState.isDirty && (
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-sm border border-border shadow-2xl p-2 rounded-full flex items-center justify-between sm:justify-start gap-2 animate-in slide-in-from-bottom-10 fade-in duration-300 w-[calc(100%-2rem)] sm:w-auto">
-                <span className="text-sm font-semibold ml-4 text-foreground hidden sm:inline-block whitespace-nowrap">
+              <div className="sticky bottom-6 mx-auto z-50 bg-background/95 backdrop-blur-sm border border-border shadow-2xl p-2 rounded-full flex items-center justify-between sm:justify-center gap-4 animate-in fade-in duration-300 w-[calc(100%-1rem)] sm:w-fit">
+                <span className="text-sm font-semibold ml-2 text-foreground hidden sm:inline-block whitespace-nowrap">
                   Alterações não salvas
                 </span>
                 <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
