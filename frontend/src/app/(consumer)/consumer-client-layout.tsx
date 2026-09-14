@@ -10,13 +10,15 @@ import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import Image from "next/image"
 
+import { Footer } from "@/components/layout/footer"
+
 export function ConsumerClientLayout({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
     <ConsumerAuthProvider>
       <ConsumerAuthGuard>
-        <div className="min-h-screen bg-muted/30">
+        <div className="min-h-screen bg-muted/30 flex flex-col">
           {/* Desktop Sidebar (hidden on mobile) */}
           <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30">
             <ConsumerSidebar />
@@ -57,9 +59,10 @@ export function ConsumerClientLayout({ children }: { children: ReactNode }) {
               <ConsumerUserNav />
             </header>
 
-            <main className="container max-w-7xl mx-auto p-4 md:p-6 lg:p-8 py-6">
+            <main className="container max-w-7xl mx-auto p-4 md:p-6 lg:p-8 py-6 flex-1 w-full">
               {children}
             </main>
+            <Footer />
           </div>
         </div>
       </ConsumerAuthGuard>
