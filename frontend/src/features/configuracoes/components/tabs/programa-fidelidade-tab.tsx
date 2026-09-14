@@ -258,8 +258,8 @@ export function ProgramaFidelidadeTab() {
             </div>
 
             {form.formState.isDirty && (
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-sm border border-border shadow-2xl p-2 rounded-full flex items-center justify-between sm:justify-start gap-2 animate-in slide-in-from-bottom-10 fade-in duration-300 w-[calc(100%-2rem)] sm:w-auto">
-                <span className="text-sm font-semibold ml-4 text-foreground hidden sm:inline-block whitespace-nowrap">
+              <div className="sticky bottom-6 mx-auto z-50 bg-background/95 backdrop-blur-sm border border-border shadow-2xl p-2 rounded-full flex items-center justify-between sm:justify-center gap-4 animate-in fade-in duration-300 w-[calc(100%-1rem)] sm:w-fit">
+                <span className="text-sm font-semibold ml-2 text-foreground hidden sm:inline-block whitespace-nowrap">
                   Alterações não salvas
                 </span>
                 <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">

@@ -5,7 +5,9 @@ import { AuthGuard } from "@/features/auth/components/auth-guard"
 import { AuthProvider } from "@/lib/auth/auth-context"
 import { PendingInvitations } from "@/components/dashboard/pending-invitations"
 import { BillingBanner } from "@/components/dashboard/billing-banner"
+import { AdminHeader } from "@/components/dashboard/admin-header"
 import { TrialOnboardingModal } from "@/features/configuracoes/components/trial-onboarding-modal"
+import { Footer } from "@/components/layout/footer"
 
 export const metadata: Metadata = {
   robots: {
@@ -23,11 +25,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Sidebar />
           </div>
 
-          <main className="flex-1 min-w-0 p-3 md:p-4 lg:ml-64 lg:p-5">
-            <PendingInvitations />
-            <BillingBanner />
-            <TrialOnboardingModal />
-            {children}
+          <main className="flex-1 min-w-0 lg:ml-64 flex flex-col">
+            <AdminHeader />
+            <div className="flex-1 p-3 md:p-4 lg:p-5">
+              <PendingInvitations />
+              <BillingBanner />
+              <TrialOnboardingModal />
+              {children}
+            </div>
+            <Footer />
           </main>
         </div>
       </AuthGuard>
