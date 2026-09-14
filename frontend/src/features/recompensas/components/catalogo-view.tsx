@@ -230,65 +230,70 @@ export function CatalogoView() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recompensas.map((r: Recompensa) => (
-            <Card key={r.id} className={`p-0 overflow-hidden flex flex-col h-full transition-all duration-200 border-border shadow-sm group ${!r.isActive ? 'opacity-70 grayscale-[0.2]' : 'hover:shadow-md hover:border-primary/20'}`}>
-              <CardHeader className="p-0 border-b border-border relative min-h-[160px] flex flex-col justify-end overflow-hidden">
+            <Card key={r.id} className={`p-0 overflow-hidden flex flex-col h-full transition-all duration-300 border-border group ${!r.isActive ? 'opacity-85 bg-muted/40 grayscale-[0.1]' : 'bg-card shadow-sm hover:shadow-md hover:border-primary/30'}`}>
+              <CardHeader className="p-0 border-b border-border/50 relative aspect-[16/9] min-h-[160px] flex flex-col justify-end overflow-hidden">
                 {r.imageUrl ? (
                   <>
-                    {/* Fundo desfocado para preencher espaço de imagens com proporções diferentes */}
                     <div 
-                      className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60 dark:opacity-40"
+                      className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-50 dark:opacity-30 transition-transform duration-700 group-hover:scale-125"
                       style={{ backgroundImage: `url(${r.imageUrl})` }}
                     />
-                    {/* Imagem principal sem cortes (contain) */}
                     <img 
                       src={r.imageUrl} 
                       alt={r.name}
-                      className="absolute inset-0 w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105 drop-shadow-lg"
+                      className="absolute inset-0 w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                     />
-                    {/* Gradiente escuro para garantir leitura do texto que fica por cima */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                   </>
                 ) : (
-                  <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                    <Gift className="w-16 h-16 text-primary/20" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 flex flex-col items-center justify-center">
+                    <Gift className="w-16 h-16 text-primary/20 mb-4" />
                   </div>
                 )}
                 
-                <div className="relative p-6 pt-12 w-full">
+                <div className="relative p-5 w-full mt-auto">
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-4">
-                    <Badge variant="secondary" className={`${r.imageUrl ? 'bg-black/50 text-white hover:bg-black/70' : 'bg-primary/10 text-primary hover:bg-primary/20'} font-bold border-none px-3 py-1 text-sm flex items-center gap-1 backdrop-blur-md`}>
-                      <Award className="w-3.5 h-3.5" />
+                    <Badge variant="secondary" className={`${r.imageUrl ? 'bg-black/60 text-white hover:bg-black/80' : 'bg-primary/10 text-primary hover:bg-primary/20'} font-bold border-none px-3 py-1.5 text-sm flex items-center gap-1.5 backdrop-blur-md shadow-sm`}>
+                      <Award className="w-4 h-4" />
                       {r.pointsCost} {pointName}
                     </Badge>
                     {!r.isActive && (
-                      <Badge variant="outline" className={`text-xs border-none backdrop-blur-md ${r.imageUrl ? 'bg-black/50 text-white/80' : 'bg-muted/50 text-muted-foreground'}`}>Inativo</Badge>
+                      <Badge variant="secondary" className="bg-destructive/90 text-white hover:bg-destructive font-semibold text-xs px-2.5 py-1 border-none shadow-sm">
+                        Pausado
+                      </Badge>
                     )}
                   </div>
-                  <CardTitle className={`leading-tight text-xl ${r.imageUrl ? 'text-white' : 'text-foreground'}`}>{r.name}</CardTitle>
+                  <CardTitle className={`leading-tight text-xl font-bold mt-12 ${r.imageUrl ? 'text-white' : 'text-foreground'}`}>
+                    {r.name}
+                  </CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 p-6 flex flex-col">
-                <CardDescription className="text-sm">
+
+              <CardContent className="flex-1 p-5 flex flex-col">
+                <CardDescription className={`text-sm leading-relaxed ${r.imageUrl ? '' : 'mt-2'} text-muted-foreground`}>
                   {r.description || "Nenhuma descrição informada."}
                 </CardDescription>
               </CardContent>
-              <CardFooter className="flex justify-between items-center border-t border-border bg-muted/10 p-4 px-6 mt-auto">
-                <div className="flex items-center space-x-2">
+
+              <CardFooter className="flex justify-between items-center flex-wrap gap-4 border-t border-border/60 bg-muted/30 p-4 px-5 mt-auto">
+                <div className="flex items-center space-x-3">
                   <Switch 
                     id={`switch-${r.id}`}
                     checked={r.isActive} 
                     onCheckedChange={(checked) => toggleAtivo(r, checked)} 
                     disabled={atualizar.isPending}
-                    className="data-[state=checked]:bg-emerald-500"
+                    className="data-[state=checked]:bg-emerald-500 scale-110 origin-left"
                   />
-                  <Label htmlFor={`switch-${r.id}`} className="text-xs cursor-pointer select-none font-medium text-muted-foreground">{r.isActive ? 'Ativo' : 'Pausado'}</Label>
+                  <Label htmlFor={`switch-${r.id}`} className="text-sm cursor-pointer select-none font-semibold text-muted-foreground">
+                    {r.isActive ? 'Ativo' : 'Pausado'}
+                  </Label>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => openEditModal(r)}>
-                    <Pencil className="h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" className="h-10 w-10 bg-background text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors shadow-sm" onClick={() => openEditModal(r)}>
+                    <Pencil className="h-5 w-5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeletingRecompensa(r)}>
-                    <Trash className="h-4 w-4" />
+                  <Button variant="outline" size="icon" className="h-10 w-10 bg-background text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive/10 transition-colors shadow-sm" onClick={() => setDeletingRecompensa(r)}>
+                    <Trash className="h-5 w-5" />
                   </Button>
                 </div>
               </CardFooter>

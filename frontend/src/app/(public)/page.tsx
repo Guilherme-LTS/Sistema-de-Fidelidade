@@ -3,6 +3,7 @@ import Image from "next/image"
 import { ArrowRight, CheckCircle2, QrCode, Smartphone, Store, Gift, ChevronDown, User, Star, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Footer } from "@/components/layout/footer"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { routes } from "@/config/routes"
 import { DOMAINS } from "@/config/domains"
@@ -245,39 +246,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* 7. Footer */}
-      <footer className="bg-card border-t py-12">
-        <div className="container mx-auto max-w-6xl px-4 flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
-          
-          <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-4">
-            <div className="flex items-center gap-2">
-              <Image src="/logo-light.png" alt="Pontus" width={220} height={59} className="dark:hidden" priority  style={{ width: "auto", height: "auto" }} />
-            <Image src="/logo-dark.png" alt="Pontus" width={220} height={59} className="hidden dark:block" priority  style={{ width: "auto", height: "auto" }} />
-            </div>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              A plataforma definitiva de retenção e fidelização para estabelecimentos e negócios locais.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-12 text-sm">
-            <div className="flex flex-col space-y-3">
-              <h4 className="font-semibold text-foreground">Produto (B2B)</h4>
-              <a href={`${DOMAINS.app}/login`} className="text-muted-foreground hover:text-foreground">Entrar no Painel</a>
-              <a href={`${DOMAINS.app}/cadastro`} className="text-muted-foreground hover:text-foreground">Criar Conta</a>
-            </div>
-            <div className="flex flex-col space-y-3">
-              <h4 className="font-semibold text-foreground">Consumidores (B2C)</h4>
-              <a href={`${DOMAINS.app}/painel`} className="text-muted-foreground hover:text-foreground">Meus Pontos</a>
-              <a href="#" className="text-muted-foreground hover:text-foreground">Termos de Uso</a>
-              <a href="#" className="text-muted-foreground hover:text-foreground">Privacidade (LGPD)</a>
-            </div>
-          </div>
-
-        </div>
-        <div className="container mx-auto max-w-6xl px-4 mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Pontus. Todos os direitos reservados.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
