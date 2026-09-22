@@ -43,6 +43,13 @@
       "when": 1786654261443,
       "tag": "0005_add_point_name_to_tenants",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789851600000,
+      "tag": "0006_enable_rls_stripe_tables",
+      "breakpoints": true
     }
   ]
 }
