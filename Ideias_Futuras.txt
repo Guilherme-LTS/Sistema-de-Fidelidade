@@ -1,0 +1,4 @@
+- Fazer um Ponto de Venda
+- Ver questao para fazer um sistema utilizando NFC onde o usuario aproxima do nfc preenche um formulario e envia para o banco de dados (Bonus: Avalia o restaurante)
+- Verificar uma forma do ususario avaliar o restaurante e ganhar 1 ponto no sistema
+- Verificar a questao do ponto de venda para criar um ERP e vender o ERP como produto principal tambem
