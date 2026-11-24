@@ -176,7 +176,7 @@ export function ProgramaFidelidadeTab() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Informe um nome personalizado para a moeda de fidelidade dos seus clientes. Deixe em branco para utilizar o padrão "Pontos".
+                        Informe um nome personalizado para a moeda de fidelidade dos seus clientes. Deixe em branco para utilizar o padrão &quot;Pontos&quot;.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

@@ -29,13 +29,6 @@ export function TrialOnboardingModal() {
   const isOwner = user?.role === "admin"
   const showOnboarding = user?.trial_onboarding_shown === false
 
-  useEffect(() => {
-    if (isTrial && isOwner && showOnboarding) {
-      setIsOpen(true)
-      dispararConfetes()
-    }
-  }, [isTrial, isOwner, showOnboarding])
-
   const dispararConfetes = () => {
     // Dispara uma explosão festiva rápida
     confetti({
@@ -44,6 +37,13 @@ export function TrialOnboardingModal() {
       origin: { y: 0.6 },
     })
   }
+
+  useEffect(() => {
+    if (isTrial && isOwner && showOnboarding) {
+      setIsOpen(true)
+      dispararConfetes()
+    }
+  }, [isTrial, isOwner, showOnboarding])
 
   const handleConfirmar = async () => {
     setCarregando(true)

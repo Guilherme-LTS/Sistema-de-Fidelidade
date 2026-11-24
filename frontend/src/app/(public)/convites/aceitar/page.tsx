@@ -63,12 +63,6 @@ function AceitarConviteContent() {
     fetchInvite()
   }, [token])
 
-  useEffect(() => {
-    if (isEmailMatching && !submitting) {
-      handleAcceptExisting()
-    }
-  }, [user, invite, isEmailMatching])
-
   const handleAcceptExisting = async () => {
     if (!token) return
     setSubmitting(true)
@@ -85,6 +79,12 @@ function AceitarConviteContent() {
       setSubmitting(false)
     }
   }
+
+  useEffect(() => {
+    if (isEmailMatching && !submitting) {
+      handleAcceptExisting()
+    }
+  }, [user, invite, isEmailMatching])
 
   const handleRegisterAndAccept = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -117,9 +117,9 @@ export function AssinaturaView() {
     }
   }, [details, user, queryClient])
 
-  if (!user || !isMounted) return null
-
   const { status, isTrial, isPro, isLocked, willCancelAtPeriodEnd, trialDaysLeft } = useBillingState(user)
+
+  if (!user || !isMounted) return null
 
   const isPastDue = status === "past_due"
   const isExpired = status === "expired"

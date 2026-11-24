@@ -603,7 +603,7 @@ export default function TenantDashboardPage(props: PageProps) {
                           <li>Os {pointNameLower} são concedidos mediante a identificação do seu CPF no momento do pagamento no caixa.</li>
                           <li>Os {pointNameLower} acumulados são de uso pessoal, intransferíveis e não podem ser convertidos em dinheiro.</li>
                           {tenant.loyaltyGracePeriodDays > 0 && (
-                            <li>Após acumular {pointNameLower}, eles ficarão em estado "Pendente" por {tenant.loyaltyGracePeriodDays} dias antes de ficarem "Disponíveis" para troca.</li>
+                            <li>Após acumular {pointNameLower}, eles ficarão em estado &quot;Pendente&quot; por {tenant.loyaltyGracePeriodDays} dias antes de ficarem &quot;Disponíveis&quot; para troca.</li>
                           )}
                           {tenant.loyaltyExpirationDays > 0 && (
                             <li>Fique atento: os {pointNameLower} expiram automaticamente após {tenant.loyaltyExpirationDays} dias de sua data de lançamento.</li>

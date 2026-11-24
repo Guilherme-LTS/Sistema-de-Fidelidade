@@ -33,35 +33,6 @@ export function CheckoutSuccessModal() {
   const checkoutStatus = searchParams.get("checkout_status")
   const sessionId = searchParams.get("session_id")
 
-  useEffect(() => {
-    if (checkoutStatus !== "success" || !sessionId) return
-
-    // Chave dinâmica baseada no sessionId para evitar bloqueios de sessões passadas
-    const storageKey = `checkout_success_shown_${sessionId}`
-    const hasBeenShown = sessionStorage.getItem(storageKey)
-    if (hasBeenShown === "true") {
-      limparUrl()
-      return
-    }
-
-    setIsOpen(true)
-    setStatus("processing")
-    pollingCountRef.current = 0
-
-    // Limpa a query string da URL imediatamente para evitar F5 re-trigger
-    limparUrl()
-
-    // Inicia o polling de validação
-    iniciarPolling(sessionId)
-
-    // Grava no sessionStorage que esta sessão de checkout específica já está sendo processada
-    sessionStorage.setItem(storageKey, "true")
-
-    return () => {
-      pararPolling()
-    }
-  }, [checkoutStatus, sessionId])
-
   const limparUrl = () => {
     const params = new URLSearchParams(window.location.search)
     params.delete("checkout_status")
@@ -71,31 +42,33 @@ export function CheckoutSuccessModal() {
     router.replace(cleanUrl, { scroll: false })
   }
 
-  const iniciarPolling = (sessId: string | null) => {
-    pararPolling()
-
-    // Primeira checagem imediata
-    verificarAssinatura(sessId)
-
-    pollingIntervalRef.current = setInterval(() => {
-      pollingCountRef.current += 1
-
-      if (pollingCountRef.current >= 4) {
-        // Atingiu 3 tentativas adicionais (totalizando ~4.5 segundos) sem detectar atualização
-        pararPolling()
-        setStatus("timeout")
-        return
-      }
-
-      verificarAssinatura(sessId)
-    }, 1500)
-  }
-
   const pararPolling = () => {
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current)
       pollingIntervalRef.current = null
     }
+  }
+
+  const dispararConfetes = () => {
+    const duration = 2.5 * 1000
+    const animationEnd = Date.now() + duration
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min
+    }
+
+    const interval = setInterval(() => {
+      const timeLeft = animationEnd - Date.now()
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval)
+      }
+
+      const particleCount = 50 * (timeLeft / duration)
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } })
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } })
+    }, 250)
   }
 
   const verificarAssinatura = async (sessId: string | null) => {
@@ -131,27 +104,54 @@ export function CheckoutSuccessModal() {
     }
   }
 
-  const dispararConfetes = () => {
-    const duration = 2.5 * 1000
-    const animationEnd = Date.now() + duration
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
+  const iniciarPolling = (sessId: string | null) => {
+    pararPolling()
 
-    const randomInRange = (min: number, max: number) => {
-      return Math.random() * (max - min) + min
-    }
+    // Primeira checagem imediata
+    verificarAssinatura(sessId)
 
-    const interval = setInterval(() => {
-      const timeLeft = animationEnd - Date.now()
+    pollingIntervalRef.current = setInterval(() => {
+      pollingCountRef.current += 1
 
-      if (timeLeft <= 0) {
-        return clearInterval(interval)
+      if (pollingCountRef.current >= 4) {
+        // Atingiu 3 tentativas adicionais (totalizando ~4.5 segundos) sem detectar atualização
+        pararPolling()
+        setStatus("timeout")
+        return
       }
 
-      const particleCount = 50 * (timeLeft / duration)
-      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } })
-      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } })
-    }, 250)
+      verificarAssinatura(sessId)
+    }, 1500)
   }
+
+  useEffect(() => {
+    if (checkoutStatus !== "success" || !sessionId) return
+
+    // Chave dinâmica baseada no sessionId para evitar bloqueios de sessões passadas
+    const storageKey = `checkout_success_shown_${sessionId}`
+    const hasBeenShown = sessionStorage.getItem(storageKey)
+    if (hasBeenShown === "true") {
+      limparUrl()
+      return
+    }
+
+    setIsOpen(true)
+    setStatus("processing")
+    pollingCountRef.current = 0
+
+    // Limpa a query string da URL imediatamente para evitar F5 re-trigger
+    limparUrl()
+
+    // Inicia o polling de validação
+    iniciarPolling(sessionId)
+
+    // Grava no sessionStorage que esta sessão de checkout específica já está sendo processada
+    sessionStorage.setItem(storageKey, "true")
+
+    return () => {
+      pararPolling()
+    }
+  }, [checkoutStatus, sessionId])
 
   const handleClose = () => {
     setIsOpen(false)
