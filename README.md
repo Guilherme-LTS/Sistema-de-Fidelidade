@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./logo-dark.png" alt="Pontus Logo" width="150" />
+  <img src="./frontend/public/logo-dark.png" alt="Pontus Logo" width="150" />
   <h1>Pontus</h1>
   <p><strong>A plataforma de fidelidade feita para quem tem restaurante, não para quem tem TI.</strong></p>
   
@@ -45,14 +45,18 @@ Arquitetura moderna, escalável e 100% pronta para a nuvem.
 
 À medida que a plataforma cresce, as seguintes evoluções arquiteturais e de negócio já estão mapeadas para as próximas versões:
 
-- [ ] **Integração de Pagamentos (Stripe):** Integrar checkout automático para assinaturas mensais do SaaS e cobrança de lojistas.
-- [ ] **Gestão de Billing:** Implementar controle de planos (Free, Pro, Enterprise), faturamento e gerenciamento de assinaturas dos restaurantes.
+- [x] **Integração de Pagamentos (Stripe):** Checkout automático, Customer Portal, webhooks idempotentes e sincronização de assinaturas.
+- [x] **Gestão de Billing:** Controle de Trial (14 dias), plano Pro (Mensal/Anual) e limites de operadores por restaurante.
 - [ ] **Rotinas de Backup:** Criar backups automáticos e diários (Point-in-Time Recovery) no Supabase.
 - [ ] **Internacionalização (i18n):** Implementar suporte completo a múltiplos idiomas (Inglês, Espanhol), preparando a plataforma para expansão internacional.
 - [ ] **Multi-currency & Multi-region:** Estruturar a arquitetura do banco para operação em múltiplos países, fuso-horários e conversões de diferentes moedas.
 - [ ] **Observabilidade e Logs:** Otimizar logs estruturados do backend (Pino) para integração com Datadog, Grafana ou Elastic Stack.
 - [ ] **Métricas Avançadas:** Implementar monitoramento ativo de APM (Application Performance Monitoring).
 - [ ] **Alta Disponibilidade:** Evoluir a infraestrutura de backend para múltiplos containers balanceados (Load Balancing) visando o crescimento exponencial da plataforma.
+
+## 🧠 Documentação Técnica (Obsidian Brain)
+
+Toda a documentação viva de arquitetura, DNS/Cloudflare, Supabase, Stripe, Resend, regras de negócio e identidade visual está centralizada em [`brain/00-INDEX.md`](./brain/00-INDEX.md) (abra a pasta `brain/` como um Vault no Obsidian). Agentes de IA seguem as instruções em [`AGENTS.md`](./AGENTS.md).
 
 ## ⚖️ Licença
 
