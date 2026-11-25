@@ -16,18 +16,18 @@ const restauranteSchema = z.object({
   addressState: z.string().length(2).optional().or(z.literal("")),
   latitude: z.union([z.string(), z.number()]).optional(),
   longitude: z.union([z.string(), z.number()]).optional(),
-  logoUrl: safeHttpUrlSchema.optional(),
+  logoUrl: safeHttpUrlSchema.nullable().optional(),
   businessHours: z.record(z.string(), z.object({
     active: z.boolean(),
     open: z.string(),
     close: z.string(),
   })).optional(),
   socialLinks: z.object({
-    instagram: safeHttpUrlSchema.optional(),
-    facebook: safeHttpUrlSchema.optional(),
-    tiktok: safeHttpUrlSchema.optional(),
-    website: safeHttpUrlSchema.optional(),
-  }).optional(),
+    instagram: safeHttpUrlSchema.nullable().optional(),
+    facebook: safeHttpUrlSchema.nullable().optional(),
+    tiktok: safeHttpUrlSchema.nullable().optional(),
+    website: safeHttpUrlSchema.nullable().optional(),
+  }).nullable().optional(),
 });
 
 const fidelidadeSchema = z.object({

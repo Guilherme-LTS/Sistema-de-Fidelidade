@@ -16,9 +16,9 @@ type RestauranteInput = {
   addressState?: string;
   latitude?: string | number;
   longitude?: string | number;
-  logoUrl?: string;
+  logoUrl?: string | null;
   businessHours?: Record<string, { active: boolean; open: string; close: string }>;
-  socialLinks?: { instagram?: string; facebook?: string; tiktok?: string; website?: string };
+  socialLinks?: { instagram?: string | null; facebook?: string | null; tiktok?: string | null; website?: string | null } | null;
 };
 
 type FidelidadeInput = {
@@ -51,6 +51,18 @@ export class ConfiguracoesService {
   }
 
   async updateRestaurante(tenantId: string, input: RestauranteInput, operatorId?: string, ipAddress?: string) {
+    const normalizedSocialLinks =
+      input.socialLinks === null
+        ? null
+        : input.socialLinks
+          ? {
+              instagram: input.socialLinks.instagram ?? undefined,
+              facebook: input.socialLinks.facebook ?? undefined,
+              tiktok: input.socialLinks.tiktok ?? undefined,
+              website: input.socialLinks.website ?? undefined,
+            }
+          : undefined;
+
     const [tenant] = await db.update(tenants)
       .set({
         name: input.name,
@@ -66,7 +78,7 @@ export class ConfiguracoesService {
         latitude: input.latitude !== undefined && input.latitude !== "" ? String(input.latitude) : undefined,
         longitude: input.longitude !== undefined && input.longitude !== "" ? String(input.longitude) : undefined,
         businessHours: input.businessHours,
-        socialLinks: input.socialLinks,
+        socialLinks: normalizedSocialLinks,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tenants.id, tenantId))

@@ -8,6 +8,7 @@ import { successResponse } from "./shared/http/response.js";
 
 export const app = fastify({
   logger: false, // Usamos nosso logger customizado infra/logger para controle total
+  trustProxy: true, // Necessário atrás do proxy Cloudflare + Render para request.ip real (rate limit, auditoria, LGPD)
 });
 
 // Injetar cabeçalho HTTP de SEO para impedir indexação da API por robôs de busca

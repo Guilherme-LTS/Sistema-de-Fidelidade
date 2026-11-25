@@ -27,6 +27,7 @@ Relacionado: [[00-INDEX]]
   - **Convites endurecidos** (`auth.routes.ts`): validação UUID no `:token`, verificação obrigatória de expiração no `/accept`, comparação case-insensitive de e-mail e execução dentro de `db.transaction`.
   - **Rotas públicas e equipe blindadas**: rate limit rígido (`5–20 req/min`) em `/public/consumer/*`, remoção de `admin.listUsers()` sem paginação em `public.routes.ts` e `usuarios.service.ts`, remoção de vazamento de `error.message` em 500s (`public.routes.ts`, `dashboard.controller.ts`), `crypto.timingSafeEqual` no `CRON_SECRET`, proteção contra auto-exclusão/auto-desativação de admin e remoção de `novato` das rotas operacionais.
   - **Testes unitários** de segurança adicionados em `backend/tests/unit/security-validators.test.ts`.
+  - **Ajustes pós-regressão ao vivo**: ativado `trustProxy: true` no Fastify (`app.ts`) para IP real atrás de Cloudflare + Render, adicionado `.nullable()` em `logoUrl`/`socialLinks`, corrigido *hydration mismatch* de `domains.ts` (SSR vs Client) e corrigido link `/painel` em `footer.tsx` (`DOMAINS.landing`).
 
 ## 2026-11-24 — Regressão Completa, Correções de Frontend/CI e Limpeza do Repositório
 - **O que foi feito**:

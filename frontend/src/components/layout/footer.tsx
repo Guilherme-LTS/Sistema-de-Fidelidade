@@ -66,7 +66,7 @@ export function Footer({ className = "" }: FooterProps) {
               </h4>
               <ul className="space-y-2 mt-1">
                 <li>
-                  <a href={`${DOMAINS.app}/painel`} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  <a href={`${DOMAINS.landing}/painel`} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     Meus Pontos
                   </a>
                 </li>
