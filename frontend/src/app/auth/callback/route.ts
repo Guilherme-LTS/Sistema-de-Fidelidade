@@ -2,13 +2,43 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
+/**
+ * Sanitiza o parâmetro `next` para impedir ataques de Open Redirect
+ * (ex: `next=//evil.com`, `next=@evil.com`, `next=https://evil.com`).
+ * Permite apenas caminhos relativos internos iniciados por uma única barra `/`.
+ */
+function sanitizeRedirectPath(rawNext: string | null, origin: string): string {
+  const fallback = "/admin/dashboard"
+  if (!rawNext) return fallback
+
+  const trimmed = rawNext.trim()
+  if (
+    !trimmed.startsWith("/") ||
+    trimmed.startsWith("//") ||
+    trimmed.startsWith("/\\") ||
+    /[\r\n\0]/.test(trimmed)
+  ) {
+    return fallback
+  }
+
+  try {
+    const resolved = new URL(trimmed, origin)
+    if (resolved.origin !== origin) {
+      return fallback
+    }
+    return `${resolved.pathname}${resolved.search}${resolved.hash}`
+  } catch {
+    return fallback
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const next = searchParams.get("next") || "/admin/dashboard"
+  const next = sanitizeRedirectPath(searchParams.get("next"), origin)
   const message = searchParams.get("message")
 
-  const isConsumer = next.includes("/acesso") || next.includes("/fidelidade") || next.includes("/painel")
+  const isConsumer = next.startsWith("/acesso") || next.startsWith("/fidelidade") || next.startsWith("/painel")
 
   // Trata o primeiro clique na confirmação dupla de e-mail
   if (message) {
@@ -19,7 +49,7 @@ export async function GET(request: Request) {
   if (code) {
     const cookieStore = await cookies()
     
-    // Determina o cookie correcto com base no destino do redirecionamento
+    // Determina o cookie correto com base no destino do redirecionamento
     const cookieName = isConsumer ? "sb-consumer-session" : "sb-admin-session"
 
     const supabase = createServerClient(
@@ -56,10 +86,10 @@ export async function GET(request: Request) {
     
     const isPkceError = error.message?.includes("PKCE") || error.name === "AuthPKCECodeVerifierMissingError"
     if (isPkceError) {
-      if (next.includes("alterar-senha")) {
+      if (next.startsWith("/alterar-senha")) {
         return NextResponse.redirect(`${origin}/login?error=pkce_recovery`)
       }
-      return NextResponse.redirect(`${origin}${next.includes("convites") ? next : "/login?verified=true"}`)
+      return NextResponse.redirect(`${origin}${next.startsWith("/convites") ? next : "/login?verified=true"}`)
     }
   }
 

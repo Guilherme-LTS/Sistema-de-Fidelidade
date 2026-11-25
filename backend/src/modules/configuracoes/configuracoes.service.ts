@@ -53,9 +53,18 @@ export class ConfiguracoesService {
   async updateRestaurante(tenantId: string, input: RestauranteInput, operatorId?: string, ipAddress?: string) {
     const [tenant] = await db.update(tenants)
       .set({
-        ...input,
-        latitude: input.latitude ? String(input.latitude) : undefined,
-        longitude: input.longitude ? String(input.longitude) : undefined,
+        name: input.name,
+        tradingName: input.tradingName,
+        document: input.document,
+        phone: input.phone,
+        email: input.email,
+        addressLine1: input.addressLine1,
+        addressNumber: input.addressNumber,
+        addressCity: input.addressCity,
+        addressState: input.addressState,
+        logoUrl: input.logoUrl,
+        latitude: input.latitude !== undefined && input.latitude !== "" ? String(input.latitude) : undefined,
+        longitude: input.longitude !== undefined && input.longitude !== "" ? String(input.longitude) : undefined,
         businessHours: input.businessHours,
         socialLinks: input.socialLinks,
         updatedAt: new Date().toISOString(),

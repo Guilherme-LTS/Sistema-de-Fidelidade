@@ -8,5 +8,5 @@ export async function resgatesRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAuth);
   app.addHook("preHandler", requireSubscription);
 
-  app.post("/", { preHandler: [requireRole(["admin", "operador", "novato"])] }, resgatesController.resgatar);
+  app.post("/", { preHandler: [requireRole(["admin", "operador"])] }, resgatesController.resgatar);
 }

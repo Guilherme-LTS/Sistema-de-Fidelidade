@@ -16,6 +16,18 @@ Relacionado: [[00-INDEX]]
 
 ---
 
+## 2026-11-24 — Revisão de Segurança (`security/revisao-seguranca`)
+- **Auditoria completa** de SQL Injection, XSS/HTML Injection, Open Redirect, IDOR, Mass Assignment, CORS, Rate Limiting e Security Headers.
+- **Correções aplicadas**:
+  - **Open Redirect bloqueado** em `frontend/src/app/auth/callback/route.ts` via `sanitizeRedirectPath` (rejeita `//evil.com`, `@evil.com` e URLs externas).
+  - **Security Headers OWASP** adicionados em `frontend/next.config.mjs` (removido `Access-Control-Allow-Origin: *` das páginas; adicionados `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `HSTS`).
+  - **CORS endurecido** em `backend/src/config/cors.ts` com parse `new URL(origin)`, exigindo `https:` para `*.usepontus.com.br` e restringindo `localhost` a `NODE_ENV !== "production"`.
+  - **HTML Injection bloqueado** no template de convite (`backend/src/infra/email/templates/invitation.ts`).
+  - **Protocolo `javascript:` bloqueado** com `safeHttpUrlSchema` (`backend/src/shared/validators/url.ts`) aplicado a `logoUrl`, `socialLinks.*` e `recompensas.imageUrl`, além de `escapeLikePattern` na busca de auditoria.
+  - **Convites endurecidos** (`auth.routes.ts`): validação UUID no `:token`, verificação obrigatória de expiração no `/accept`, comparação case-insensitive de e-mail e execução dentro de `db.transaction`.
+  - **Rotas públicas e equipe blindadas**: rate limit rígido (`5–20 req/min`) em `/public/consumer/*`, remoção de `admin.listUsers()` sem paginação em `public.routes.ts` e `usuarios.service.ts`, remoção de vazamento de `error.message` em 500s (`public.routes.ts`, `dashboard.controller.ts`), `crypto.timingSafeEqual` no `CRON_SECRET`, proteção contra auto-exclusão/auto-desativação de admin e remoção de `novato` das rotas operacionais.
+  - **Testes unitários** de segurança adicionados em `backend/tests/unit/security-validators.test.ts`.
+
 ## 2026-11-24 — Regressão Completa, Correções de Frontend/CI e Limpeza do Repositório
 - **O que foi feito**:
   - Rodada completa de regressão (`typecheck`, `lint`, `build`) em `backend/` e `frontend/`.

@@ -49,7 +49,14 @@ export async function publicRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/consumer/quick-check/:cpf", async (request, reply) => {
+  app.get("/consumer/quick-check/:cpf", {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: "1 minute",
+      },
+    },
+  }, async (request, reply) => {
     const paramsSchema = z.object({
       cpf: z.string().min(1),
     });
@@ -153,7 +160,14 @@ export async function publicRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/tenants/:slug/quick-check/:cpf", async (request, reply) => {
+  app.get("/tenants/:slug/quick-check/:cpf", {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: "1 minute",
+      },
+    },
+  }, async (request, reply) => {
     const paramsSchema = z.object({
       slug: z.string().min(1),
       cpf: z.string().min(1),
@@ -237,6 +251,7 @@ export async function publicRoutes(app: FastifyInstance) {
           END), 0)::int AS pontos_disponiveis
         FROM transactions
         WHERE customer_id = ${customer.id}
+          AND tenant_id = ${tenant.id}
       `);
       const pontos_disponiveis = rowsDisponiveis[0]?.pontos_disponiveis || 0;
 
@@ -258,7 +273,14 @@ export async function publicRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/consumer/login", async (request, reply) => {
+  app.post("/consumer/login", {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "1 minute",
+      },
+    },
+  }, async (request, reply) => {
     const loginSchema = z.object({
       identifier: z.string().min(1),
       password: z.string().min(1),
@@ -317,7 +339,14 @@ export async function publicRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/consumer/signup", async (request, reply) => {
+  app.post("/consumer/signup", {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "1 minute",
+      },
+    },
+  }, async (request, reply) => {
     const signupSchema = z.object({
       name: z.string().min(3),
       cpf: z.string().min(11),
@@ -414,11 +443,7 @@ export async function publicRoutes(app: FastifyInstance) {
          return reply.status(409).send(errorResponse("Já existe uma conta vinculada a este CPF.", "CONFLICT"));
       }
       
-      const errMsg = typeof error?.message === 'string' && error.message !== '{}' 
-        ? error.message 
-        : "Erro interno ao processar o cadastro.";
-        
-      return reply.status(500).send(errorResponse(errMsg, "INTERNAL_ERROR"));
+      return reply.status(500).send(errorResponse("Erro interno ao processar o cadastro.", "INTERNAL_ERROR"));
     }
   });
 
@@ -432,7 +457,14 @@ export async function publicRoutes(app: FastifyInstance) {
     return `${localPart.substring(0, 3)}***@${domain}`;
   }
 
-  app.post("/consumer/recover-password", async (request, reply) => {
+  app.post("/consumer/recover-password", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "1 minute",
+      },
+    },
+  }, async (request, reply) => {
     const recoverSchema = z.object({
       identifier: z.string().min(1),
     });
@@ -482,14 +514,14 @@ export async function publicRoutes(app: FastifyInstance) {
         request.log.error(error);
       }
     } else if (email) {
-      // Se informou um e-mail diretamente, vamos validar se existe alguma conta associada a ele
+      // Consulta direta parametrizada em auth.users (evita listUsers() sem paginação)
       try {
-        const { data: { users }, error: listError } = await supabaseAuthGateway.admin.listUsers();
-        if (!listError && users) {
-          const matchedUser = users.find(u => u.email?.toLowerCase() === email!.toLowerCase());
-          if (matchedUser) {
-            hasAccount = true;
-          }
+        const result = await db.execute<{ email: string }>(
+          sql`SELECT email FROM auth.users WHERE lower(email) = lower(${email}) LIMIT 1`
+        );
+        if (result.rows && result.rows.length > 0 && result.rows[0].email) {
+          email = result.rows[0].email;
+          hasAccount = true;
         }
       } catch (error) {
         request.log.error(error);

@@ -19,6 +19,10 @@ const alterarStatusSchema = z.object({
   isActive: z.boolean(),
 });
 
+const uuidParamSchema = z.object({
+  id: z.string().uuid("ID de usuário inválido."),
+});
+
 export class UsuariosController {
   async listar(request: FastifyRequest, reply: FastifyReply) {
     const { tenantId } = request.user!;
@@ -35,7 +39,7 @@ export class UsuariosController {
 
   async atualizar(request: FastifyRequest, reply: FastifyReply) {
     const { tenantId, tenantUserId } = request.user!;
-    const { id } = request.params as { id: string };
+    const { id } = uuidParamSchema.parse(request.params);
     const data = atualizarUsuarioSchema.parse(request.body);
     const usuarioAtualizado = await usuariosService.atualizar(tenantId, tenantUserId, id, data);
     return reply.send(successResponse(usuarioAtualizado));
@@ -43,7 +47,7 @@ export class UsuariosController {
 
   async alterarStatus(request: FastifyRequest, reply: FastifyReply) {
     const { tenantId, tenantUserId } = request.user!;
-    const { id } = request.params as { id: string };
+    const { id } = uuidParamSchema.parse(request.params);
     const { isActive } = alterarStatusSchema.parse(request.body);
     const usuarioAtualizado = await usuariosService.alterarStatus(tenantId, tenantUserId, id, isActive);
     return reply.send(successResponse(usuarioAtualizado));
@@ -51,7 +55,7 @@ export class UsuariosController {
 
   async excluir(request: FastifyRequest, reply: FastifyReply) {
     const { tenantId, tenantUserId } = request.user!;
-    const { id } = request.params as { id: string };
+    const { id } = uuidParamSchema.parse(request.params);
     await usuariosService.excluir(tenantId, tenantUserId, id);
     return reply.status(204).send();
   }

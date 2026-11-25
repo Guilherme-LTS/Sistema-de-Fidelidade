@@ -1,15 +1,24 @@
+import crypto from "node:crypto";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { successResponse, errorResponse } from "../../shared/http/response.js";
 import { db } from "../../infra/database/db.js";
 import { transactions, expirations, expirationItems, auditLogs, customers, consumerProfiles } from "../../infra/database/schema.js";
 import { sql, lt, and, gt, eq } from "drizzle-orm";
 
+function verifyBearerSecret(authHeader: string | undefined, expectedSecret: string | undefined): boolean {
+  if (!authHeader || !expectedSecret) return false;
+  const expected = `Bearer ${expectedSecret}`;
+  const providedHash = crypto.createHash("sha256").update(authHeader).digest();
+  const expectedHash = crypto.createHash("sha256").update(expected).digest();
+  return crypto.timingSafeEqual(providedHash, expectedHash);
+}
+
 export const cronController = {
   async processExpirations(request: FastifyRequest, reply: FastifyReply) {
     const authHeader = request.headers.authorization;
     const cronSecret = process.env.CRON_SECRET;
 
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    if (!verifyBearerSecret(authHeader, cronSecret)) {
       return reply.status(401).send(errorResponse("Acesso negado ao webhook de Cron", "UNAUTHORIZED"));
     }
 

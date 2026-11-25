@@ -29,7 +29,7 @@ export class DashboardController {
       return successResponse(stats);
     } catch (error: any) {
       request.log.error(error);
-      return reply.status(500).send(errorResponse("Erro interno ao buscar estatísticas do dashboard", "INTERNAL_ERROR", error.message));
+      return reply.status(500).send(errorResponse("Erro interno ao buscar estatísticas do dashboard", "INTERNAL_ERROR"));
     }
   }
 }

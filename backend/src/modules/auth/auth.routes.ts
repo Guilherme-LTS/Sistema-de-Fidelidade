@@ -191,14 +191,14 @@ export async function authRoutes(app: FastifyInstance) {
     {
       preHandler: [requireAuth],
     },
-    async (request, reply) => {
+    async (request, _reply) => {
       const user = request.user!;
-      const { eq, and } = await import("drizzle-orm");
+      const { eq, and, sql } = await import("drizzle-orm");
       const { invitations } = await import("../../infra/database/schema.js");
 
       const pendingInvitations = await db.query.invitations.findMany({
         where: and(
-          eq(invitations.email, user.email!),
+          sql`lower(${invitations.email}) = lower(${user.email!})`,
           eq(invitations.status, "pending")
         ),
         with: {
@@ -206,13 +206,18 @@ export async function authRoutes(app: FastifyInstance) {
         },
       });
 
-      return successResponse(pendingInvitations.map(inv => ({
-        id: inv.token, // we return token as ID to the frontend
-        tenantName: inv.tenant?.name,
-        tenantLogoUrl: inv.tenant?.logoUrl,
-        role: inv.role,
-        createdAt: inv.createdAt,
-      })));
+      const now = new Date();
+      return successResponse(
+        pendingInvitations
+          .filter((inv) => new Date(inv.expiresAt) >= now)
+          .map(inv => ({
+            id: inv.token, // we return token as ID to the frontend
+            tenantName: inv.tenant?.name,
+            tenantLogoUrl: inv.tenant?.logoUrl,
+            role: inv.role,
+            createdAt: inv.createdAt,
+          }))
+      );
     }
   );
 
@@ -221,65 +226,74 @@ export async function authRoutes(app: FastifyInstance) {
     {
       preHandler: [requireAuth],
     },
-    async (request, reply) => {
+    async (request, _reply) => {
       const user = request.user!;
-      const { token } = request.params as { token: string };
-      const { eq, and, isNull } = await import("drizzle-orm");
+      const { token } = z.object({ token: z.string().uuid("Token de convite inválido.") }).parse(request.params);
+      const { eq, and, isNull, sql } = await import("drizzle-orm");
       const { invitations, tenantUsers } = await import("../../infra/database/schema.js");
 
-      const invite = await db.query.invitations.findFirst({
-        where: and(
-          eq(invitations.token, token),
-          eq(invitations.email, user.email!),
-          eq(invitations.status, "pending")
-        )
-      });
+      await db.transaction(async (tx) => {
+        const invite = await tx.query.invitations.findFirst({
+          where: and(
+            eq(invitations.token, token),
+            sql`lower(${invitations.email}) = lower(${user.email!})`,
+            eq(invitations.status, "pending")
+          )
+        });
 
-      if (!invite) {
-        throw new AppError("Convite não encontrado, expirado ou não pertence a este e-mail.", 404);
-      }
-
-      // Check if user is already in the tenant
-      const existing = await db.query.tenantUsers.findFirst({
-        where: and(
-          eq(tenantUsers.tenantId, invite.tenantId!),
-          eq(tenantUsers.userId, user.authUserId),
-          isNull(tenantUsers.deletedAt)
-        )
-      });
-
-      if (!existing) {
-        if (invite.role === "operador") {
-          await planLimitService.checkOperatorLimit(invite.tenantId!);
+        if (!invite) {
+          throw new AppError("Convite não encontrado, expirado ou não pertence a este e-mail.", 404);
         }
 
-        // Create user in tenant
-        await db.insert(tenantUsers).values({
-          tenantId: invite.tenantId!,
-          userId: user.authUserId,
-          name: user.name,
-          role: invite.role,
-          isActive: true,
-          status: "active",
+        if (new Date(invite.expiresAt) < new Date()) {
+          await tx.update(invitations)
+            .set({ status: "expired", updatedAt: new Date().toISOString() })
+            .where(eq(invitations.id, invite.id));
+          throw new AppError("Este convite expirou.", 400);
+        }
+
+        // Check if user is already in the tenant
+        const existing = await tx.query.tenantUsers.findFirst({
+          where: and(
+            eq(tenantUsers.tenantId, invite.tenantId!),
+            eq(tenantUsers.userId, user.authUserId),
+            isNull(tenantUsers.deletedAt)
+          )
         });
-      }
 
-      // Mark invite as accepted
-      await db.update(invitations)
-        .set({
-          status: "accepted",
-          updatedAt: new Date().toISOString()
-        })
-        .where(eq(invitations.id, invite.id));
+        if (!existing) {
+          if (invite.role === "operador") {
+            await planLimitService.checkOperatorLimit(invite.tenantId!, tx);
+          }
 
-      await db.insert(auditLogs).values({
-        tenantId: invite.tenantId!,
-        operatorId: user.tenantUserId || user.authUserId,
-        action: "ACTIVATE_USER",
-        entityType: "USER",
-        entityId: user.authUserId,
-        metadata: JSON.stringify({ email: user.email, source: "invitation" }),
-        status: "SUCESSO",
+          // Create user in tenant
+          await tx.insert(tenantUsers).values({
+            tenantId: invite.tenantId!,
+            userId: user.authUserId,
+            name: user.name,
+            role: invite.role,
+            isActive: true,
+            status: "active",
+          });
+        }
+
+        // Mark invite as accepted
+        await tx.update(invitations)
+          .set({
+            status: "accepted",
+            updatedAt: new Date().toISOString()
+          })
+          .where(eq(invitations.id, invite.id));
+
+        await tx.insert(auditLogs).values({
+          tenantId: invite.tenantId!,
+          operatorId: user.tenantUserId || user.authUserId,
+          action: "ACTIVATE_USER",
+          entityType: "USER",
+          entityId: user.authUserId,
+          metadata: JSON.stringify({ email: user.email, source: "invitation" }),
+          status: "SUCESSO",
+        });
       });
 
       return successResponse({ message: "Convite aceito com sucesso." });
@@ -291,16 +305,16 @@ export async function authRoutes(app: FastifyInstance) {
     {
       preHandler: [requireAuth],
     },
-    async (request, reply) => {
+    async (request, _reply) => {
       const user = request.user!;
-      const { token } = request.params as { token: string };
-      const { eq, and } = await import("drizzle-orm");
+      const { token } = z.object({ token: z.string().uuid("Token de convite inválido.") }).parse(request.params);
+      const { eq, and, sql } = await import("drizzle-orm");
       const { invitations } = await import("../../infra/database/schema.js");
 
       const invite = await db.query.invitations.findFirst({
         where: and(
           eq(invitations.token, token),
-          eq(invitations.email, user.email!),
+          sql`lower(${invitations.email}) = lower(${user.email!})`,
           eq(invitations.status, "pending")
         )
       });
@@ -322,8 +336,16 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get(
     "/invitations/public/:token",
-    async (request, reply) => {
-      const { token } = request.params as { token: string };
+    {
+      config: {
+        rateLimit: {
+          max: 20,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, _reply) => {
+      const { token } = z.object({ token: z.string().uuid("Token de convite inválido.") }).parse(request.params);
       const { eq, and } = await import("drizzle-orm");
       const { invitations } = await import("../../infra/database/schema.js");
 

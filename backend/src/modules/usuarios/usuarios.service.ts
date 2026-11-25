@@ -1,6 +1,6 @@
 import { db } from "../../infra/database/db.js";
 import { tenantUsers, invitations, tenants } from "../../infra/database/schema.js";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import { AppError, NotFoundError } from "../../shared/errors/app-error.js";
 import { supabaseAuthGateway } from "../../infra/auth/supabase-auth.gateway.js";
 import { logAuditEvent } from "../../shared/audit.service.js";
@@ -26,16 +26,18 @@ export class UsuariosService {
       orderBy: (tu, { asc }) => [asc(tu.name)],
     });
 
-    const { data: { users }, error } = await supabaseAuthGateway.admin.listUsers();
-    
-    if (error) {
-       console.error("Erro ao buscar usuários do Supabase", error);
-    }
-
     const emailMap = new Map<string, string>();
-    if (users) {
-      for (const u of users) {
-        emailMap.set(u.id, u.email || "");
+    const userIds = usuarios.map((u) => u.userId).filter((uid): uid is string => Boolean(uid));
+    if (userIds.length > 0) {
+      try {
+        const result = await db.execute<{ id: string; email: string | null }>(
+          sql`SELECT id, email FROM auth.users WHERE id IN (${sql.join(userIds.map((uid) => sql`${uid}::uuid`), sql`, `)})`
+        );
+        for (const row of result.rows) {
+          emailMap.set(row.id, row.email || "");
+        }
+      } catch (err) {
+        console.error("Erro ao buscar e-mails dos usuários da equipe:", err);
       }
     }
 
@@ -67,19 +69,23 @@ export class UsuariosService {
   }
 
   async criar(tenantId: string, operatorId: string, data: CriarUsuarioDTO) {
+    const normalizedEmail = data.email.trim().toLowerCase();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     const existingInvite = await db.query.invitations.findFirst({
-      where: and(eq(invitations.tenantId, tenantId), eq(invitations.email, data.email), eq(invitations.status, "pending"))
+      where: and(
+        eq(invitations.tenantId, tenantId),
+        sql`lower(${invitations.email}) = ${normalizedEmail}`,
+        eq(invitations.status, "pending")
+      )
     });
 
     if (existingInvite) {
       throw new AppError("Já existe um convite pendente para este e-mail neste estabelecimento.", 400);
     }
 
-    const { sql } = await import("drizzle-orm");
-    const result = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${data.email} LIMIT 1`);
+    const result = await db.execute(sql`SELECT id FROM auth.users WHERE lower(email) = ${normalizedEmail} LIMIT 1`);
     if (result.rows && result.rows.length > 0) {
       const authUserId = result.rows[0].id as string;
       const existingTenantUser = await db.query.tenantUsers.findFirst({
@@ -99,14 +105,14 @@ export class UsuariosService {
 
     const [novoConvite] = await db.insert(invitations).values({
       tenantId,
-      email: data.email,
+      email: normalizedEmail,
       role: data.role,
       expiresAt: expiresAt.toISOString(),
       status: "pending"
     }).returning();
 
     const emailService = EmailService.getInstance();
-    await emailService.sendInvitation(data.email, novoConvite.token, tenant?.name || 'Estabelecimento', data.role);
+    await emailService.sendInvitation(normalizedEmail, novoConvite.token, tenant?.name || 'Estabelecimento', data.role);
 
     await logAuditEvent({
       tenantId,
@@ -114,10 +120,10 @@ export class UsuariosService {
       action: "INVITE_USER",
       entityType: "CONVITE",
       entityId: novoConvite.id,
-      metadata: { role: data.role, email: data.email },
+      metadata: { role: data.role, email: normalizedEmail },
     });
 
-    return { id: novoConvite.id, email: data.email, name: data.name, role: data.role, status: "pending", isActive: false };
+    return { id: novoConvite.id, email: normalizedEmail, name: data.name, role: data.role, status: "pending", isActive: false };
   }
 
   async atualizar(tenantId: string, operatorId: string, id: string, data: AtualizarUsuarioDTO) {
@@ -146,7 +152,7 @@ export class UsuariosService {
         role: data.role !== undefined ? data.role : usuario.role,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(tenantUsers.id, id))
+      .where(and(eq(tenantUsers.id, id), eq(tenantUsers.tenantId, tenantId)))
       .returning();
 
     await logAuditEvent({
@@ -170,13 +176,17 @@ export class UsuariosService {
       throw new NotFoundError("Usuário não encontrado.");
     }
 
+    if (id === operatorId && !isActive) {
+      throw new AppError("Você não pode desativar sua própria conta.", 400);
+    }
+
     if (isActive && !usuario.isActive && usuario.role === "operador") {
       await planLimitService.checkOperatorLimit(tenantId);
     }
 
     const [usuarioAtualizado] = await db.update(tenantUsers)
       .set({ isActive, updatedAt: new Date().toISOString() })
-      .where(eq(tenantUsers.id, id))
+      .where(and(eq(tenantUsers.id, id), eq(tenantUsers.tenantId, tenantId)))
       .returning();
 
     await logAuditEvent({
@@ -197,9 +207,13 @@ export class UsuariosService {
     });
 
     if (usuario) {
+      if (usuario.id === operatorId) {
+        throw new AppError("Você não pode excluir sua própria conta.", 400);
+      }
+
       await db.update(tenantUsers)
         .set({ deletedAt: new Date().toISOString(), isActive: false })
-        .where(eq(tenantUsers.id, id));
+        .where(and(eq(tenantUsers.id, id), eq(tenantUsers.tenantId, tenantId)));
 
       await logAuditEvent({
         tenantId,
@@ -218,7 +232,7 @@ export class UsuariosService {
 
     if (invite) {
       await db.delete(invitations)
-        .where(eq(invitations.id, id));
+        .where(and(eq(invitations.id, id), eq(invitations.tenantId, tenantId)));
 
       await logAuditEvent({
         tenantId,

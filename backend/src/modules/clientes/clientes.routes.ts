@@ -8,7 +8,7 @@ export async function clientesRoutes(app: FastifyInstance) {
   // Todas as rotas de clientes requerem autenticação
   app.addHook("preHandler", requireAuth);
   app.addHook("preHandler", requireSubscription);
-  app.addHook("preHandler", requireRole(["admin", "operador", "novato"]));
+  app.addHook("preHandler", requireRole(["admin", "operador"]));
 
   app.get("/", clientesController.listar);
   app.post("/", clientesController.cadastrar);

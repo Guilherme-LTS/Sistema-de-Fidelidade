@@ -2,30 +2,31 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { configuracoesService } from "./configuracoes.service.js";
 import { successResponse } from "../../shared/http/response.js";
+import { safeHttpUrlSchema } from "../../shared/validators/url.js";
 
 const restauranteSchema = z.object({
-  name: z.string().min(1),
-  tradingName: z.string().optional(),
-  document: z.string().optional(),
-  phone: z.string().optional(),
+  name: z.string().min(1).max(200),
+  tradingName: z.string().max(200).optional(),
+  document: z.string().max(30).optional(),
+  phone: z.string().max(30).optional(),
   email: z.string().email().optional().or(z.literal("")),
-  addressLine1: z.string().optional(),
-  addressNumber: z.string().optional(),
-  addressCity: z.string().optional(),
+  addressLine1: z.string().max(255).optional(),
+  addressNumber: z.string().max(30).optional(),
+  addressCity: z.string().max(120).optional(),
   addressState: z.string().length(2).optional().or(z.literal("")),
   latitude: z.union([z.string(), z.number()]).optional(),
   longitude: z.union([z.string(), z.number()]).optional(),
-  logoUrl: z.string().url().optional().or(z.literal("")),
+  logoUrl: safeHttpUrlSchema.optional(),
   businessHours: z.record(z.string(), z.object({
     active: z.boolean(),
     open: z.string(),
     close: z.string(),
   })).optional(),
   socialLinks: z.object({
-    instagram: z.string().optional().or(z.literal("")),
-    facebook: z.string().optional().or(z.literal("")),
-    tiktok: z.string().optional().or(z.literal("")),
-    website: z.string().optional().or(z.literal("")),
+    instagram: safeHttpUrlSchema.optional(),
+    facebook: safeHttpUrlSchema.optional(),
+    tiktok: safeHttpUrlSchema.optional(),
+    website: safeHttpUrlSchema.optional(),
   }).optional(),
 });
 

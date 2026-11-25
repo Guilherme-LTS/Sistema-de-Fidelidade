@@ -1,6 +1,7 @@
 import { db } from "../../infra/database/db.js";
 import { auditLogs, tenantUsers } from "../../infra/database/schema.js";
-import { eq, and, desc, asc, ilike, or, gte, lte, sql } from "drizzle-orm";
+import { eq, and, desc, ilike, or, gte, lte, sql } from "drizzle-orm";
+import { escapeLikePattern } from "../../shared/validators/url.js";
 
 type ListQueryParams = {
   page: number;
@@ -36,7 +37,7 @@ export class AuditoriaService {
     }
 
     if (params.q) {
-      const qText = `%${params.q}%`;
+      const qText = `%${escapeLikePattern(params.q)}%`;
       whereConditions.push(
         or(
           ilike(auditLogs.entityType, qText),

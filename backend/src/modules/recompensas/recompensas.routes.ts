@@ -8,7 +8,7 @@ export async function recompensasRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAuth);
   app.addHook("preHandler", requireSubscription);
 
-  app.get("/", { preHandler: [requireRole(["admin", "operador", "novato"])] }, (req, rep) => recompensasController.listar(req, rep));
+  app.get("/", { preHandler: [requireRole(["admin", "operador"])] }, (req, rep) => recompensasController.listar(req, rep));
   app.post("/", { preHandler: [requireRole(["admin"])] }, (req, rep) => recompensasController.criar(req, rep));
   app.put<{ Params: { id: string } }>("/:id", { preHandler: [requireRole(["admin"])] }, (req, rep) => recompensasController.atualizar(req, rep));
   app.delete<{ Params: { id: string } }>("/:id", { preHandler: [requireRole(["admin"])] }, (req, rep) => recompensasController.excluir(req, rep));

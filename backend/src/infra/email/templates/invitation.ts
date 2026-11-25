@@ -1,3 +1,12 @@
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function invitationTemplate({
   tenantName,
   inviteLink,
@@ -7,6 +16,11 @@ export function invitationTemplate({
   inviteLink: string;
   role: string;
 }) {
+  const safeTenantName = escapeHtml(tenantName);
+  const safeInviteLink = escapeHtml(inviteLink);
+  const roleLabel =
+    role === "admin" ? "Administrador" : role === "operador" ? "Operador" : "Novato";
+
   return `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -80,11 +94,11 @@ export function invitationTemplate({
     <div class="content">
       <h2>Você foi convidado!</h2>
       <p>Olá,</p>
-      <p>Você foi convidado para participar da equipe do estabelecimento <strong>${tenantName}</strong> na plataforma Pontus.</p>
-      <p>O seu cargo será: <strong>${role === 'admin' ? 'Administrador' : role === 'operador' ? 'Operador' : 'Novato'}</strong>.</p>
+      <p>Você foi convidado para participar da equipe do estabelecimento <strong>${safeTenantName}</strong> na plataforma Pontus.</p>
+      <p>O seu cargo será: <strong>${roleLabel}</strong>.</p>
       
       <div class="button-container">
-        <a href="${inviteLink}" class="button" style="color: #ffffff;">Aceitar Convite</a>
+        <a href="${safeInviteLink}" class="button" style="color: #ffffff;">Aceitar Convite</a>
       </div>
       
       <p>Se você não estava esperando este convite, pode ignorar este e-mail tranquilamente.</p>
